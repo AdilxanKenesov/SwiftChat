@@ -44,6 +44,7 @@ object ErrorCodes {
     const val FORBIDDEN = "FORBIDDEN"
     const val NOT_FOUND = "NOT_FOUND"
     const val USERNAME_TAKEN = "USERNAME_TAKEN"
+    const val EDIT_WINDOW_EXPIRED = "EDIT_WINDOW_EXPIRED"
     const val RATE_LIMITED = "RATE_LIMITED"
     const val SERVER_ERROR = "SERVER_ERROR"
 }

@@ -24,9 +24,11 @@ import uz.relay.data.source.local.cache.UserCache
 import uz.relay.data.source.local.database.RelayDatabase
 import uz.relay.data.source.local.database.dao.ChatDao
 import uz.relay.data.source.local.database.dao.MemberCursorDao
+import uz.relay.data.source.local.database.dao.MessageDao
 import uz.relay.data.source.local.database.dao.SyncStateDao
 import uz.relay.data.source.local.database.dao.UserDao
 import uz.relay.data.source.local.database.entity.LastMessageEmbedded
+import uz.relay.data.source.local.database.entity.SendStatus
 import uz.relay.data.source.network.api.ChatApi
 import uz.relay.data.utils.safeApiCall
 import java.io.IOException
@@ -50,8 +52,9 @@ private sealed interface Decoded {
  *
  * Asosiy qoida — IDEMPOTENTLIK: bitta update ikki marta kelsa ham natija bir xil bo'lishi kerak
  * (chaos mode dublikatlari, bootstrap bilan catch-up'ning ustma-ust tushishi):
- *  - yangi xabar chatni faqat uning `topSeq`idan katta bo'lsa o'zgartiradi (dublikat e'tiborsiz qoladi);
- *  - tahrir/o'chirish "oxirgi xabar" preview'iga faqat o'sha xabar bo'lsa tegadi;
+ *  - xabarlar `clientMessageId` bo'yicha upsert qilinadi (dublikat bo'lmaydi);
+ *  - tahrir faqat `editVersion` oshsa, o'chirish faqat hali o'chirilmagan bo'lsa qo'llanadi;
+ *  - yangi xabar chatni faqat uning `topSeq`idan katta bo'lsa o'zgartiradi (o'qilmaganlar ikki marta sanalmaydi);
  *  - kursorlar max-wins (hech qachon orqaga ketmaydi).
  *
  * Ikki bosqich:
@@ -64,6 +67,7 @@ private sealed interface Decoded {
 class UpdateApplier @Inject constructor(
     private val database: RelayDatabase,
     private val chatDao: ChatDao,
+    private val messageDao: MessageDao,
     private val userDao: UserDao,
     private val memberCursorDao: MemberCursorDao,
     private val syncStateDao: SyncStateDao,
@@ -142,10 +146,12 @@ class UpdateApplier @Inject constructor(
             is Decoded.NewMessage -> applyNewMessage(update.message, myUserId)
 
             is Decoded.Edit -> with(update.payload) {
+                messageDao.applyEdit(serverId, body, editVersion, editedAt)
                 updateLastMessage(chatId, serverId) { it.copy(body = body) }
             }
 
             is Decoded.Delete -> with(update.payload) {
+                messageDao.applyDelete(serverId, deletedAt)
                 updateLastMessage(chatId, serverId) { it.copy(deletedAt = deletedAt) }
             }
 
@@ -164,6 +170,7 @@ class UpdateApplier @Inject constructor(
                 // shuning uchun lokal nusxani ham o'chiramiz. A'zolar ro'yxati guruh bosqichida qo'shiladi.
                 if (userId == myUserId && removed) {
                     chatDao.delete(chatId)
+                    messageDao.deleteByChat(chatId)
                     memberCursorDao.deleteByChat(chatId)
                 }
             }
@@ -174,6 +181,17 @@ class UpdateApplier @Inject constructor(
     }
 
     private suspend fun applyNewMessage(message: MessageResponse, myUserId: String) {
+        val existing = messageDao.get(message.clientMessageId)
+        // Server bergan va keyin tahrirlangan/o'chirilgan xabarni eski nusxa bilan bosib ketmaymiz
+        // (catch-up bootstrap'dan keyin eski message_new'larni qayta berishi mumkin).
+        val keepExisting = existing != null &&
+            existing.status == SendStatus.SENT &&
+            (existing.editVersion > message.editVersion || (existing.deletedAt != null && message.deletedAt == null))
+        if (!keepExisting) {
+            // O'z xabarimning "echo"si ack'dan oldin kelsa ham to'g'ri: PENDING qator shu yerda SENT bo'ladi.
+            messageDao.upsertAll(listOf(message.toEntity()))
+        }
+
         val chat = chatDao.getChat(message.chatId) ?: return
         // topSeq'dan eski yoki teng xabar — dublikat yoki snapshot uni allaqachon hisobga olgan.
         if (message.serverSeq <= chat.topSeq) return

@@ -62,6 +62,7 @@ fun ChatListItem.toDomain(myUserId: String, json: Json): ChatSummary {
         title = if (type == ChatType.DIRECT) peerDisplayName else chat.title,
         peerUserId = chat.peerUserId,
         peerOnline = peerOnline == true,
+        peerLastSeenAt = peerLastSeenAt,
         lastMessage = chat.lastMessage?.let { last ->
             val messageType = last.type.toMessageType()
             val isSystem = messageType == MessageType.SYSTEM
@@ -74,23 +75,17 @@ fun ChatListItem.toDomain(myUserId: String, json: Json): ChatSummary {
                 systemEvent = if (isSystem) parseSystemEvent(last.body, json) else null,
                 isDeleted = last.deletedAt != null,
                 createdAt = last.createdAt,
-                status = deriveStatus(last.serverSeq)
+                status = outgoingStatus(
+                    sendStatus = MessageStatus.SENT,
+                    serverSeq = last.serverSeq,
+                    peers = PeerCursors(peerReadUpToSeq ?: 0, peerDeliveredUpToSeq ?: 0)
+                )
             )
         },
         lastActivityAt = chat.lastActivityAt,
         unreadCount = chat.unreadCount,
         muted = chat.muted
     )
-}
-
-/**
- * ✓ belgisi: suhbatdoshlarning kursori xabarimning serverSeq'iga yetgan bo'lsa — o'qilgan/yetkazilgan.
- * Kursor noma'lum bo'lsa (hali `read`/`delivered` update kelmagan) — shunchaki "yuborildi".
- */
-private fun ChatListItem.deriveStatus(serverSeq: Long): MessageStatus = when {
-    (peerReadUpToSeq ?: 0) >= serverSeq -> MessageStatus.READ
-    (peerDeliveredUpToSeq ?: 0) >= serverSeq -> MessageStatus.DELIVERED
-    else -> MessageStatus.SENT
 }
 
 /** SYSTEM xabar `body`si JSON satr. Buzuq bo'lsa `null` — ro'yxat baribir chiziladi. */
@@ -105,13 +100,13 @@ fun parseSystemEvent(body: String?, json: Json): SystemEvent? {
 fun systemEventUserIds(body: String?, json: Json): List<String> =
     parseSystemEvent(body, json)?.let { listOf(it.actorId) + it.targetUserIds }.orEmpty()
 
-private fun String.toChatType(): ChatType = when (this) {
+internal fun String.toChatType(): ChatType = when (this) {
     "DIRECT" -> ChatType.DIRECT
     "GROUP" -> ChatType.GROUP
     else -> ChatType.UNKNOWN
 }
 
-private fun String.toMessageType(): MessageType = when (this) {
+internal fun String.toMessageType(): MessageType = when (this) {
     "TEXT" -> MessageType.TEXT
     "IMAGE" -> MessageType.IMAGE
     "VIDEO" -> MessageType.VIDEO

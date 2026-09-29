@@ -18,6 +18,7 @@ import uz.relay.data.source.local.cache.UserCache
 import uz.relay.data.source.local.database.RelayDatabase
 import uz.relay.data.source.local.database.dao.ChatDao
 import uz.relay.data.source.local.database.dao.MemberCursorDao
+import uz.relay.data.source.local.database.dao.MessageDao
 import uz.relay.data.source.local.database.dao.SyncStateDao
 import uz.relay.data.source.local.database.dao.UserDao
 import uz.relay.data.source.network.api.ChatApi
@@ -52,6 +53,7 @@ fun classifyLiveUpdate(cursor: Long, updateSeq: Long): LiveUpdateAction = when {
 class SyncEngine @Inject constructor(
     private val database: RelayDatabase,
     private val chatDao: ChatDao,
+    private val messageDao: MessageDao,
     private val userDao: UserDao,
     private val memberCursorDao: MemberCursorDao,
     private val syncStateDao: SyncStateDao,
@@ -157,6 +159,9 @@ class SyncEngine @Inject constructor(
         database.withTransaction {
             userDao.upsertAll(users)
             chatDao.replaceAll(chats.map { it.toEntity() })
+            // Lokal xabarlar eskirgan bo'lishi mumkin (o'tkazib yuborilgan tahrir/o'chirishlar) — tashlaymiz,
+            // chat ochilganda serverdan yangisi yuklanadi. Outbox (PENDING/FAILED) tegilmaydi.
+            messageDao.deleteAllSynced()
             // Kursorlar eski snapshot'ga tegishli — yangi update'lar ularni qayta to'ldiradi.
             memberCursorDao.deleteAll()
             syncStateDao.setCursor(cursor)

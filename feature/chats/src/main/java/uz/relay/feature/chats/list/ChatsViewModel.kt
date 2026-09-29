@@ -25,7 +25,8 @@ class ChatsViewModel @Inject constructor(
     private val observeConnectionStatus: ObserveConnectionStatusUseCase,
     private val observeTyping: ObserveTypingUseCase,
     private val refreshChats: RefreshChatsUseCase,
-    private val refreshMe: RefreshMeUseCase
+    private val refreshMe: RefreshMeUseCase,
+    private val directions: ChatsContract.Directions
 ) : ViewModel(), ChatsContract.ViewModel {
 
     override val container =
@@ -38,6 +39,7 @@ class ChatsViewModel @Inject constructor(
     override fun onEventDispatcher(intent: ChatsContract.Intent) {
         when (intent) {
             ChatsContract.Intent.OnRetrySync -> sync()
+            is ChatsContract.Intent.OnChatClick -> intent { directions.navigateToChat(intent.chatId) }
         }
     }
 

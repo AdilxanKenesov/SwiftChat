@@ -27,6 +27,21 @@ sealed interface ClientFrame {
         val cursor: Long
     ) : ClientFrame
 
+    /**
+     * Xabar yuborish — REST `POST /v1/chats/{id}/messages` bilan bir xil servis. Javob: `ack` yoki `nack`.
+     * `messageType` deb nomlangan, chunki `type` frame turi uchun band.
+     */
+    @Serializable
+    @SerialName("send")
+    data class Send(
+        val clientMessageId: String,
+        val chatId: String,
+        val messageType: String,
+        val body: String? = null,
+        val mediaIds: List<String>? = null,
+        val replyTo: String? = null
+    ) : ClientFrame
+
     /** "Men shu serverSeq gacha o'qidim" (max-wins). */
     @Serializable
     @SerialName("read")

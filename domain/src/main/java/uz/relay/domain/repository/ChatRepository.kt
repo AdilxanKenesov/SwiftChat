@@ -13,6 +13,9 @@ interface ChatRepository {
      */
     fun observeChats(): Flow<List<ChatSummary>>
 
+    /** Bitta chat (suhbat ekrani sarlavhasi uchun). Bazada yo'q bo'lsa `null`. */
+    fun observeChat(chatId: String): Flow<ChatSummary?>
+
     fun observeSyncStatus(): Flow<SyncStatus>
 
     /**

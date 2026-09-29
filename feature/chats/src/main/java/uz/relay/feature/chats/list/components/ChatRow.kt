@@ -170,11 +170,13 @@ internal fun ChatRow(
     }
 }
 
-/** ✓ yuborildi (kulrang), ✓✓ yetkazildi (kulrang), ✓✓ o'qildi (primary). */
+/** Soat — yuborilmoqda, ✓ yuborildi, ✓✓ yetkazildi (kulrang), ✓✓ o'qildi (primary), qizil belgi — yuborilmadi. */
 @Composable
 private fun StatusTick(status: MessageStatus, modifier: Modifier = Modifier) {
     val colors = SwiftTheme.colors
     val (icon, description) = when (status) {
+        MessageStatus.SENDING -> DesignR.drawable.ic_clock to R.string.status_sending
+        MessageStatus.FAILED -> DesignR.drawable.ic_alert_circle to R.string.status_failed
         MessageStatus.SENT -> DesignR.drawable.ic_check_single to R.string.status_sent
         MessageStatus.DELIVERED -> DesignR.drawable.ic_check_double to R.string.status_delivered
         MessageStatus.READ -> DesignR.drawable.ic_check_double to R.string.status_read
@@ -182,7 +184,11 @@ private fun StatusTick(status: MessageStatus, modifier: Modifier = Modifier) {
     Icon(
         painter = painterResource(icon),
         contentDescription = stringResource(description),
-        tint = if (status == MessageStatus.READ) colors.primary else colors.text2,
+        tint = when (status) {
+            MessageStatus.READ -> colors.primary
+            MessageStatus.FAILED -> colors.error
+            else -> colors.text2
+        },
         modifier = modifier.size(17.dp)
     )
 }

@@ -43,6 +43,8 @@
     <string name="no_chats_sub">Username orqali odam toping</string>
     <string name="group">Guruh</string>
     <string name="muted">Ovozsiz</string>
+    <string name="status_sending">Yuborilmoqda</string>
+    <string name="status_failed">Yuborilmadi</string>
     <string name="status_sent">Yuborildi</string>
     <string name="status_delivered">Yetkazildi</string>
     <string name="status_read">Oʻqildi</string>

@@ -72,7 +72,7 @@ internal fun ChatsScreen(viewModel: ChatsViewModel = hiltViewModel()) {
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        ChatsScreenContent(uiState = uiState)
+        ChatsScreenContent(uiState = uiState, onEventDispatcher = viewModel::onEventDispatcher)
 
         SnackbarHost(
             hostState = snackbarHostState,
@@ -83,9 +83,12 @@ internal fun ChatsScreen(viewModel: ChatsViewModel = hiltViewModel()) {
     }
 }
 
-// Qidiruv, suhbat va profil ekranlari keyingi bosqichlarda qo'shiladi; hozircha tugmalar faqat chiziladi.
+// Qidiruv va profil ekranlari keyingi bosqichlarda qo'shiladi; hozircha ularning tugmalari faqat chiziladi.
 @Composable
-private fun ChatsScreenContent(uiState: ChatsContract.UiState) {
+private fun ChatsScreenContent(
+    uiState: ChatsContract.UiState,
+    onEventDispatcher: (ChatsContract.Intent) -> Unit
+) {
     val colors = SwiftTheme.colors
 
     Box(
@@ -114,7 +117,7 @@ private fun ChatsScreenContent(uiState: ChatsContract.UiState) {
                 uiState.showEmpty -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     EmptyChats(onNewChatClick = {})
                 }
-                else -> ChatsPager(uiState = uiState)
+                else -> ChatsPager(uiState = uiState, onEventDispatcher = onEventDispatcher)
             }
         }
 
@@ -135,7 +138,10 @@ private fun ChatsScreenContent(uiState: ChatsContract.UiState) {
 
 /** Tablar va ular ostidagi sahifalar: tabni bosish ham, chapga-o'ngga surish ham ishlaydi. */
 @Composable
-private fun ChatsPager(uiState: ChatsContract.UiState) {
+private fun ChatsPager(
+    uiState: ChatsContract.UiState,
+    onEventDispatcher: (ChatsContract.Intent) -> Unit
+) {
     val tabs = ChatTab.entries
     val pagerState = rememberPagerState(pageCount = { tabs.size })
     val scope = rememberCoroutineScope()
@@ -162,7 +168,7 @@ private fun ChatsPager(uiState: ChatsContract.UiState) {
                     chat = chat,
                     userNames = uiState.userNames,
                     typingUserIds = uiState.typing[chat.id].orEmpty(),
-                    onClick = {}
+                    onClick = { onEventDispatcher(ChatsContract.Intent.OnChatClick(chat.id)) }
                 )
             }
         }
@@ -208,6 +214,7 @@ private fun previewChat(
         title = title,
         peerUserId = if (type == ChatType.DIRECT) "peer_$id" else null,
         peerOnline = online,
+        peerLastSeenAt = null,
         lastMessage = LastMessage(
             serverId = 1,
             senderId = senderId,
@@ -238,7 +245,7 @@ private val PreviewNames = mapOf("malika" to "Malika")
 
 @Composable
 private fun ChatsPreview(darkTheme: Boolean, state: ChatsContract.UiState) {
-    SwiftChatTheme(darkTheme = darkTheme) { ChatsScreenContent(uiState = state) }
+    SwiftChatTheme(darkTheme = darkTheme) { ChatsScreenContent(uiState = state, onEventDispatcher = {}) }
 }
 
 @Preview(name = "List · Light", showSystemUi = true)

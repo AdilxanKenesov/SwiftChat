@@ -4,10 +4,15 @@ import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
+import kotlinx.coroutines.flow.Flow
 import uz.relay.data.source.local.database.entity.MemberCursorEntity
 
 @Dao
 interface MemberCursorDao {
+
+    /** Chat a'zolarining kursorlari — xabarlar ✓✓ holatini hisoblash uchun. */
+    @Query("SELECT * FROM member_cursors WHERE chatId = :chatId")
+    fun observe(chatId: String): Flow<List<MemberCursorEntity>>
 
     @Query("SELECT * FROM member_cursors WHERE chatId = :chatId AND userId = :userId")
     suspend fun get(chatId: String, userId: String): MemberCursorEntity?
