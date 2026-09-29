@@ -1,9 +1,9 @@
 package uz.relay.feature.profile.me
 
+import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,14 +18,15 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,6 +51,7 @@ import org.orbitmvi.orbit.compose.collectSideEffect
 import uz.relay.core.designsystem.R as DesignR
 import uz.relay.core.designsystem.theme.SwiftChatTheme
 import uz.relay.core.designsystem.theme.SwiftTheme
+import uz.relay.domain.model.AppLanguage
 import uz.relay.domain.model.ConnectionStatus
 import uz.relay.domain.model.ThemeMode
 import uz.relay.domain.model.User
@@ -59,11 +61,18 @@ import uz.relay.feature.profile.components.ProfileCard
 import uz.relay.feature.profile.components.ProfileHeader
 import uz.relay.feature.profile.components.ProfileTopBar
 import uz.relay.feature.profile.components.SettingRow
-import uz.relay.feature.profile.components.SwiftSwitch
+import uz.relay.core.designsystem.component.SwiftSwitch
+import uz.relay.core.designsystem.component.SwiftDialog
+import uz.relay.feature.profile.components.DangerRow
+import uz.relay.feature.profile.components.SectionLabel
 import uz.relay.feature.profile.components.TileColors
 import uz.relay.feature.profile.util.formatPhone
 import uz.relay.feature.profile.util.messageRes
 
+/**
+ * "Mening profilim" ekrani (Nav3 entry: MyProfileKey). Stateful qism: ViewModel'ni `hiltViewModel()` bilan
+ * oladi, SideEffect'larni Snackbar'ga aylantiradi; chizish [MyProfileContent]da (Preview ViewModel'siz ishlaydi).
+ */
 @Composable
 internal fun MyProfileScreen(viewModel: MyProfileViewModel = hiltViewModel()) {
     val uiState by viewModel.collectAsState()
@@ -79,16 +88,17 @@ internal fun MyProfileScreen(viewModel: MyProfileViewModel = hiltViewModel()) {
 
     Box(modifier = Modifier.fillMaxSize()) {
         MyProfileContent(uiState = uiState, onEventDispatcher = viewModel::onEventDispatcher)
-        SnackbarHost(
+        SwiftSnackbarHost(
             hostState = snackbarHostState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .navigationBarsPadding()
-                .padding(bottom = 80.dp)
+            modifier = Modifier.align(Alignment.TopCenter)
         )
     }
 }
 
+/**
+ * Profil UI'si: sarlavha, ism + ulanish holati, "Hisob" (telefon/username), "Sozlamalar" va alohida kartada "Chiqish".
+ * Til tanlash sheet'i va chiqish dialogi — vaqtinchalik ko'rinish holati, shuning uchun ViewModel'da emas.
+ */
 @Composable
 private fun MyProfileContent(
     uiState: MyProfileContract.UiState,
@@ -96,14 +106,10 @@ private fun MyProfileContent(
 ) {
     val colors = SwiftTheme.colors
     val me = uiState.me
-    // Switch ILOVA temasini ko'rsatadi: tanlov qilinmagan bo'lsa (SYSTEM) — tizimnikini.
-    val darkChecked = when (uiState.themeMode) {
-        ThemeMode.SYSTEM -> isSystemInDarkTheme()
-        ThemeMode.LIGHT -> false
-        ThemeMode.DARK -> true
-    }
+    val darkChecked = uiState.themeMode == ThemeMode.DARK
     // Dialog faqat ko'rinishga tegishli; burilishda yo'qolmasin.
     var showLogoutDialog by rememberSaveable { mutableStateOf(false) }
+    var showLanguageSheet by rememberSaveable { mutableStateOf(false) }
 
     val (status, statusColor) = when (uiState.connectionStatus) {
         ConnectionStatus.CONNECTED, ConnectionStatus.UPDATING -> stringResource(R.string.online) to colors.primary
@@ -136,6 +142,7 @@ private fun MyProfileContent(
         ) {
             ProfileHeader(name = me?.displayName, colorSeed = me?.id.orEmpty(), status = status, statusColor = statusColor)
 
+            SectionLabel(text = stringResource(R.string.section_account))
             ProfileCard {
                 me?.phone?.let { phone ->
                     InfoRow(icon = DesignR.drawable.ic_phone, tileColor = TileColors.Phone, value = formatPhone(phone), caption = stringResource(R.string.phone))
@@ -145,7 +152,8 @@ private fun MyProfileContent(
                 }
             }
 
-            ProfileCard(modifier = Modifier.padding(top = 12.dp, bottom = 16.dp)) {
+            SectionLabel(text = stringResource(R.string.section_settings), modifier = Modifier.padding(top = 20.dp))
+            ProfileCard {
                 SettingRow(
                     icon = DesignR.drawable.ic_bell,
                     tileColor = TileColors.Notifications,
@@ -168,67 +176,111 @@ private fun MyProfileContent(
                         onCheckedChange = { onEventDispatcher(MyProfileContract.Intent.OnDarkModeChange(it)) }
                     )
                 }
-                // Hozircha yagona til — faqat ma'lumot uchun, bosilmaydi.
-                SettingRow(icon = DesignR.drawable.ic_globe, tileColor = TileColors.Language, label = stringResource(R.string.language)) {
-                    Text(text = stringResource(R.string.language_uzbek), color = colors.text2, fontSize = 14.sp)
+                SettingRow(
+                    icon = DesignR.drawable.ic_globe,
+                    tileColor = TileColors.Language,
+                    label = stringResource(R.string.language),
+                    onClick = { showLanguageSheet = true }
+                ) {
+                    Text(text = stringResource(uiState.language.labelRes()), color = colors.text2, fontSize = 14.sp)
                 }
+            }
+
+            // "Chiqish" — sozlamalar ostidagi alohida kartada (ekran pastiga yopishtirilmagan), qizil plitka bilan.
+            ProfileCard(modifier = Modifier.padding(top = 20.dp, bottom = 24.dp)) {
+                DangerRow(
+                    icon = DesignR.drawable.ic_log_out,
+                    label = stringResource(R.string.logout),
+                    loading = uiState.loggingOut,
+                    onClick = { showLogoutDialog = true }
+                )
             }
         }
-
-        LogoutButton(loading = uiState.loggingOut, onClick = { showLogoutDialog = true })
     }
 
-    if (showLogoutDialog) {
-        AlertDialog(
-            onDismissRequest = { showLogoutDialog = false },
-            containerColor = colors.menu,
-            title = { Text(stringResource(R.string.logout_title), color = colors.text) },
-            text = { Text(stringResource(R.string.logout_text), color = colors.text2) },
-            confirmButton = {
-                TextButton(onClick = {
-                    showLogoutDialog = false
-                    onEventDispatcher(MyProfileContract.Intent.OnLogout)
-                }) {
-                    Text(stringResource(R.string.logout), color = colors.error, fontWeight = FontWeight.SemiBold)
-                }
+    if (showLanguageSheet) {
+        LanguageSheet(
+            selected = uiState.language,
+            onSelect = { language ->
+                showLanguageSheet = false
+                if (language != uiState.language) onEventDispatcher(MyProfileContract.Intent.OnLanguageChange(language))
             },
-            dismissButton = {
-                TextButton(onClick = { showLogoutDialog = false }) {
-                    Text(stringResource(R.string.cancel), color = colors.primary)
-                }
-            }
+            onDismiss = { showLanguageSheet = false }
+        )
+    }
+
+    // Faqat qisqa savol — ortiqcha izohsiz (foydalanuvchi talabi).
+    if (showLogoutDialog) {
+        SwiftDialog(
+            title = stringResource(R.string.logout_title),
+            confirmText = stringResource(R.string.logout),
+            dismissText = stringResource(R.string.cancel),
+            icon = DesignR.drawable.ic_log_out,
+            destructive = true,
+            onConfirm = {
+                showLogoutDialog = false
+                onEventDispatcher(MyProfileContract.Intent.OnLogout)
+            },
+            onDismiss = { showLogoutDialog = false }
         )
     }
 }
 
-/** "Chiqish": karta ko'rinishidagi 56dp tugma, qizil matn + ikonka. Chiqish ketayotganda — progress. */
+/** Til nomi o'z tilida ("Русский" — ruscha interfeysda ham, o'zbekchada ham). */
+private fun AppLanguage.labelRes(): Int = when (this) {
+    AppLanguage.UZ -> R.string.lang_uz
+    AppLanguage.RU -> R.string.lang_ru
+    AppLanguage.EN -> R.string.lang_en
+}
+
+/** Uchta til, tanlangani yonida ✓ (primary). */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun LogoutButton(loading: Boolean, onClick: () -> Unit) {
+private fun LanguageSheet(selected: AppLanguage, onSelect: (AppLanguage) -> Unit, onDismiss: () -> Unit) {
     val colors = SwiftTheme.colors
-    val shape = RoundedCornerShape(20.dp)
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 16.dp, end = 16.dp, bottom = 20.dp)
-            .height(56.dp)
-            .shadow(elevation = if (colors.cardBorder == Color.Transparent) 2.dp else 0.dp, shape = shape)
-            .clip(shape)
-            .background(colors.card, shape)
-            .border(1.dp, colors.cardBorder, shape)
-            .clickable(enabled = !loading, onClick = onClick),
-        horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
-        verticalAlignment = Alignment.CenterVertically
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        containerColor = colors.bg,
+        scrimColor = colors.scrim,
+        dragHandle = { BottomSheetDefaults.DragHandle(color = colors.outline, width = 32.dp, height = 4.dp) }
     ) {
-        if (loading) {
-            CircularProgressIndicator(color = colors.error, strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
-        } else {
-            Icon(painter = painterResource(DesignR.drawable.ic_log_out), contentDescription = null, tint = colors.error, modifier = Modifier.size(20.dp))
+        Column(modifier = Modifier.navigationBarsPadding().padding(bottom = 16.dp)) {
+            Text(
+                text = stringResource(R.string.language),
+                color = colors.text,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 8.dp)
+            )
+            AppLanguage.entries.forEach { language ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .clickable { onSelect(language) }
+                        .padding(horizontal = 24.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(language.labelRes()),
+                        color = colors.text,
+                        fontSize = 16.sp,
+                        fontWeight = if (language == selected) FontWeight.SemiBold else FontWeight.Medium,
+                        modifier = Modifier.weight(1f)
+                    )
+                    if (language == selected) {
+                        Icon(painter = painterResource(DesignR.drawable.ic_check), contentDescription = null, tint = colors.primary, modifier = Modifier.size(22.dp))
+                    }
+                }
+            }
         }
-        Text(text = stringResource(R.string.logout), color = colors.error, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
     }
 }
 
 // ---------------- Preview'lar ----------------
+// Yorug' va qorong'i temada to'ldirilgan profil.
 
 private val PreviewMe = User("me", "dawran_n", "Dawran", null, 0, "+998901234567", online = true)
 

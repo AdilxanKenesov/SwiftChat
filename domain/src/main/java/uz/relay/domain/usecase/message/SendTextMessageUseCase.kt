@@ -3,6 +3,11 @@ package uz.relay.domain.usecase.message
 import uz.relay.domain.repository.MessageRepository
 import javax.inject.Inject
 
+/**
+ * Matnli xabar yuboradi (darhol bazaga, keyin outbox serverga jo'natadi).
+ *
+ * Kichik mantiq: matn trim qilinadi va bo'sh xabar umuman yuborilmaydi.
+ */
 class SendTextMessageUseCase @Inject constructor(
     private val repository: MessageRepository
 ) {

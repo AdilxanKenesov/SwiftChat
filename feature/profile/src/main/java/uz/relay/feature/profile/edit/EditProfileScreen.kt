@@ -1,5 +1,6 @@
 package uz.relay.feature.profile.edit
 
+import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,7 +19,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -48,6 +48,10 @@ import uz.relay.core.designsystem.theme.SwiftTheme
 import uz.relay.feature.profile.R
 import uz.relay.feature.profile.util.messageRes
 
+/**
+ * Profilni tahrirlash ekrani (Nav3 entry: EditProfileKey). Runtime argument yo'q, shuning uchun ViewModel oddiy
+ * `hiltViewModel()` bilan olinadi. SideEffect'lar Snackbar'ga aylanadi; chizish [EditProfileContent]da.
+ */
 @Composable
 internal fun EditProfileScreen(viewModel: EditProfileViewModel = hiltViewModel()) {
     val uiState by viewModel.collectAsState()
@@ -63,13 +67,9 @@ internal fun EditProfileScreen(viewModel: EditProfileViewModel = hiltViewModel()
 
     Box(modifier = Modifier.fillMaxSize()) {
         EditProfileContent(uiState = uiState, onEventDispatcher = viewModel::onEventDispatcher)
-        SnackbarHost(
+        SwiftSnackbarHost(
             hostState = snackbarHostState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .navigationBarsPadding()
-                .imePadding()
-                .padding(bottom = 80.dp)
+            modifier = Modifier.align(Alignment.TopCenter)
         )
     }
 }
@@ -82,6 +82,9 @@ private fun EditProfileContent(
 ) {
     val colors = SwiftTheme.colors
     val usernameError = uiState.usernameTaken
+    // Qoida ("3–32 belgi…") faqat foydalanuvchi qoidaga mos KELMAYDIGAN username yozganda ko'rinadi —
+    // bo'sh maydonda va to'g'ri yozilganda ortiqcha matn ko'rsatilmaydi.
+    val rulesBroken = uiState.username.isNotEmpty() && !uiState.usernameValid
 
     Column(
         modifier = Modifier
@@ -139,14 +142,14 @@ private fun EditProfileContent(
                 onValueChange = { onEventDispatcher(EditProfileContract.Intent.OnUsernameChange(it)) },
                 label = stringResource(R.string.username),
                 modifier = Modifier.padding(top = 13.dp),
-                isError = usernameError,
+                isError = usernameError || rulesBroken,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii, autoCorrectEnabled = false, imeAction = ImeAction.Done),
                 leading = {
                     Text(text = "@", fontSize = 17.sp, color = colors.text2, modifier = Modifier.padding(end = 2.dp))
                 },
                 trailing = {
                     when {
-                        usernameError -> Icon(
+                        usernameError || rulesBroken -> Icon(
                             painter = painterResource(DesignR.drawable.ic_alert_circle),
                             contentDescription = null,
                             tint = colors.error,
@@ -163,13 +166,15 @@ private fun EditProfileContent(
                 }
             )
 
-            Text(
-                text = stringResource(if (usernameError) R.string.username_taken else R.string.username_rules),
-                color = if (usernameError) colors.error else colors.text2,
-                fontSize = 12.sp,
-                fontWeight = if (usernameError) FontWeight.SemiBold else FontWeight.Normal,
-                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 6.dp)
-            )
+            if (usernameError || rulesBroken) {
+                Text(
+                    text = stringResource(if (usernameError) R.string.username_taken else R.string.username_rules),
+                    color = colors.error,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 6.dp)
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -185,6 +190,7 @@ private fun EditProfileContent(
 }
 
 // ---------------- Preview'lar ----------------
+// O'zgartirilgan forma (yorug'/qorong'i) va "username band" xatosi.
 
 private val PreviewState = EditProfileContract.UiState(
     loaded = true,

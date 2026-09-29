@@ -19,6 +19,11 @@ import uz.relay.data.model.response.ChatMemberResponse
 import uz.relay.data.model.response.ChatResponse
 import uz.relay.data.model.response.MembersResponse
 
+/**
+ * Chatlar va guruh a'zolari bo'yicha REST endpoint'lar (Retrofit). Retrofit — deklarativ interfeys:
+ * URL/parametrlar annotatsiyada, JSON esa kotlinx.serialization konverteri orqali o'giriladi.
+ * Kim ishlatadi: SyncEngine (bootstrap), ChatRepositoryImpl va GroupRepositoryImpl.
+ */
 interface ChatApi {
 
     /**
@@ -31,6 +36,7 @@ interface ChatApi {
         @Query("cursor") cursor: String? = null
     ): ChatListPageResponse
 
+    /** Bitta chat — update'da noma'lum chat kelganda yoki suhbat ochilganda yangilash uchun. */
     @GET("v1/chats/{id}")
     suspend fun getChat(@Path("id") id: String): ChatResponse
 

@@ -30,8 +30,11 @@ import uz.relay.core.designsystem.theme.FigtreeFontFamily
 import uz.relay.core.designsystem.theme.SwiftTheme
 
 /**
- * Outlined 58dp field with the label sitting on the top border.
- * Border: focused 2dp primary, error 2dp error, otherwise 1.5dp outline.
+ * Dizayndagi 58dp chegarali (outlined) matn maydoni: yorlig'i (label) yuqori chegara ustida turadi.
+ * Chegara: fokusda 2dp primary, xatoda 2dp error, aks holda 1.5dp outline.
+ *
+ * Nega Material OutlinedTextField emas: uning ichki padding'i, balandligi va label animatsiyasi dizaynga
+ * mos kelmaydi. BasicTextField ustida qurilgani uchun har bir o'lcham to'liq nazoratda.
  */
 @Composable
 fun SwiftTextField(
@@ -57,7 +60,7 @@ fun SwiftTextField(
     }
     val shape = RoundedCornerShape(16.dp)
 
-    // The field starts 9dp down, so the ~18dp label row is centered on its top border.
+    // Maydon 9dp pastdan boshlanadi — shunda ~18dp balandlikdagi label qatori aynan yuqori chegara o'rtasida turadi.
     Box(modifier = modifier.fillMaxWidth()) {
         BasicTextField(
             value = value,
@@ -92,6 +95,7 @@ fun SwiftTextField(
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier
                 .padding(start = 12.dp)
+                // Fon rangi label ortidagi chegara chizig'ini "kesib" turadi.
                 .background(colors.bg)
                 .padding(horizontal = 4.dp),
         )

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Galereyaga saqlash bildirishnomalari (MediaSaveWorker). -->
+    <string name="media_save_channel">Yuklab olishlar</string>
+    <string name="media_save_channel_description">Rasm va videolarni telefonga saqlash jarayoni</string>
+    <string name="media_save_image">Rasm saqlanmoqda</string>
+    <string name="media_save_video">Video saqlanmoqda</string>
+    <string name="media_save_done_image">Rasm galereyaga saqlandi</string>
+    <string name="media_save_done_video">Video galereyaga saqlandi</string>
+    <string name="media_save_done_text">Ochish uchun bosing</string>
+    <string name="media_save_failed">Saqlab boʻlmadi</string>
+    <string name="media_save_failed_text">Internetni tekshirib, qayta urining</string>
+</resources>

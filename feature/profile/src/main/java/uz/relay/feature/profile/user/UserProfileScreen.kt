@@ -1,5 +1,12 @@
 package uz.relay.feature.profile.user
 
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import uz.relay.core.designsystem.component.SwiftDialog
+import uz.relay.feature.profile.components.DangerRow
+import uz.relay.feature.profile.components.SettingRow
+import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,7 +19,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -40,6 +46,10 @@ import uz.relay.feature.profile.components.ProfileTopBar
 import uz.relay.feature.profile.components.TileColors
 import uz.relay.feature.profile.util.messageRes
 
+/**
+ * Foydalanuvchi profili ekrani (Nav3 entry: UserProfileKey). ViewModel AssistedInject factory bilan `userId`ni
+ * kalitdan oladi; SideEffect'lar Snackbar'ga aylanadi, chizish [UserProfileContent]da.
+ */
 @Composable
 internal fun UserProfileScreen(userId: String) {
     val viewModel = hiltViewModel<UserProfileViewModel, UserProfileViewModel.Factory>(
@@ -53,22 +63,21 @@ internal fun UserProfileScreen(userId: String) {
         when (sideEffect) {
             is UserProfileContract.SideEffect.ShowError ->
                 snackbarHostState.showSnackbar(context.getString(sideEffect.error.messageRes()))
+            UserProfileContract.SideEffect.ContactAdded ->
+                snackbarHostState.showSnackbar(context.getString(R.string.contact_added))
         }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
         UserProfileContent(userId = userId, uiState = uiState, onEventDispatcher = viewModel::onEventDispatcher)
-        SnackbarHost(
+        SwiftSnackbarHost(
             hostState = snackbarHostState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .navigationBarsPadding()
-                .padding(bottom = 16.dp)
+            modifier = Modifier.align(Alignment.TopCenter)
         )
     }
 }
 
-/** Avatar · ism · holat, keyin "Xabar" va "Ovozsiz qilish" kartalari, pastda username. */
+/** Avatar · ism · holat, "Xabar" va "Ovozsiz qilish" kartalari, username va kontaktga qo'shish/o'chirish. */
 @Composable
 private fun UserProfileContent(
     userId: String,
@@ -78,6 +87,7 @@ private fun UserProfileContent(
     val colors = SwiftTheme.colors
     val resources = LocalContext.current.resources
     val user = uiState.user
+    var confirmRemoveContact by rememberSaveable { mutableStateOf(false) }
     val status = user?.let { formatPresence(it.online, it.lastSeenAt, resources) }.orEmpty()
 
     Column(
@@ -123,10 +133,46 @@ private fun UserProfileContent(
                 InfoRow(icon = DesignR.drawable.ic_at_sign, tileColor = TileColors.Username, value = username, caption = stringResource(R.string.username))
             }
         }
+
+        // Kontaktlar (faqat shu qurilmada): qo'shish — oddiy qator, o'chirish — qizil qator + tasdiq dialogi.
+        if (user != null) {
+            ProfileCard(modifier = Modifier.padding(top = 12.dp, bottom = 16.dp)) {
+                if (uiState.isContact) {
+                    DangerRow(
+                        icon = DesignR.drawable.ic_user_minus,
+                        label = stringResource(R.string.remove_from_contacts),
+                        onClick = { confirmRemoveContact = true }
+                    )
+                } else {
+                    SettingRow(
+                        icon = DesignR.drawable.ic_user_plus,
+                        tileColor = TileColors.Username,
+                        label = stringResource(R.string.add_to_contacts),
+                        onClick = { onEventDispatcher(UserProfileContract.Intent.OnToggleContact) }
+                    ) {}
+                }
+            }
+        }
+    }
+
+    if (confirmRemoveContact) {
+        SwiftDialog(
+            title = stringResource(R.string.remove_contact_title, user?.displayName.orEmpty()),
+            confirmText = stringResource(R.string.remove),
+            dismissText = stringResource(R.string.cancel),
+            icon = DesignR.drawable.ic_user_minus,
+            destructive = true,
+            onConfirm = {
+                confirmRemoveContact = false
+                onEventDispatcher(UserProfileContract.Intent.OnToggleContact)
+            },
+            onDismiss = { confirmRemoveContact = false }
+        )
     }
 }
 
 // ---------------- Preview'lar ----------------
+// Yorug' va qorong'i temada, "oxirgi marta 5 daqiqa oldin" holatidagi foydalanuvchi.
 
 private val PreviewUser = User(
     id = "u1",

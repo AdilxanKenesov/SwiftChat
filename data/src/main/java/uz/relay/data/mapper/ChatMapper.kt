@@ -15,6 +15,14 @@ import uz.relay.domain.model.MessageStatus
 import uz.relay.domain.model.MessageType
 import uz.relay.domain.model.SystemEvent
 
+/**
+ * Chat mapper'lari: server javobi → Room [ChatEntity] va ro'yxat qatori → domain [ChatSummary].
+ *
+ * Oxirgi xabar chat qatoriga embedded qilib saqlanadi — chat ro'yxati har qatorda xabarlar jadvaliga
+ * alohida so'rov yubormasdan chiziladi. SyncEngine, UpdateApplier va Chat/GroupRepositoryImpl ishlatadi.
+ */
+
+/** Server chat javobini bazaga yoziladigan qatorga aylantiradi (bootstrap, `chat` update'i, sozlamalar). */
 fun ChatResponse.toEntity() = ChatEntity(
     id = id,
     type = type,
@@ -30,6 +38,7 @@ fun ChatResponse.toEntity() = ChatEntity(
     mutedUntil = mutedUntil
 )
 
+/** Chat javobidagi qisqa "oxirgi xabar" ko'rinishi → chat qatoridagi embedded ustunlar. */
 fun MessagePreviewResponse.toEmbedded() = LastMessageEmbedded(
     serverId = serverId,
     senderId = senderId,
@@ -40,6 +49,7 @@ fun MessagePreviewResponse.toEmbedded() = LastMessageEmbedded(
     deletedAt = deletedAt
 )
 
+/** Yangi kelgan to'liq xabardan chat qatorining "oxirgi xabar"ini yangilash uchun (update qo'llanganda). */
 fun MessageResponse.toEmbedded() = LastMessageEmbedded(
     serverId = serverId,
     senderId = senderId,
@@ -59,6 +69,7 @@ fun ChatListItem.toDomain(myUserId: String, json: Json): ChatSummary {
     return ChatSummary(
         id = chat.id,
         type = type,
+        // Shaxsiy chatda serverdagi `title` bo'sh — sarlavha suhbatdoshning keshdagi ismidan olinadi.
         title = if (type == ChatType.DIRECT) peerDisplayName else chat.title,
         peerUserId = chat.peerUserId,
         peerOnline = peerOnline == true,
@@ -76,6 +87,7 @@ fun ChatListItem.toDomain(myUserId: String, json: Json): ChatSummary {
                 isDeleted = last.deletedAt != null,
                 createdAt = last.createdAt,
                 status = outgoingStatus(
+                    // Chat qatoridagi oxirgi xabar doim serverdan kelgan — ✓/✓✓ faqat kursorlardan hisoblanadi.
                     sendStatus = MessageStatus.SENT,
                     serverSeq = last.serverSeq,
                     peers = PeerCursors(peerReadUpToSeq ?: 0, peerDeliveredUpToSeq ?: 0)
@@ -84,9 +96,16 @@ fun ChatListItem.toDomain(myUserId: String, json: Json): ChatSummary {
         },
         lastActivityAt = chat.lastActivityAt,
         unreadCount = chat.unreadCount,
-        muted = chat.muted
+        muted = chat.isMutedAt(System.currentTimeMillis()),
+        mutedUntil = chat.mutedUntil.takeIf { chat.muted }
     )
 }
+
+/**
+ * Muddati o'tgan mute — ovozsiz emas. Vaqt har emissiyada qayta hisoblanadi: ro'yxat Flow'i har qanday
+ * o'zgarishda (yangi xabar, presence, kursor) qayta keladi, shuning uchun belgi o'z-o'zidan yo'qoladi.
+ */
+private fun ChatEntity.isMutedAt(now: Long): Boolean = muted && (mutedUntil == null || mutedUntil > now)
 
 /** SYSTEM xabar `body`si JSON satr. Buzuq bo'lsa `null` — ro'yxat baribir chiziladi. */
 fun parseSystemEvent(body: String?, json: Json): SystemEvent? {
@@ -100,12 +119,14 @@ fun parseSystemEvent(body: String?, json: Json): SystemEvent? {
 fun systemEventUserIds(body: String?, json: Json): List<String> =
     parseSystemEvent(body, json)?.let { listOf(it.actorId) + it.targetUserIds }.orEmpty()
 
+/** Server chat turini enum'ga aylantiradi; noma'lum tur UNKNOWN (eski klient yangi serverda yiqilmasin). */
 internal fun String.toChatType(): ChatType = when (this) {
     "DIRECT" -> ChatType.DIRECT
     "GROUP" -> ChatType.GROUP
     else -> ChatType.UNKNOWN
 }
 
+/** Server xabar turini enum'ga aylantiradi; noma'lum tur UNKNOWN — UI uni "qo'llab-quvvatlanmaydi" deb ko'rsatadi. */
 internal fun String.toMessageType(): MessageType = when (this) {
     "TEXT" -> MessageType.TEXT
     "IMAGE" -> MessageType.IMAGE

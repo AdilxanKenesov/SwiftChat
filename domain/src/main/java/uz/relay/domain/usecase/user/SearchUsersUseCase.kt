@@ -5,6 +5,11 @@ import uz.relay.domain.model.User
 import uz.relay.domain.repository.UserRepository
 import javax.inject.Inject
 
+/**
+ * Foydalanuvchilarni username bo'yicha qidiradi.
+ *
+ * Kichik mantiq: trim va "@" prefiksini olib tashlash; bo'sh so'rov serverga umuman yuborilmaydi.
+ */
 class SearchUsersUseCase @Inject constructor(
     private val repository: UserRepository
 ) {

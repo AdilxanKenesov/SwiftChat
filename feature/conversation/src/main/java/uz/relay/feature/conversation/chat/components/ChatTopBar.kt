@@ -1,5 +1,6 @@
 package uz.relay.feature.conversation.chat.components
 
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -36,7 +37,10 @@ import uz.relay.core.designsystem.util.formatPresence
  * 64dp sarlavha: orqaga · avatar 40 · ism (17/700) + holat (13) · "ko'proq".
  *
  * Holat ustuvorligi (spec 3.8): yozmoqda (primary) > online (primary) > "oxirgi marta …" (text2).
- * Guruhda: yozmoqda > "12 aʼzo". Sarlavha bosilsa guruh ma'lumoti ochiladi.
+ * Guruhda: yozmoqda > "12 aʼzo". Sarlavha bosilsa guruh ma'lumoti (shaxsiy chatda — suhbatdosh profili) ochiladi.
+ *
+ * "Oxirgi marta ..." matni core:designsystem'dagi umumiy `formatPresence` bilan tuziladi — chatlar ro'yxati va
+ * profil ekrani bilan bir xil ko'rinsin. `chat == null` (baza hali bo'sh) holatida joy saqlanadi, sarlavha sakramaydi.
  */
 @Composable
 fun ChatTopBar(
@@ -60,7 +64,7 @@ fun ChatTopBar(
     val (subtitle, highlighted) = when {
         typingText != null -> typingText to true
         chat == null -> null to false
-        isGroup -> (if (memberCount > 0) stringResource(R.string.members_n, memberCount) else null) to false
+        isGroup -> (if (memberCount > 0) pluralStringResource(R.plurals.members_n, memberCount, memberCount) else null) to false
         else -> formatPresence(chat.peerOnline, chat.peerLastSeenAt, resources) to chat.peerOnline
     }
 

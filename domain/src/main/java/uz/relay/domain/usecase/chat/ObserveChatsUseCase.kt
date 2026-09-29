@@ -5,6 +5,11 @@ import uz.relay.domain.model.ChatSummary
 import uz.relay.domain.repository.ChatRepository
 import javax.inject.Inject
 
+/**
+ * Chatlar ro'yxatini lokal bazadan kuzatadi (offline ham ishlaydi).
+ *
+ * Faqat repository'ga uzatadi — ViewModel repository'ni emas, aniq nomli amalni bilishi uchun (single responsibility, test'da oson almashtiriladi).
+ */
 class ObserveChatsUseCase @Inject constructor(
     private val repository: ChatRepository
 ) {

@@ -1,5 +1,8 @@
 package uz.relay.feature.group.create
 
+import androidx.compose.ui.text.style.TextAlign
+import uz.relay.core.designsystem.component.SwiftSnackbarHost
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -28,7 +31,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -68,8 +70,18 @@ import uz.relay.domain.model.User
 import uz.relay.feature.group.R
 import uz.relay.feature.group.util.messageRes
 
+/**
+ * "Yangi guruh" / "A'zo qo'shish" ekranining kirish nuqtasi (stateful qism).
+ *
+ * Ochiladi: chatlar qidiruvidagi "Yangi guruh" dan (`addToChatId = null`) yoki guruh ma'lumotlari ekranidagi
+ * "Qo'shish" dan (`addToChatId = chatId`). Yaratilgach — yangi guruh chatiga, qo'shilgach — orqaga qaytadi.
+ *
+ * Bu funksiya faqat ViewModel'ni oladi, holatni yig'adi va SideEffect'larni (snackbar) ushlaydi; chizishni
+ * stateless [GroupCreateContent] bajaradi — shuning uchun uni Preview'da ViewModel'siz ko'rsatish mumkin.
+ */
 @Composable
 internal fun GroupCreateScreen(addToChatId: String?) {
+    // AssistedInject: runtime argument `addToChatId` factory orqali ViewModel'ga uzatiladi.
     val viewModel = hiltViewModel<GroupCreateViewModel, GroupCreateViewModel.Factory>(
         creationCallback = { factory -> factory.create(addToChatId) }
     )
@@ -86,17 +98,17 @@ internal fun GroupCreateScreen(addToChatId: String?) {
 
     Box(modifier = Modifier.fillMaxSize()) {
         GroupCreateContent(uiState = uiState, onEventDispatcher = viewModel::onEventDispatcher)
-        SnackbarHost(
+        SwiftSnackbarHost(
             hostState = snackbarHostState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .navigationBarsPadding()
-                .imePadding()
-                .padding(bottom = 80.dp)
+            modifier = Modifier.align(Alignment.TopCenter)
         )
     }
 }
 
+/**
+ * Ekranning stateless qismi: faqat `uiState` ni chizadi va harakatlarni `onEventDispatcher` ga yuboradi.
+ * Qadamga qarab [PickStep] yoki [NameStep] ko'rsatiladi; FAB esa ular ustida pastki o'ng burchakda turadi.
+ */
 @Composable
 private fun GroupCreateContent(
     uiState: GroupCreateContract.UiState,
@@ -115,7 +127,7 @@ private fun GroupCreateContent(
         Column(modifier = Modifier.fillMaxSize()) {
             TopBar(
                 title = stringResource(if (uiState.isAddMode) R.string.add_members else R.string.new_group),
-                subtitle = if (isPick) stringResource(R.string.selected_n, uiState.selected.size) else stringResource(R.string.name_and_photo),
+                subtitle = if (isPick) pluralStringResource(R.plurals.selected_n, uiState.selected.size, uiState.selected.size) else stringResource(R.string.name_and_photo),
                 onBack = { onEventDispatcher(GroupCreateContract.Intent.OnBack) }
             )
             if (isPick) PickStep(uiState, onEventDispatcher) else NameStep(uiState, onEventDispatcher)
@@ -157,6 +169,7 @@ private fun GroupCreateContent(
     }
 }
 
+/** 64dp yuqori panel: orqaga tugmasi · sarlavha + izoh (tanlanganlar soni yoki "Nom va rasm"). */
 @Composable
 private fun TopBar(title: String, subtitle: String, onBack: () -> Unit) {
     val colors = SwiftTheme.colors
@@ -185,6 +198,7 @@ private fun PickStep(uiState: GroupCreateContract.UiState, onEventDispatcher: (G
     val colors = SwiftTheme.colors
     val resources = LocalContext.current.resources
 
+    // FlowRow: chip'lar qatorga sig'masa keyingi qatorga o'tadi — gorizontal scroll'siz hammasi ko'rinadi.
     if (uiState.selected.isNotEmpty()) {
         FlowRow(
             modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 12.dp),
@@ -203,10 +217,12 @@ private fun PickStep(uiState: GroupCreateContract.UiState, onEventDispatcher: (G
     )
 
     if (uiState.candidates.isEmpty()) {
+        // Bo'sh holat — bitta qisqa qator, markazda (ortiqcha ko'rsatma matnisiz).
         Text(
             text = stringResource(R.string.no_people),
             color = colors.text2,
             fontSize = 15.sp,
+            textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(24.dp)
@@ -268,7 +284,7 @@ private fun NameStep(uiState: GroupCreateContract.UiState, onEventDispatcher: (G
             .background(colors.surface)
     )
     Text(
-        text = stringResource(R.string.members_n, uiState.selected.size),
+        text = pluralStringResource(R.plurals.members_n, uiState.selected.size, uiState.selected.size),
         color = colors.primary,
         fontSize = 13.sp,
         fontWeight = FontWeight.Bold,
@@ -367,6 +383,10 @@ private fun SelectedChip(user: User, onRemove: () -> Unit) {
     }
 }
 
+/**
+ * Pill ko'rinishidagi qidiruv maydoni. Material TextField o'rniga [BasicTextField] + `decorationBox`:
+ * dizayndagi dumaloq fon, ikonka va placeholder'ni aniq chizish uchun (Material'ning ichki padding/label'isiz).
+ */
 @Composable
 private fun PillSearchField(query: String, onQueryChange: (String) -> Unit) {
     val colors = SwiftTheme.colors
@@ -400,6 +420,7 @@ private fun PillSearchField(query: String, onQueryChange: (String) -> Unit) {
 }
 
 // ---------------- Preview'lar ----------------
+// Stateless GroupCreateContent tayyor holat bilan chiziladi: ikkala qadam yorug' va qorong'i temada.
 
 private val PreviewPeople = listOf(
     User("1", "jasur", "Jasur Aliyev", null, 0, null, online = true),

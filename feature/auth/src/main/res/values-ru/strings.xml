@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ruscha tarjima. Kalitlar values/strings.xml (o'zbekcha, asosiy) bilan bir xil. -->
+<resources>
+    <string name="phone_title">Ваш номер телефона</string>
+    <string name="phone_subtitle">Мы отправим код через Telegram</string>
+    <string name="phone_label">Номер телефона</string>
+    <string name="get_code">Получить код</string>
+    <string name="tg_link_title">Подключите Telegram</string>
+    <string name="tg_step1">Откройте бота</string>
+    <string name="tg_step2">Нажмите «Старт»</string>
+    <string name="tg_step3">Поделитесь номером</string>
+    <string name="open_bot">Открыть бота</string>
+    <string name="resend_code">Отправить код ещё раз</string>
+    <string name="otp_title">Введите код</string>
+    <string name="otp_sent">Отправлен в Telegram · %1$s</string>
+    <string name="resend_in">Отправить снова через %1$s</string>
+    <plurals name="otp_wrong">
+        <item quantity="one">Неверный код · осталась %1$d попытка</item>
+        <item quantity="few">Неверный код · осталось %1$d попытки</item>
+        <item quantity="many">Неверный код · осталось %1$d попыток</item>
+        <item quantity="other">Неверный код · осталось %1$d попытки</item>
+    </plurals>
+    <string name="otp_expired">Срок действия кода истёк</string>
+    <string name="otp_locked">Код заблокирован</string>
+    <string name="otp_locked_sub">Введено неверно 5 раз</string>
+    <string name="new_code">Получить новый код</string>
+    <string name="back">Назад</string>
+    <string name="profile_title">Ваш профиль</string>
+    <string name="name">Имя</string>
+    <string name="username">Имя пользователя</string>
+    <string name="username_rules">3–32 символа · a–z, 0–9, _</string>
+    <string name="username_taken">Это имя пользователя занято</string>
+    <string name="continue_button">Продолжить</string>
+    <string name="pick_photo">Выбрать фото</string>
+    <string name="no_internet">Нет подключения к интернету</string>
+    <string name="error_rate_limited">Слишком много попыток. Повторите чуть позже</string>
+    <string name="error_otp_unavailable">Не удалось отправить код. Повторите чуть позже</string>
+    <string name="error_unknown">Что-то пошло не так. Повторите попытку</string>
+</resources>

@@ -10,16 +10,18 @@ import uz.relay.feature.auth.phone.PhoneContract
 import uz.relay.feature.auth.phone.PhoneDirectionsImpl
 import uz.relay.feature.auth.profile.ProfileSetupContract
 import uz.relay.feature.auth.profile.ProfileSetupDirectionsImpl
-import uz.relay.feature.auth.splash.SplashContract
-import uz.relay.feature.auth.splash.SplashDirectionsImpl
 
-/** Directions are only needed by ViewModels and hold no state, so they are ViewModel-scoped. */
+/**
+ * Auth ekranlarining `Contract.Directions` interfeyslarini ularning `DirectionsImpl`'lariga bog'laydi.
+ *
+ * ViewModel faqat interfeysni ko'radi, navigatsiya tafsilotlarini (qaysi key, ResetTo yoki Push) bilmaydi -
+ * testda Directions'ni oson fake bilan almashtirish mumkin. Directions'ni faqat ViewModel'lar ishlatadi
+ * va ular holat saqlamaydi, shuning uchun ViewModelComponent scope'ida o'rnatilgan.
+ * `@Binds` ishlatilgan, chunki `@Provides`'dan farqli ravishda qo'shimcha kod generatsiya qilmaydi.
+ */
 @Module
 @InstallIn(ViewModelComponent::class)
 internal interface AuthDirectionsModule {
-
-    @Binds
-    fun bindSplashDirections(impl: SplashDirectionsImpl): SplashContract.Directions
 
     @Binds
     fun bindPhoneDirections(impl: PhoneDirectionsImpl): PhoneContract.Directions

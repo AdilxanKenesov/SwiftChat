@@ -1,5 +1,6 @@
 package uz.relay.feature.auth.profile
 
+import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -21,7 +22,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -52,6 +52,13 @@ import uz.relay.feature.auth.R
 import uz.relay.feature.auth.profile.components.AvatarPicker
 import uz.relay.feature.auth.util.messageRes
 
+/**
+ * Profil sozlash ekrani (stateful qism).
+ *
+ * OTP'dan keyin yangi foydalanuvchi yoki profili to'ldirilmagan sessiya bilan Splash shu ekranni ochadi;
+ * "Davom etish" muvaffaqiyatli bo'lsa Chats ekraniga o'tiladi. ViewModel'ga ulanadi, SideEffect'larni
+ * snackbar orqali ko'rsatadi va chizishni stateless [ProfileSetupScreenContent] ga topshiradi.
+ */
 @Composable
 internal fun ProfileSetupScreen(viewModel: ProfileSetupViewModel = hiltViewModel()) {
     val uiState by viewModel.collectAsState()
@@ -71,16 +78,17 @@ internal fun ProfileSetupScreen(viewModel: ProfileSetupViewModel = hiltViewModel
             onEventDispatcher = viewModel::onEventDispatcher
         )
 
-        SnackbarHost(
+        SwiftSnackbarHost(
             hostState = snackbarHostState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .navigationBarsPadding()
-                .imePadding()
+            modifier = Modifier.align(Alignment.TopCenter)
         )
     }
 }
 
+/**
+ * Ekranning stateless UI qismi: [uiState] ni chizadi, harakatlarni [onEventDispatcher] orqali qaytaradi.
+ * Preview'larda "to'g'ri" va "band" holatlarini ViewModel'siz ko'rsatish uchun ajratilgan.
+ */
 @Composable
 private fun ProfileSetupScreenContent(
     uiState: ProfileSetupContract.UiState,
@@ -89,6 +97,9 @@ private fun ProfileSetupScreenContent(
     val colors = SwiftTheme.colors
     val typography = SwiftTheme.typography
     val usernameError = uiState.usernameTaken
+    // Qoida ("3–32 belgi…") faqat foydalanuvchi qoidaga mos KELMAYDIGAN username yozganda ko'rinadi —
+    // bo'sh maydonda va to'g'ri yozilganda ortiqcha matn ko'rsatilmaydi.
+    val rulesBroken = uiState.username.isNotEmpty() && !uiState.usernameValid
 
     Column(
         modifier = Modifier
@@ -99,6 +110,7 @@ private fun ProfileSetupScreenContent(
             .imePadding()
             .padding(start = 24.dp, end = 24.dp, top = 40.dp, bottom = 24.dp)
     ) {
+        // Kichik ekranda klaviatura ochilganda maydonlar skroll bo'ladi, tugma esa pastda qoladi.
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -135,7 +147,7 @@ private fun ProfileSetupScreenContent(
                 onValueChange = { onEventDispatcher(ProfileSetupContract.Intent.OnUsernameChange(it)) },
                 label = stringResource(R.string.username),
                 modifier = Modifier.padding(top = 13.dp),
-                isError = usernameError,
+                isError = usernameError || rulesBroken,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Ascii,
                     autoCorrectEnabled = false,
@@ -144,9 +156,10 @@ private fun ProfileSetupScreenContent(
                 leading = {
                     Text(text = "@", fontSize = 17.sp, color = colors.text2, modifier = Modifier.padding(end = 2.dp))
                 },
+                // Band bo'lsa xato ikonkasi, qoidaga mos bo'lsa yashil belgi, aks holda hech narsa.
                 trailing = {
                     when {
-                        usernameError -> Icon(
+                        usernameError || rulesBroken -> Icon(
                             painter = painterResource(DesignR.drawable.ic_alert_circle),
                             contentDescription = null,
                             tint = colors.error,
@@ -163,14 +176,17 @@ private fun ProfileSetupScreenContent(
                 }
             )
 
-            Text(
-                text = stringResource(if (usernameError) R.string.username_taken else R.string.username_rules),
-                color = if (usernameError) colors.error else colors.text2,
-                fontSize = 12.sp,
-                fontWeight = if (usernameError) FontWeight.SemiBold else FontWeight.Normal,
-                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 6.dp)
-            )
+            if (usernameError || rulesBroken) {
+                Text(
+                    text = stringResource(if (usernameError) R.string.username_taken else R.string.username_rules),
+                    color = colors.error,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 6.dp)
+                )
+            }
 
+            // Takliflar faqat username band bo'lganda paydo bo'ladi.
             if (uiState.suggestions.isNotEmpty()) {
                 Row(
                     modifier = Modifier.padding(top = 14.dp),
@@ -197,6 +213,7 @@ private fun ProfileSetupScreenContent(
     }
 }
 
+/** Bosilganda username'ni taklif qilingan qiymat bilan almashtiradigan chip. */
 @Composable
 private fun SuggestionChip(text: String, onClick: () -> Unit) {
     val colors = SwiftTheme.colors
@@ -214,6 +231,7 @@ private fun SuggestionChip(text: String, onClick: () -> Unit) {
     }
 }
 
+// Preview'lar: to'g'ri va band username holatlari, yorug'/qorong'i tema.
 @Composable
 private fun ProfileSetupPreview(darkTheme: Boolean, state: ProfileSetupContract.UiState) {
     SwiftChatTheme(darkTheme = darkTheme) {

@@ -2,8 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- REST API, WebSocket va media yuklash uchun. -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!--
+        .App — Hilt ildizi (@HiltAndroidApp). localeConfig — Android 13+ da ilova tilini tizim sozlamalaridan
+        tanlash imkoni. Starting tema — tizim splash screen'i (core-splashscreen), keyin Theme.SwiftChat.
+    -->
     <application
         android:name=".App"
         android:allowBackup="true"
@@ -11,9 +16,14 @@
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:localeConfig="@xml/locales_config"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.SwiftChat.Starting">
+        <!--
+            Yagona Activity (single-activity + Compose). adjustResize — klaviatura ochilganda kontent
+            siqiladi, xabar yozish maydoni klaviatura ostida qolmaydi.
+        -->
         <activity
             android:name=".MainActivity"
             android:exported="true"

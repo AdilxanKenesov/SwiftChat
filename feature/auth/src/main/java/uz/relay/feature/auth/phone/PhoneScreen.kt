@@ -1,5 +1,6 @@
 package uz.relay.feature.auth.phone
 
+import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import androidx.compose.foundation.background
@@ -15,7 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -49,12 +49,20 @@ import uz.relay.feature.auth.util.UZ_PREFIX
 import uz.relay.feature.auth.util.formatFullPhone
 import uz.relay.feature.auth.util.messageRes
 
+/**
+ * Telefon raqamini kiritish ekrani (stateful qism).
+ *
+ * Splash sessiya topmasa shu ekranni ochadi; "Kod olish" muvaffaqiyatli bo'lsa OTP ekraniga o'tiladi.
+ * Bu composable faqat ViewModel'ga ulanadi: state'ni yig'adi, SideEffect'larni (snackbar, havola ochish)
+ * bajaradi va chizishni stateless [PhoneScreenContent] ga topshiradi.
+ */
 @Composable
 internal fun PhoneScreen(viewModel: PhoneViewModel = hiltViewModel()) {
     val uiState by viewModel.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
 
+    // collectSideEffect lifecycle'ga bog'langan (repeatOnLifecycle STARTED) - fonda hodisa yo'qolmaydi va UI yo'qligida ishlamaydi.
     viewModel.collectSideEffect { sideEffect ->
         when (sideEffect) {
             is PhoneContract.SideEffect.ShowError ->
@@ -62,6 +70,7 @@ internal fun PhoneScreen(viewModel: PhoneViewModel = hiltViewModel()) {
 
             is PhoneContract.SideEffect.OpenUrl -> try {
                 context.startActivity(Intent(Intent.ACTION_VIEW, sideEffect.url.toUri()))
+            // Qurilmada havolani ochadigan ilova bo'lmasligi mumkin.
             } catch (_: ActivityNotFoundException) {
                 snackbarHostState.showSnackbar(context.getString(R.string.error_unknown))
             }
@@ -74,15 +83,13 @@ internal fun PhoneScreen(viewModel: PhoneViewModel = hiltViewModel()) {
             onEventDispatcher = viewModel::onEventDispatcher
         )
 
-        SnackbarHost(
+        SwiftSnackbarHost(
             hostState = snackbarHostState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .navigationBarsPadding()
-                .imePadding()
+            modifier = Modifier.align(Alignment.TopCenter)
         )
     }
 
+    // Bot havolasi bor bo'lsagina Telegram'ni bog'lash sheet'i ko'rsatiladi.
     uiState.botUrl?.let {
         TelegramLinkSheet(
             phone = formatFullPhone(UZ_PREFIX + uiState.digits),
@@ -94,6 +101,10 @@ internal fun PhoneScreen(viewModel: PhoneViewModel = hiltViewModel()) {
     }
 }
 
+/**
+ * Ekranning stateless UI qismi: faqat [uiState] ni chizadi va harakatlarni [onEventDispatcher] orqali qaytaradi.
+ * ViewModel'siz bo'lgani uchun Preview'larda va UI testlarda to'g'ridan-to'g'ri ishlatiladi.
+ */
 @Composable
 private fun PhoneScreenContent(
     uiState: PhoneContract.UiState,
@@ -133,9 +144,11 @@ private fun PhoneScreenContent(
             textStyle = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Medium, letterSpacing = 0.6.sp),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { onEventDispatcher(PhoneContract.Intent.OnGetCode) }),
+            // State'da faqat raqamlar, bo'shliqlar faqat ko'rinishda qo'shiladi.
             visualTransformation = LocalPhoneTransformation,
             leading = {
                 Text(text = UZ_PREFIX, fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = colors.text)
+                // +998 va raqam orasidagi vertikal ajratkich chiziq.
                 Box(
                     modifier = Modifier
                         .padding(horizontal = 12.dp)
@@ -151,11 +164,13 @@ private fun PhoneScreenContent(
             text = stringResource(R.string.get_code),
             onClick = { onEventDispatcher(PhoneContract.Intent.OnGetCode) },
             enabled = uiState.continueEnabled,
+            // Sheet ochiq bo'lsa yuklanish sheet ichidagi tugmada ko'rsatiladi, bu yerda emas.
             loading = uiState.loading && uiState.botUrl == null
         )
     }
 }
 
+// Preview'lar: yorug'/qorong'i tema, bo'sh va yuklanish holatlari.
 @Preview(name = "Light", showSystemUi = true)
 @Composable
 private fun PhoneLightPreview() {

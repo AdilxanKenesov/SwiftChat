@@ -4,12 +4,19 @@ import org.orbitmvi.orbit.OrbitContainerHost
 import uz.relay.core.common.result.AppError
 import uz.relay.domain.model.ProfileRules
 
+/**
+ * Profilni tahrirlash ekranining Orbit MVI shartnomasi (ism va username). "Mening profilim"dagi tahrirlash
+ * tugmasidan ochiladi, muvaffaqiyatli saqlashdan keyin orqaga qaytadi.
+ * Tekshiruv qoidalari (uzunlik, belgilar) domain'dagi ProfileRules'dan — ro'yxatdan o'tishdagi ProfileSetup bilan bir xil.
+ */
 interface EditProfileContract {
 
+    /** Screen ko'radigan ViewModel interfeysi: state/sideEffect va yagona [onEventDispatcher]. */
     interface ViewModel : OrbitContainerHost<UiState, UiState, SideEffect> {
         fun onEventDispatcher(intent: Intent)
     }
 
+    /** Foydalanuvchi harakatlari: orqaga, maydonlar o'zgarishi, saqlash. */
     sealed interface Intent {
         object OnBack : Intent
         data class OnNameChange(val name: String) : Intent
@@ -17,10 +24,12 @@ interface EditProfileContract {
         object OnSave : Intent
     }
 
+    /** Bir martalik xatolar (Snackbar); "username band" esa state'da, maydon ostida ko'rsatiladi. */
     sealed interface SideEffect {
         data class ShowError(val error: AppError) : SideEffect
     }
 
+    /** Forma holati: joriy va boshlang'ich qiymatlar (o'zgarish bor-yo'qligini bilish uchun) hamda saqlash bayroqlari. */
     data class UiState(
         /** Profil keshdan o'qilib, maydonlar to'ldirildi. Unga qadar saqlash tugmasi o'chiq. */
         val loaded: Boolean = false,
@@ -43,6 +52,7 @@ interface EditProfileContract {
             get() = loaded && ProfileRules.isNameValid(name) && usernameValid && !usernameTaken && changed
     }
 
+    /** Faqat orqaga (profil ekraniga) qaytish. */
     interface Directions {
         suspend fun back()
     }

@@ -84,8 +84,10 @@ fun ConnectionTitle(text: String, modifier: Modifier = Modifier) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        // Halqa Canvas'da: tayyor CircularProgressIndicator dizayndagi ikki qatlamli ko'rinishni bermaydi.
         Canvas(modifier = Modifier.size(20.dp)) {
             val strokeWidth = 2.6.dp.toPx()
+            // Chiziq qalinligining yarmi ichkariga surilmasa, yoy chetlari kesilib qoladi.
             val inset = strokeWidth / 2
             val arcSize = Size(size.width - strokeWidth, size.height - strokeWidth)
             drawArc(
@@ -179,6 +181,7 @@ fun SkeletonChatRow(titleWidth: Dp, subtitleWidth: Dp, modifier: Modifier = Modi
     }
 }
 
+/** Skeleton'ning bitta yumaloq chizig'i (balandligining yarmi radiusli). */
 @Composable
 private fun SkeletonBar(width: Dp, height: Dp) {
     Box(

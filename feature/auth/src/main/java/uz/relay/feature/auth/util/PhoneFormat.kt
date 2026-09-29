@@ -5,6 +5,7 @@ import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 
+// Hozircha faqat O'zbekiston raqamlari qo'llab-quvvatlanadi: +998 va 9 ta mahalliy raqam.
 const val UZ_PREFIX = "+998"
 const val UZ_PHONE_DIGITS = 9
 
@@ -16,11 +17,17 @@ fun formatLocalPhone(digits: String): String = buildString {
     }
 }
 
-/** "+998901234567" -> "+998 90 123 45 67" */
+/** "+998901234567" -> "+998 90 123 45 67"; boshqa formatdagi raqam o'zgarishsiz qaytadi. */
 fun formatFullPhone(phone: String): String =
     if (phone.startsWith(UZ_PREFIX)) "$UZ_PREFIX ${formatLocalPhone(phone.removePrefix(UZ_PREFIX))}" else phone
 
-/** Shows the 9 local digits as "90 123 45 67" while the state keeps digits only. */
+/**
+ * 9 ta mahalliy raqamni "90 123 45 67" ko'rinishida ko'rsatadi, state esa faqat raqamlarni saqlaydi.
+ *
+ * VisualTransformation ishlatilgan, chunki bo'shliqlarni state'ga yozsak, validatsiya va serverga
+ * yuborishda ularni har safar tozalash kerak bo'lardi. [OffsetMapping] kursor bo'shliqlar ustidan
+ * to'g'ri sakrashi uchun kerak.
+ */
 object LocalPhoneTransformation : VisualTransformation {
 
     override fun filter(text: AnnotatedString): TransformedText {
@@ -28,6 +35,7 @@ object LocalPhoneTransformation : VisualTransformation {
         return TransformedText(AnnotatedString(formatted), object : OffsetMapping {
             override fun originalToTransformed(offset: Int): Int = offset + spacesBefore(offset)
 
+            // Teskari moslik: formatlangan pozitsiyaga to'g'ri keladigan eng katta original indeksni topadi.
             override fun transformedToOriginal(offset: Int): Int {
                 var original = 0
                 while (original < text.length && originalToTransformed(original + 1) <= offset) original++
@@ -36,6 +44,6 @@ object LocalPhoneTransformation : VisualTransformation {
         })
     }
 
-    // Spaces are inserted before original indices 2, 5 and 7.
+    // Bo'shliqlar original 2, 5 va 7-indekslar oldidan qo'yiladi.
     private fun spacesBefore(offset: Int): Int = listOf(2, 5, 7).count { offset > it }
 }

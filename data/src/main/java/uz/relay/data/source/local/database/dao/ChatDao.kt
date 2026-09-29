@@ -20,6 +20,10 @@ data class ChatListItem(
     val peerDeliveredUpToSeq: Long?
 )
 
+/**
+ * `chats` jadvali uchun Room DAO. Chatlar ro'yxati va suhbat sarlavhasi shu yerdan Flow sifatida o'qiladi;
+ * yozuvchilar — SyncEngine (bootstrap/full resync), UpdateApplier (update'lar) va ChatRepositoryImpl.
+ */
 @Dao
 interface ChatDao {
 
@@ -78,6 +82,7 @@ interface ChatDao {
     )
     fun observeDirectChat(peerUserId: String, myUserId: String): Flow<ChatListItem?>
 
+    /** Bir martalik o'qish (Flow emas) — update qo'llashda joriy holatni tekshirish uchun. */
     @Query("SELECT * FROM chats WHERE id = :chatId")
     suspend fun getChat(chatId: String): ChatEntity?
 

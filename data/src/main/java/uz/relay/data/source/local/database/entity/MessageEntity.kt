@@ -36,7 +36,9 @@ data class MessageEntity(
     val deletedAt: Long?,
     val status: SendStatus,
     /** FAILED bo'lsa — server qaytargan xato kodi. */
-    val sendError: String?
+    val sendError: String?,
+    /** Serverdagi media meta'lari (JSON ustun, [MediaConverters]). O'zim yuborayotganda — bo'sh. */
+    val media: List<MediaItemEntity> = emptyList()
 )
 
 /** Room enum'ni nomi bo'yicha TEXT sifatida saqlaydi (SQL so'rovlarda 'PENDING' kabi yoziladi). */

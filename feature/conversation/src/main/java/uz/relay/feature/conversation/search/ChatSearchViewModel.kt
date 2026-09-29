@@ -16,6 +16,9 @@ import kotlin.time.Duration.Companion.milliseconds
 /**
  * Chat ichida qidiruv. API'da xabar qidiruvi yo'q — shuning uchun faqat qurilmadagi (yuklangan) xabarlar
  * ichidan qidiriladi; hali yuklanmagan eski xabarlar topilmaydi (ekranda shu haqida izoh bor).
+ *
+ * `chatId` AssistedInject orqali Nav3 kalitidan beriladi (ChatViewModel'dagi kabi). Natija bosilganda
+ * Directions chatni shu xabarga scroll qilingan holda qayta ochadi.
  */
 @HiltViewModel(assistedFactory = ChatSearchViewModel.Factory::class)
 class ChatSearchViewModel @AssistedInject constructor(
@@ -35,6 +38,7 @@ class ChatSearchViewModel @AssistedInject constructor(
             observeNames()
         }
 
+    /** Oldingi (hali tugamagan) qidiruv — yangi harf kiritilganda bekor qilinadi, eski natija yangisini bosib ketmasin. */
     private var searchJob: Job? = null
 
     override fun onEventDispatcher(intent: ChatSearchContract.Intent) {
@@ -48,6 +52,7 @@ class ChatSearchViewModel @AssistedInject constructor(
         }
     }
 
+    /** Natijalarda yuboruvchi ismini ko'rsatish uchun ismlar keshi kuzatiladi. */
     private fun observeNames() = intent {
         repeatOnSubscription {
             observeUserNames().collect { names -> reduce { state.copy(userNames = names) } }

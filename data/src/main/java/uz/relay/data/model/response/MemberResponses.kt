@@ -2,6 +2,7 @@ package uz.relay.data.model.response
 
 import kotlinx.serialization.Serializable
 
+/** Chat a'zosi: roli, o'qish kursori va presence (online/lastSeen) holati bilan. */
 @Serializable
 data class ChatMemberResponse(
     val userId: String,
@@ -19,6 +20,7 @@ data class MembersResponse(
     val members: List<ChatMemberResponse>
 )
 
+/** Foydalanuvchilarni qidirish natijasi (username/ism bo'yicha). */
 @Serializable
 data class UserSearchResponse(
     val users: List<UserResponse>

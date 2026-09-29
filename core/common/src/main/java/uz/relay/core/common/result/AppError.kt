@@ -1,28 +1,36 @@
 package uz.relay.core.common.result
 
 /**
- * The single error type across the app. The network layer maps HttpException / IOException into it,
- * so features only look at [Api.code] and [isRetryable] (the API's `{code, message, retryable}` shape).
+ * Butun ilova uchun yagona xato turi. Tarmoq qatlami HttpException / IOException'ni shunga aylantiradi,
+ * shuning uchun feature'lar faqat [Api.code] va [isRetryable] ga qaraydi (API'ning `{code, message, retryable}`
+ * shakli).
+ *
+ * Nega sealed interface: `when` barcha holatlarni (server xatosi, tarmoq yo'q, kutilmagan) majburan ko'rib
+ * chiqtiradi, va Retrofit/OkHttp exception turlari data modulidan tashqariga chiqmaydi.
  */
 sealed interface AppError {
 
-    /** The server answered with an error body `{code, message, retryable}`. */
+    /** Server xato tanasi bilan javob berdi: `{code, message, retryable}`. */
     data class Api(
         val httpStatus: Int,
         val code: String,
         val message: String,
         val retryable: Boolean,
-        /** Only on 409 TELEGRAM_NOT_LINKED. */
+        /** Faqat 409 TELEGRAM_NOT_LINKED da: foydalanuvchi Telegram botni ochishi uchun havola. */
         val botUrl: String? = null
     ) : AppError
 
-    /** The server could not be reached (no connection, timeout). */
+    /** Serverga yetib bo'lmadi (internet yo'q, timeout). */
     data object Network : AppError
 
-    /** Anything unexpected (e.g. a response that failed to parse). */
+    /** Kutilmagan har qanday xato (masalan, javobni parse qilib bo'lmadi). */
     data class Unknown(val throwable: Throwable) : AppError
 }
 
+/**
+ * Qayta urinish ma'nolimi: server o'zi aytgan `retryable`, tarmoq xatosi — ha, kutilmagan xato — yo'q.
+ * Outbox va UI'dagi "Qayta urinish" tugmasi shunga tayanadi.
+ */
 val AppError.isRetryable: Boolean
     get() = when (this) {
         is AppError.Api -> retryable
@@ -30,7 +38,7 @@ val AppError.isRetryable: Boolean
         is AppError.Unknown -> false
     }
 
-/** Relay API error codes (Guide, section 9). */
+/** Relay API xato kodlari (qo'llanma, 9-bo'lim). String konstantalar — xato kodini yozishda adashmaslik uchun. */
 object ErrorCodes {
     const val VALIDATION_ERROR = "VALIDATION_ERROR"
     const val UNAUTHORIZED = "UNAUTHORIZED"
@@ -47,4 +55,14 @@ object ErrorCodes {
     const val EDIT_WINDOW_EXPIRED = "EDIT_WINDOW_EXPIRED"
     const val RATE_LIMITED = "RATE_LIMITED"
     const val SERVER_ERROR = "SERVER_ERROR"
+
+    // Media
+    const val PAYLOAD_TOO_LARGE = "PAYLOAD_TOO_LARGE"
+    const val OFFSET_MISMATCH = "OFFSET_MISMATCH"
+    const val UPLOAD_EXPIRED = "UPLOAD_EXPIRED"
+    const val SHA256_MISMATCH = "SHA256_MISMATCH"
+    const val MEDIA_NOT_READY = "MEDIA_NOT_READY"
+
+    /** Klient kodi: yuboriladigan fayl qurilmadan yo'qolgan (o'chirilgan) — qayta urinish befoyda. */
+    const val MEDIA_FILE_MISSING = "MEDIA_FILE_MISSING"
 }

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- SwiftColors.bg, used before Compose draws (system splash, window background) -->
+    <!-- SwiftColors.bg bilan bir xil: Compose chizishidan oldin ko'rinadi (tizim splash'i, oyna foni). -->
     <color name="window_background">#FFFFFFFF</color>
 </resources>

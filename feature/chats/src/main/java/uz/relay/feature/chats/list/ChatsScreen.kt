@@ -1,5 +1,6 @@
 package uz.relay.feature.chats.list
 
+import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,11 +14,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -48,8 +51,14 @@ import uz.relay.feature.chats.list.components.ChatRow
 import uz.relay.feature.chats.list.components.ChatsTabs
 import uz.relay.feature.chats.list.components.ChatsTopBar
 import uz.relay.feature.chats.list.components.EmptyChats
+import uz.relay.feature.chats.list.components.MuteSheet
 import uz.relay.feature.chats.util.messageRes
 
+/**
+ * Chatlar ro'yxati ekrani (stateful qobiq). ViewModel'dan holatni `collectAsState` bilan oladi, SideEffect'larni
+ * snackbar sifatida ko'rsatadi va chizishni holatsiz [ChatsScreenContent]ga topshiradi.
+ * Vaqtinchalik xatoda snackbar'dagi "Qayta urinish" sync'ni qaytadan boshlaydi.
+ */
 @Composable
 internal fun ChatsScreen(viewModel: ChatsViewModel = hiltViewModel()) {
     val uiState by viewModel.collectAsState()
@@ -68,28 +77,34 @@ internal fun ChatsScreen(viewModel: ChatsViewModel = hiltViewModel()) {
                     viewModel.onEventDispatcher(ChatsContract.Intent.OnRetrySync)
                 }
             }
+
+            is ChatsContract.SideEffect.ShowActionError ->
+                snackbarHostState.showSnackbar(context.getString(sideEffect.error.messageRes()))
         }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
         ChatsScreenContent(uiState = uiState, onEventDispatcher = viewModel::onEventDispatcher)
 
-        SnackbarHost(
+        SwiftSnackbarHost(
             hostState = snackbarHostState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .navigationBarsPadding()
+            modifier = Modifier.align(Alignment.TopCenter)
         )
     }
 }
 
-// "Mening profilim" ekrani profil bosqichida qo'shiladi; hozircha avatar tugmasi faqat chiziladi.
+/**
+ * Holatsiz (stateless) UI: faqat `uiState` va `onEventDispatcher` oladi. Shu tufayli ViewModel'siz Preview'da
+ * istalgan holatni (ro'yxat, offline, skeleton, bo'sh) ko'rsatish va UI test yozish oson.
+ */
 @Composable
 private fun ChatsScreenContent(
     uiState: ChatsContract.UiState,
     onEventDispatcher: (ChatsContract.Intent) -> Unit
 ) {
     val colors = SwiftTheme.colors
+    // Sheet faqat id'ni eslaydi: chat qatori bazadan yangilansa (masalan, mute holati), sheet ham yangisini ko'rsatadi.
+    var muteSheetChatId by rememberSaveable { mutableStateOf<String?>(null) }
 
     Box(
         modifier = Modifier
@@ -115,9 +130,13 @@ private fun ChatsScreenContent(
             when {
                 uiState.showSkeleton -> SkeletonList()
                 uiState.showEmpty -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    EmptyChats(onNewChatClick = { onEventDispatcher(ChatsContract.Intent.OnSearchClick) })
+                    EmptyChats(onNewChatClick = { onEventDispatcher(ChatsContract.Intent.OnNewMessageClick) })
                 }
-                else -> ChatsPager(uiState = uiState, onEventDispatcher = onEventDispatcher)
+                else -> ChatsPager(
+                    uiState = uiState,
+                    onEventDispatcher = onEventDispatcher,
+                    onChatLongClick = { muteSheetChatId = it }
+                )
             }
         }
 
@@ -126,7 +145,7 @@ private fun ChatsScreenContent(
             SwiftFab(
                 icon = DesignR.drawable.ic_pencil,
                 contentDescription = stringResource(R.string.new_chat),
-                onClick = { onEventDispatcher(ChatsContract.Intent.OnSearchClick) },
+                onClick = { onEventDispatcher(ChatsContract.Intent.OnNewMessageClick) },
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .navigationBarsPadding()
@@ -134,13 +153,34 @@ private fun ChatsScreenContent(
             )
         }
     }
+
+    // Chat o'chib ketsa (masalan, guruhdan chiqarildim) — sheet o'zi yopiladi.
+    uiState.chats.firstOrNull { it.id == muteSheetChatId }?.let { chat ->
+        MuteSheet(
+            chat = chat,
+            onDismiss = { muteSheetChatId = null },
+            onMute = { duration ->
+                muteSheetChatId = null
+                onEventDispatcher(ChatsContract.Intent.OnMute(chat.id, duration))
+            },
+            onUnmute = {
+                muteSheetChatId = null
+                onEventDispatcher(ChatsContract.Intent.OnUnmute(chat.id))
+            }
+        )
+    }
 }
 
-/** Tablar va ular ostidagi sahifalar: tabni bosish ham, chapga-o'ngga surish ham ishlaydi. */
+/**
+ * Tablar va ular ostidagi sahifalar: tabni bosish ham, chapga-o'ngga surish ham ishlaydi.
+ * HorizontalPager — Telegram'dagidek swipe bilan tab almashtirish tabiiy; tanlangan tab alohida holat emas,
+ * `pagerState.currentPage`dan olinadi (bitta haqiqat manbai).
+ */
 @Composable
 private fun ChatsPager(
     uiState: ChatsContract.UiState,
-    onEventDispatcher: (ChatsContract.Intent) -> Unit
+    onEventDispatcher: (ChatsContract.Intent) -> Unit,
+    onChatLongClick: (chatId: String) -> Unit
 ) {
     val tabs = ChatTab.entries
     val pagerState = rememberPagerState(pageCount = { tabs.size })
@@ -168,13 +208,15 @@ private fun ChatsPager(
                     chat = chat,
                     userNames = uiState.userNames,
                     typingUserIds = uiState.typing[chat.id].orEmpty(),
-                    onClick = { onEventDispatcher(ChatsContract.Intent.OnChatClick(chat.id)) }
+                    onClick = { onEventDispatcher(ChatsContract.Intent.OnChatClick(chat.id)) },
+                    onLongClick = { onChatLongClick(chat.id) }
                 )
             }
         }
     }
 }
 
+/** Birinchi sync tugaguncha ko'rsatiladigan "skelet" qatorlar — bo'sh ekran yoki spinner o'rniga. */
 @Composable
 private fun SkeletonList() {
     Column {
@@ -243,6 +285,7 @@ private val PreviewChats = listOf(
 
 private val PreviewNames = mapOf("malika" to "Malika")
 
+/** Preview'lar: har bir holat yorug' va qorong'i temada, ViewModel'siz — Content'ga to'g'ridan-to'g'ri UiState beriladi. */
 @Composable
 private fun ChatsPreview(darkTheme: Boolean, state: ChatsContract.UiState) {
     SwiftChatTheme(darkTheme = darkTheme) { ChatsScreenContent(uiState = state, onEventDispatcher = {}) }

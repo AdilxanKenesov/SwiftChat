@@ -8,6 +8,10 @@ import uz.relay.core.navigation.key.ChatsKey
 import uz.relay.core.navigation.key.GroupCreateKey
 import javax.inject.Inject
 
+/**
+ * [GroupInfoContract.Directions] realizatsiyasi: [AppNavigator] event-bus'i orqali Nav3 back stack'ini o'zgartiradi.
+ * "A'zo qo'shish" uchun guruh yaratish ekrani qayta ishlatiladi ([GroupCreateKey] + `addToChatId`).
+ */
 internal class GroupInfoDirectionsImpl @Inject constructor(
     private val navigator: AppNavigator
 ) : GroupInfoContract.Directions {

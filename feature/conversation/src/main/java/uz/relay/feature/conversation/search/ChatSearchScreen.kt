@@ -57,6 +57,10 @@ import uz.relay.domain.model.MessageType
 import uz.relay.feature.conversation.R
 import uz.relay.feature.conversation.util.formatMessageTime
 
+/**
+ * Chat ichida qidiruv ekrani (Nav3 entry: ChatSearchKey). ViewModel AssistedInject factory bilan `chatId`ni oladi;
+ * chizish [ChatSearchContent]da — Preview ViewModel'siz ishlashi uchun.
+ */
 @Composable
 internal fun ChatSearchScreen(chatId: String) {
     val viewModel = hiltViewModel<ChatSearchViewModel, ChatSearchViewModel.Factory>(
@@ -66,6 +70,10 @@ internal fun ChatSearchScreen(chatId: String) {
     ChatSearchContent(uiState = uiState, onEventDispatcher = viewModel::onEventDispatcher)
 }
 
+/**
+ * Qidiruv UI'si: yuqorida so'rov maydoni (ekran ochilishi bilan fokus va klaviatura), ostida izoh va natijalar.
+ * BasicTextField ishlatilgan — Material TextField'ning ramka/label'i dizayndagi "toza" sarlavha qatoriga to'g'ri kelmaydi.
+ */
 @Composable
 private fun ChatSearchContent(
     uiState: ChatSearchContract.UiState,
@@ -192,6 +200,7 @@ private fun highlight(text: String, query: String, color: Color): AnnotatedStrin
     }
 }
 
+// Preview: bitta topilgan natija bilan (moslik ajratib ko'rsatiladi).
 @Preview(name = "Light", showSystemUi = true)
 @Composable
 private fun ChatSearchLightPreview() {

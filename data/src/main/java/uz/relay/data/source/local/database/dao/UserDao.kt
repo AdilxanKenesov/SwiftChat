@@ -12,6 +12,10 @@ data class UserName(
     val displayName: String
 )
 
+/**
+ * `users` (profillar keshi) jadvali uchun DAO. Ism va online holat chat ro'yxati, a'zolar ro'yxati
+ * va suhbat sarlavhasida JOIN orqali ishlatiladi; [UserCache], UserRepositoryImpl va UpdateApplier yozadi.
+ */
 @Dao
 interface UserDao {
 
@@ -22,6 +26,7 @@ interface UserDao {
     @Query("SELECT * FROM users WHERE id != :exceptUserId ORDER BY displayName COLLATE NOCASE")
     fun observeAllExcept(exceptUserId: String): Flow<List<UserEntity>>
 
+    /** Hamma ismlar — UI'da id o'rniga ism ko'rsatish uchun (masalan, chat ichidagi qidiruvda). */
     @Query("SELECT id, displayName FROM users")
     fun observeNames(): Flow<List<UserName>>
 

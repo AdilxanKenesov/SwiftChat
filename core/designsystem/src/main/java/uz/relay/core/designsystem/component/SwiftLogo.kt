@@ -28,7 +28,11 @@ import uz.relay.core.designsystem.theme.Brand
 import uz.relay.core.designsystem.theme.SwiftChatTheme
 import uz.relay.core.designsystem.theme.SwiftTheme
 
-/** Brand tile with the white SwiftChat mark: 112dp on splash, 34dp in the chat list app bar. */
+/**
+ * Oq SwiftChat belgisi tushirilgan brend plitka: splash'da 112dp, chatlar ro'yxati app bar'ida 34dp.
+ * Radius, soya va belgi o'lchami [size] ga mutanosib — har qanday o'lchamda bir xil proporsiya.
+ * [glow] `false` — kichik o'lchamda (app bar) soya ortiqcha ko'rinmasligi uchun.
+ */
 @Composable
 fun SwiftLogoTile(
     size: Dp,
@@ -54,7 +58,7 @@ fun SwiftLogoTile(
     }
 }
 
-/** "Swift" in text color + "Chat" in primary, weight 800. */
+/** Matnli logo (wordmark): "Swift" oddiy matn rangida + "Chat" primary rangda, qalinlik 800 (ExtraBold). */
 @Composable
 fun SwiftWordmark(
     modifier: Modifier = Modifier,
@@ -73,6 +77,7 @@ fun SwiftWordmark(
     )
 }
 
+// Preview'lar: ikkala temada tekshirish uchun.
 @Preview(name = "Light", showBackground = true)
 @Composable
 private fun SwiftLogoLightPreview() {

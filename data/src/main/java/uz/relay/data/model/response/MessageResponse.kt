@@ -3,8 +3,9 @@ package uz.relay.data.model.response
 import kotlinx.serialization.Serializable
 
 /**
- * To'liq xabar (`message_new` update'ining payload'i). Hozircha undan faqat chatlar ro'yxatidagi
- * "oxirgi xabar" yangilanadi; xabarlar jadvali suhbat bosqichida qo'shiladi.
+ * To'liq xabar: `message_new` update'ining payload'i va xabarlar sahifasi (`GET .../messages`) elementi.
+ * Mapper orqali Room'dagi xabar jadvaliga yoziladi; `clientMessageId` bo'yicha upsert qilingani uchun
+ * o'zimiz yuborgan xabarning echo'si dublikat hosil qilmaydi.
  */
 @Serializable
 data class MessageResponse(
@@ -20,10 +21,27 @@ data class MessageResponse(
     /** TEXT uchun matn yoki caption; SYSTEM uchun JSON satr (SystemMessageBody). */
     val body: String? = null,
     val replyToClientMessageId: String? = null,
+    /** IMAGE/VIDEO/FILE xabarning fayllari. Thumbnail yo'q — server uni hech qayerda qaytarmaydi. */
+    val media: List<MediaMetaResponse> = emptyList(),
     val createdAt: Long,
     val editedAt: Long? = null,
     val editVersion: Int = 0,
     val deletedAt: Long? = null
+)
+
+/** Media meta'si (`MediaMeta`). */
+@Serializable
+data class MediaMetaResponse(
+    val mediaId: String,
+    /** IMAGE | VIDEO | FILE */
+    val kind: String,
+    val mimeType: String,
+    val sizeBytes: Long,
+    val width: Int? = null,
+    val height: Int? = null,
+    val durationMs: Long? = null,
+    /** UPLOADING | READY */
+    val status: String = "READY"
 )
 
 /** SYSTEM xabarning `body`si ichidagi JSON. */

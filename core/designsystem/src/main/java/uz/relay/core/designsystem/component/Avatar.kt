@@ -72,6 +72,10 @@ fun Avatar(
     }
 }
 
+/**
+ * [seed] bo'yicha [AvatarColors] palitrasidan rang tanlaydi. `floorMod` — manfiy hashCode'da ham indeks
+ * 0..size oralig'ida qolishi uchun (oddiy `%` manfiy son qaytarishi mumkin).
+ */
 fun avatarColor(seed: String): Color = AvatarColors[Math.floorMod(seed.hashCode(), AvatarColors.size)]
 
 /** "Jasur Aliyev" → "JA", "Dilnoza" → "D". Ism yo'q bo'lsa — bo'sh (faqat rangli doira). */
@@ -82,6 +86,7 @@ fun initialsOf(name: String?): String = name.orEmpty()
     .take(2)
     .joinToString("") { it.first().uppercase() }
 
+// Preview'lar: komponentni ikkala temada Android Studio'da tekshirish uchun.
 @Preview(name = "Light", showBackground = true)
 @Composable
 private fun AvatarLightPreview() {

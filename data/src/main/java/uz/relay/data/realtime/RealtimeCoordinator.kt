@@ -30,6 +30,11 @@ import javax.inject.Singleton
 /**
  * WebSocket'ni ilova holatiga bog'laydi va kelgan frame'larni kerakli joyga yo'naltiradi.
  *
+ * Nega alohida klass: [RealtimeClient] faqat transport (ulanish, handshake, reconnect, frame parse) bilan
+ * shug'ullanadi va sync/outbox/profil haqida hech narsa bilmaydi. Qaysi paytda socket ochilishi va har bir
+ * frame kimga borishi — ilova darajasidagi qaror, u shu yerda jamlangan. Natijada ikkala tomonni alohida
+ * o'zgartirish va tushunish oson.
+ *
  * - Socket faqat login qilingan VA ilova old planda bo'lganda ochiq. Fonda yopiladi: server socket'i yo'q
  *   qurilmaga push yuboradi (Guide, 8-bo'lim), socket'ni ochiq ushlab batareyani yeyish shart emas.
  * - `auth_ok` → catch-up (socket ochilguncha o'tkazib yuborilgan hodisalar) + outbox'ni yuborish.
@@ -47,9 +52,13 @@ class RealtimeCoordinator @Inject constructor(
     private val outboxScheduler: OutboxScheduler,
     @ApplicationScope private val scope: CoroutineScope
 ) {
+    // Ikkinchi start() chaqiruvi kolektorlarni ikki marta ishga tushirmasligi uchun.
     private var started = false
 
-    /** Application.onCreate'dan bir marta chaqiriladi. */
+    /**
+     * Application.onCreate'dan bir marta chaqiriladi. Uchta uzoq yashovchi kolektorni ApplicationScope'da
+     * ishga tushiradi: socket'ni ochish/yopish, frame'larni tarqatish va internet qaytganda qayta ulanish.
+     */
     @OptIn(ExperimentalCoroutinesApi::class) // transformLatest
     @Synchronized
     fun start() {
@@ -70,6 +79,7 @@ class RealtimeCoordinator @Inject constructor(
                 }
                 .distinctUntilChanged()
                 .collect { active ->
+                    // Kursor lambda sifatida beriladi: har qayta ulanishda eng yangi qiymat o'qiladi.
                     if (active) realtimeClient.start { syncEngine.cursor() ?: 0 } else realtimeClient.stop()
                 }
         }
@@ -85,6 +95,7 @@ class RealtimeCoordinator @Inject constructor(
         }
     }
 
+    /** Bitta server frame'ini tegishli komponentga uzatadi. `ack`/`nack` bu yerda e'tiborsiz qoladi. */
     private suspend fun handle(frame: ServerFrame) {
         when (frame) {
             is ServerFrame.AuthOk -> {
@@ -111,6 +122,7 @@ class RealtimeCoordinator @Inject constructor(
             .flowOn(Dispatchers.Main)
 
     private companion object {
+        /** Fonga o'tgandan keyin socket'ni yopishdan oldin kutiladigan vaqt. */
         const val BACKGROUND_GRACE_MS = 5_000L
     }
 }

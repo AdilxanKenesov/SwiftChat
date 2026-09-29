@@ -4,6 +4,11 @@ import uz.relay.core.common.result.AppResult
 import uz.relay.domain.repository.MessageRepository
 import javax.inject.Inject
 
+/**
+ * Xabar matnini tahrirlaydi.
+ *
+ * Kichik mantiq: matn trim qilinadi, keyin repository'ga uzatiladi.
+ */
 class EditMessageUseCase @Inject constructor(
     private val repository: MessageRepository
 ) {

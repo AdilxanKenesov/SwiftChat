@@ -10,10 +10,14 @@
     <string name="notifications">Bildirishnomalar</string>
     <string name="dark_mode">Tungi rejim</string>
     <string name="language">Til</string>
-    <string name="language_uzbek">Oʻzbekcha</string>
+    <!-- Til nomlari har doim o'z tilida yoziladi (tanlovda foydalanuvchi o'z tilini taniydi) — tarjima qilinmaydi. -->
+    <string name="lang_uz" translatable="false">Oʻzbekcha</string>
+    <string name="lang_ru" translatable="false">Русский</string>
+    <string name="lang_en" translatable="false">English</string>
+    <string name="section_account">Hisob</string>
+    <string name="section_settings">Sozlamalar</string>
     <string name="logout">Chiqish</string>
     <string name="logout_title">Hisobdan chiqasizmi?</string>
-    <string name="logout_text">Bu qurilmadagi chatlar va xabarlar oʻchiriladi. Qayta kirganingizda ular serverdan yuklanadi.</string>
     <string name="cancel">Bekor qilish</string>
 
     <!-- Profilni tahrirlash -->
@@ -33,4 +37,9 @@
     <string name="error_forbidden">Bu amalga ruxsat yoʻq</string>
     <string name="error_not_found">Foydalanuvchi topilmadi</string>
     <string name="error_unknown">Nimadir xato ketdi. Qayta urining</string>
+    <string name="add_to_contacts">Kontaktlarga qoʻshish</string>
+    <string name="remove_from_contacts">Kontaktlardan oʻchirish</string>
+    <string name="remove_contact_title">%1$s kontaktlardan oʻchirilsinmi?</string>
+    <string name="remove">Oʻchirish</string>
+    <string name="contact_added">Kontaktlarga qoʻshildi</string>
 </resources>

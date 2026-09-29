@@ -1,6 +1,6 @@
 package uz.relay.feature.chats.list.components
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -50,6 +50,8 @@ internal fun ChatRow(
     /** Hozir shu chatda yozayotganlar (o'zimsiz). Bo'sh bo'lmasa, oxirgi xabar o'rnida "yozmoqda…". */
     typingUserIds: Set<String>,
     onClick: () -> Unit,
+    /** Long-press — ovozsiz qilish sheet'i. */
+    onLongClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val colors = SwiftTheme.colors
@@ -63,7 +65,7 @@ internal fun ChatRow(
         modifier = modifier
             .fillMaxWidth()
             .height(76.dp)
-            .clickable(onClick = onClick)
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
             .padding(start = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(14.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -139,6 +141,7 @@ internal fun ChatRow(
                         if (chat.type == ChatType.GROUP && name != null) stringResource(R.string.typing_named, name)
                         else stringResource(R.string.typing)
                     }
+                    // AnnotatedString qurish arzon emas — faqat kirish ma'lumotlari o'zgarganda qayta hisoblanadi.
                     val preview = remember(last, chat.type, userNames, colors) {
                         last?.let {
                             buildChatPreview(

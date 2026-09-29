@@ -5,6 +5,7 @@ import uz.relay.core.navigation.AppNavigator
 import uz.relay.core.navigation.key.EditProfileKey
 import javax.inject.Inject
 
+/** [MyProfileContract.Directions] implementatsiyasi: Nav3 kalitlarini AppNavigator event bus'iga yuboradi. */
 internal class MyProfileDirectionsImpl @Inject constructor(
     private val navigator: AppNavigator
 ) : MyProfileContract.Directions {

@@ -1,5 +1,9 @@
 package uz.relay.feature.group.info
 
+import uz.relay.core.designsystem.component.SwiftDialog
+import uz.relay.core.designsystem.component.SwiftInputDialog
+import uz.relay.core.designsystem.component.SwiftSnackbarHost
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -20,17 +24,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -56,7 +56,6 @@ import org.orbitmvi.orbit.compose.collectSideEffect
 import uz.relay.core.designsystem.R as DesignR
 import uz.relay.core.designsystem.component.Avatar
 import uz.relay.core.designsystem.component.BrandTile
-import uz.relay.core.designsystem.component.SwiftTextField
 import uz.relay.core.designsystem.component.avatarColor
 import uz.relay.core.designsystem.theme.SwiftChatTheme
 import uz.relay.core.designsystem.theme.SwiftTheme
@@ -69,8 +68,18 @@ import uz.relay.domain.model.MemberRole
 import uz.relay.feature.group.R
 import uz.relay.feature.group.util.messageRes
 
+/**
+ * Guruh ma'lumotlari ekranining kirish nuqtasi (stateful qism).
+ *
+ * Chat ekranidagi guruh sarlavhasi bosilganda ochiladi. Bu yerdan: chat ichida qidiruv, a'zo qo'shish
+ * (guruh yaratish ekrani qayta ishlatiladi), a'zo bilan shaxsiy chat va guruhdan chiqish (chatlar ro'yxatiga).
+ *
+ * Funksiya ViewModel'ni oladi, holatni yig'adi va SideEffect'larni (snackbar) ushlaydi; chizish stateless
+ * [GroupInfoContent] da — Preview va testlarda ViewModel'siz ishlatish uchun.
+ */
 @Composable
 internal fun GroupInfoScreen(chatId: String) {
+    // AssistedInject: runtime argument `chatId` factory orqali ViewModel'ga uzatiladi.
     val viewModel = hiltViewModel<GroupInfoViewModel, GroupInfoViewModel.Factory>(
         creationCallback = { factory -> factory.create(chatId) }
     )
@@ -87,16 +96,17 @@ internal fun GroupInfoScreen(chatId: String) {
 
     Box(modifier = Modifier.fillMaxSize()) {
         GroupInfoContent(uiState = uiState, onEventDispatcher = viewModel::onEventDispatcher)
-        SnackbarHost(
+        SwiftSnackbarHost(
             hostState = snackbarHostState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .navigationBarsPadding()
-                .padding(bottom = 64.dp)
+            modifier = Modifier.align(Alignment.TopCenter)
         )
     }
 }
 
+/**
+ * Ekranning stateless qismi: yuqori panel · sarlavha · amal kartalari · a'zolar ro'yxati · "Guruhdan chiqish".
+ * Butun kontent bitta [LazyColumn] da — a'zolar ko'p bo'lsa ham faqat ko'rinadiganlari chiziladi.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun GroupInfoContent(
@@ -143,7 +153,7 @@ private fun GroupInfoContent(
             }
         }
 
-        LazyColumn(modifier = Modifier.weight(1f), contentPadding = PaddingValues(bottom = 8.dp)) {
+        LazyColumn(modifier = Modifier.weight(1f).navigationBarsPadding(), contentPadding = PaddingValues(bottom = 24.dp)) {
             item(key = "header") { Header(chat = chat, memberCount = uiState.members.size, onlineCount = uiState.onlineCount) }
             item(key = "actions") {
                 Row(
@@ -206,25 +216,15 @@ private fun GroupInfoContent(
                     onClick = if (member.isMe) null else ({ selectedMember = member })
                 )
             }
-        }
-
-        // Pastki qator: "Guruhdan chiqish" (qizil) + tepada chiziq.
-        HorizontalDivider(thickness = 1.dp, color = colors.line)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .height(56.dp)
-                .clickable { showLeaveDialog = true }
-                .padding(horizontal = 24.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(painter = painterResource(DesignR.drawable.ic_log_out), contentDescription = null, tint = colors.error, modifier = Modifier.size(22.dp))
-            Text(text = stringResource(R.string.leave_group), color = colors.error, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+            // "Guruhdan chiqish" — ro'yxat oxirida alohida kartada (ekran pastiga yopishtirilgan qizil qator
+            // o'rniga): tasodifan bosilmaydi va boshqa kartalar bilan bir uslubda.
+            item(key = "leave") {
+                LeaveGroupCard(onClick = { showLeaveDialog = true }, modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 20.dp))
+            }
         }
     }
 
+    // Sheet va dialoglar Column'dan tashqarida — ular o'z oynasida (overlay) ko'rsatiladi.
     selectedMember?.let { member ->
         MemberSheet(
             member = member,
@@ -246,10 +246,12 @@ private fun GroupInfoContent(
     }
 
     confirmRemove?.let { member ->
-        ConfirmDialog(
+        SwiftDialog(
             title = stringResource(R.string.remove_title, member.displayName ?: stringResource(R.string.unknown_user)),
-            text = null,
-            confirm = stringResource(R.string.remove_confirm),
+            confirmText = stringResource(R.string.remove_confirm),
+            dismissText = stringResource(R.string.cancel),
+            icon = DesignR.drawable.ic_user_minus,
+            destructive = true,
             onConfirm = {
                 confirmRemove = null
                 onEventDispatcher(GroupInfoContract.Intent.OnRemove(member))
@@ -259,10 +261,12 @@ private fun GroupInfoContent(
     }
 
     if (showLeaveDialog) {
-        ConfirmDialog(
+        SwiftDialog(
             title = stringResource(R.string.leave_title),
-            text = stringResource(R.string.leave_text),
-            confirm = stringResource(R.string.leave_confirm),
+            confirmText = stringResource(R.string.leave_confirm),
+            dismissText = stringResource(R.string.cancel),
+            icon = DesignR.drawable.ic_log_out,
+            destructive = true,
             onConfirm = {
                 showLeaveDialog = false
                 onEventDispatcher(GroupInfoContract.Intent.OnLeave)
@@ -272,9 +276,17 @@ private fun GroupInfoContent(
     }
 
     if (showRenameDialog) {
-        RenameDialog(
-            initial = chat?.title.orEmpty(),
-            onSave = { title ->
+        // Server qoidasi: nom 1..128 belgi. Tugma nom o'zgarmaguncha o'chiq.
+        SwiftInputDialog(
+            title = stringResource(R.string.rename_title),
+            label = stringResource(R.string.group_name),
+            initialValue = chat?.title.orEmpty(),
+            confirmText = stringResource(R.string.save),
+            dismissText = stringResource(R.string.cancel),
+            icon = DesignR.drawable.ic_pencil,
+            maxLength = 128,
+            isValid = { it.length in 1..128 },
+            onConfirm = { title ->
                 showRenameDialog = false
                 onEventDispatcher(GroupInfoContract.Intent.OnRename(title))
             },
@@ -313,7 +325,7 @@ private fun Header(chat: ChatSummary?, memberCount: Int, onlineCount: Int) {
             modifier = Modifier.padding(horizontal = 24.dp)
         )
         if (memberCount > 0) {
-            Text(text = stringResource(R.string.members_online, memberCount, onlineCount), color = colors.text2, fontSize = 14.sp)
+            Text(text = stringResource(R.string.members_online, pluralStringResource(R.plurals.members_n, memberCount, memberCount), onlineCount), color = colors.text2, fontSize = 14.sp)
         }
     }
 }
@@ -395,6 +407,9 @@ private fun RolePill(role: MemberRole) {
 /**
  * A'zo amallari (spec 3.11): sarlavha (avatar + ism + rol) · "Admin qilish"/"Aʼzo qilish" (faqat OWNER)
  * · "Xabar yozish" · "Guruhdan chiqarish" (OWNER har kimni, ADMIN faqat oddiy a'zoni). Ruxsat yo'q amal ko'rinmaydi.
+ *
+ * Nega ModalBottomSheet: amallar ro'yxati kontekstli (bitta a'zoga tegishli), ekrandan chiqmasdan pastdan ochiladi
+ * va tashqariga bosish/pastga surish bilan yopiladi — alohida ekran yoki menyu kerak emas.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -460,12 +475,14 @@ private fun MemberSheet(
     }
 }
 
+/** Rol → matn resursi (sheet sarlavhasidagi rol nomi uchun). */
 private fun roleLabel(role: MemberRole): Int = when (role) {
     MemberRole.OWNER -> R.string.owner
     MemberRole.ADMIN -> R.string.admin
     else -> R.string.member
 }
 
+/** Sheet ichidagi bitta amal qatori (56dp): ikonka + yorliq, rang amal turiga qarab (xavfli — qizil). */
 @Composable
 private fun SheetItem(icon: Int, label: String, color: Color, onClick: () -> Unit, bold: Boolean = false) {
     Row(
@@ -482,52 +499,40 @@ private fun SheetItem(icon: Int, label: String, color: Color, onClick: () -> Uni
     }
 }
 
+/**
+ * "Guruhdan chiqish" kartasi: qizil ikonka plitkasi (errorContainer) + qizil matn, radius 20. Yorug' temada
+ * yumshoq soya, tungi temada hoshiya — boshqa kartalar (ActionCard) bilan bir xil qoida.
+ */
 @Composable
-private fun ConfirmDialog(title: String, text: String?, confirm: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+private fun LeaveGroupCard(onClick: () -> Unit, modifier: Modifier = Modifier) {
     val colors = SwiftTheme.colors
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = colors.menu,
-        title = { Text(title, color = colors.text) },
-        text = text?.let { { Text(it, color = colors.text2) } },
-        confirmButton = {
-            TextButton(onClick = onConfirm) { Text(confirm, color = colors.error, fontWeight = FontWeight.SemiBold) }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel), color = colors.primary) }
+    val shape = RoundedCornerShape(20.dp)
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .shadow(elevation = if (colors.cardBorder == Color.Transparent) 2.dp else 0.dp, shape = shape)
+            .clip(shape)
+            .background(colors.card, shape)
+            .border(1.dp, colors.cardBorder, shape)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 18.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .background(colors.errorContainer, RoundedCornerShape(11.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(painter = painterResource(DesignR.drawable.ic_log_out), contentDescription = null, tint = colors.error, modifier = Modifier.size(19.dp))
         }
-    )
-}
-
-/** Guruh nomini o'zgartirish (ADMIN/OWNER). Server qoidasi: 1..128 belgi. */
-@Composable
-private fun RenameDialog(initial: String, onSave: (String) -> Unit, onDismiss: () -> Unit) {
-    val colors = SwiftTheme.colors
-    var title by remember { mutableStateOf(initial) }
-    val valid = title.trim().length in 1..128 && title.trim() != initial
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = colors.menu,
-        title = { Text(stringResource(R.string.rename_title), color = colors.text) },
-        text = {
-            SwiftTextField(
-                value = title,
-                onValueChange = { title = it.take(128) },
-                label = stringResource(R.string.group_name)
-            )
-        },
-        confirmButton = {
-            TextButton(onClick = { onSave(title.trim()) }, enabled = valid) {
-                Text(stringResource(R.string.save), color = if (valid) colors.primary else colors.text2, fontWeight = FontWeight.SemiBold)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel), color = colors.primary) }
-        }
-    )
+        Text(text = stringResource(R.string.leave_group), color = colors.error, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+    }
 }
 
 // ---------------- Preview'lar ----------------
+// Stateless GroupInfoContent: OWNER (boshqaruv tugmalari bilan) va oddiy MEMBER ko'rinishi, yorug'/qorong'i temada.
 
 private val PreviewGroup = ChatSummary(
     id = "g1",

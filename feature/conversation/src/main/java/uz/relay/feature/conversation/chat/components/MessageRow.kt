@@ -40,6 +40,9 @@ import uz.relay.feature.conversation.chat.ChatItem
  *
  * Uzoq bosilganda bubble'ning ekrandagi joyi ([Rect]) ham beriladi — menyu o'sha joyda "ko'tarilgan" bubble'ni
  * chizishi uchun.
+ *
+ * Qaysi qatorda ism/avatar ko'rinishi bu yerda hisoblanmaydi — [ChatItem.Bubble] bayroqlari ViewModel'da tayyorlanadi.
+ * `combinedClickable` (ExperimentalFoundationApi) bitta modifier'da oddiy bosish (media ochish) va uzoq bosishni (menyu) beradi.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -50,10 +53,15 @@ fun MessageRow(
     onLongPress: (Rect) -> Unit,
     onReplyClick: () -> Unit,
     onRetry: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** Rasm/video — ko'ruvchi, fayl — yuklab olib ochish. */
+    onMediaClick: () -> Unit = {},
+    onCancelUpload: () -> Unit = {},
+    downloadProgress: Float? = null
 ) {
     val message = item.message
     val isOut = message.isMine
+    val hasMedia = message.media.isNotEmpty() && !message.isDeleted
     // Bubble'ning oxirgi o'lchangan joyi. State emas: u faqat uzoq bosilgan paytda o'qiladi, qayta chizish kerak emas.
     val bounds = remember { arrayOf(Rect.Zero) }
 
@@ -87,11 +95,13 @@ fun MessageRow(
             replied = item.replied,
             repliedSenderName = item.replied?.let { names[it.senderId] },
             onReplyClick = onReplyClick,
+            downloadProgress = downloadProgress,
+            onCancelUpload = onCancelUpload,
             modifier = Modifier
                 .onGloballyPositioned { bounds[0] = it.boundsInRoot() }
                 .clip(RoundedCornerShape(18.dp))
                 .combinedClickable(
-                    onClick = {},
+                    onClick = if (hasMedia) onMediaClick else ({}),
                     // O'chirilgan xabar uchun menyu yo'q (spec: "no reply/menu").
                     onLongClick = if (message.isDeleted) null else ({ onLongPress(bounds[0]) })
                 )

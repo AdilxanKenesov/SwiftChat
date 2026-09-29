@@ -59,7 +59,11 @@ data class MenuTarget(val item: ChatItem.Bubble, val bounds: Rect)
  *
  * Nega custom Layout: bubble ro'yxatdagi joyida chizilishi kerak, menyu esa uning ostida (joy bo'lmasa ustida)
  * va chiquvchi xabarda o'ng chetga, kiruvchida chap chetga tekislanadi. Joylar faqat o'lchangandan keyin
- * ma'lum — Layout ularni bitta o'lchash o'tishida hisoblaydi.
+ * ma'lum — Layout ularni bitta o'lchash o'tishida hisoblaydi. Popup/DropdownMenu esa bubble'ni "ko'tarib"
+ * ko'rsata olmaydi va o'z joylashuv qoidalariga ega, shuning uchun overlay ChatScreen'dagi Box ichida chiziladi.
+ *
+ * Qaysi bandlar ko'rinishi ChatContract'dagi `canReply/canEdit/canDelete` qoidalaridan olinadi — server
+ * qoidalari bilan bir joyda. Orqaga tugmasi va fon bosilishi menyuni yopadi.
  */
 @Composable
 fun MessageMenuOverlay(
@@ -107,6 +111,7 @@ fun MessageMenuOverlay(
                 )
             }
         ) { measurables, constraints ->
+            // Bubble ro'yxatdagi eni bilan o'lchanadi (aynan o'sha ko'rinishda qolsin), menyu esa o'z tabiiy o'lchamida.
             val bounds = target.bounds
             val bubble = measurables[0].measure(Constraints.fixedWidth(max(1, bounds.width.toInt())))
             val menu = measurables[1].measure(Constraints())
@@ -120,6 +125,7 @@ fun MessageMenuOverlay(
                 val bubbleY = (bounds.top - origin.y).toInt()
                 bubble.place(bubbleX, bubbleY)
 
+                // Menyu ekrandan chiqmasin: gorizontal chetlarga qisiladi, pastda joy bo'lmasa bubble ustiga ko'chadi.
                 val alignedX = if (message.isMine) bubbleX + bubble.width - menu.width else bubbleX
                 val menuX = min(max(margin, alignedX), width - menu.width - margin)
                 val below = bubbleY + bubble.height + gap
@@ -130,6 +136,7 @@ fun MessageMenuOverlay(
     }
 }
 
+/** Menyu kartasi: faqat shu xabar uchun ruxsat etilgan amallar ko'rsatiladi; "Oʻchirish" ajratgichdan keyin, qizil. */
 @Composable
 private fun MenuCard(
     message: Message,
@@ -158,6 +165,7 @@ private fun MenuCard(
     }
 }
 
+/** 48dp balandlikdagi menyu qatori: ikonka + matn. */
 @Composable
 private fun MenuItem(icon: Int, label: Int, color: Color, onClick: () -> Unit, bold: Boolean = false) {
     Row(

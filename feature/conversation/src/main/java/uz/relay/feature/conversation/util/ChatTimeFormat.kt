@@ -7,6 +7,13 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
+/*
+ * Chat ekranidagi vaqt/sana formatlash yordamchilari. java.time ishlatiladi (minSdk'da desugaring/26+ bilan mavjud):
+ * u immutable va thread-safe, SimpleDateFormat kabi har chaqiruvda yangi obyekt yaratish shart emas.
+ * `zone`/`now` parametrlari testlarda vaqtni qat'iy berish uchun.
+ */
+
+// Formatter bir marta yaratiladi — DateTimeFormatter thread-safe, qayta ishlatish mumkin.
 private val TIME = DateTimeFormatter.ofPattern("HH:mm")
 
 /** Bubble ichidagi vaqt: "10:08". */
@@ -35,6 +42,7 @@ fun formatDateSeparator(
     }
 }
 
+/** Oy nomi resursi (1..12) — til resurslardan olinadi, shuning uchun uz/ru/en'da to'g'ri ko'rinadi. */
 private fun monthRes(month: Int): Int = when (month) {
     1 -> R.string.month_1
     2 -> R.string.month_2

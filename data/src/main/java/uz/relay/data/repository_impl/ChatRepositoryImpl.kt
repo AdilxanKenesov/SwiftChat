@@ -26,6 +26,14 @@ import uz.relay.domain.model.SyncStatus
 import uz.relay.domain.repository.ChatRepository
 import javax.inject.Inject
 
+/**
+ * [ChatRepository] implementatsiyasi: chat ro'yxati, bitta chat va sync holatini kuzatish.
+ *
+ * Offline-first: UI faqat Room'dan o'qiydi, server ma'lumoti esa [SyncEngine] (bootstrap/catch-up) va
+ * realtime update'lar orqali bazaga tushadi — shuning uchun internet yo'q paytda ham ro'yxat ko'rinadi.
+ * To'g'ridan-to'g'ri so'rovlar (direct chat ochish, mute) natijasi ham darhol bazaga yoziladi.
+ * Chat ro'yxati, suhbat va chat ma'lumoti ekranlari ishlatadi.
+ */
 @OptIn(ExperimentalCoroutinesApi::class) // flatMapLatest
 internal class ChatRepositoryImpl @Inject constructor(
     private val chatDao: ChatDao,
@@ -49,6 +57,7 @@ internal class ChatRepositoryImpl @Inject constructor(
             else chatDao.observeChatList(me).map { items -> items.map { it.toDomain(me, json) } }
         }
 
+    /** Bitta chatni kuzatadi (suhbat ekrani sarlavhasi, mute holati); chat o'chsa `null`. */
     override fun observeChat(chatId: String): Flow<ChatSummary?> = sessionStorage.session
         .map { it?.userId }
         .distinctUntilChanged()
@@ -57,6 +66,7 @@ internal class ChatRepositoryImpl @Inject constructor(
             else chatDao.observeChat(chatId, me).map { it?.toDomain(me, json) }
         }
 
+    /** Foydalanuvchi bilan shaxsiy chat bormi — profil ekrani "Xabar yozish" uchun; hali yaratilmagan bo'lsa `null`. */
     override fun observeDirectChat(peerUserId: String): Flow<ChatSummary?> = sessionStorage.session
         .map { it?.userId }
         .distinctUntilChanged()
@@ -65,6 +75,7 @@ internal class ChatRepositoryImpl @Inject constructor(
             else chatDao.observeDirectChat(peerUserId, me).map { it?.toDomain(me, json) }
         }
 
+    /** Kursor hali yo'q — bootstrap bo'lmagan (birinchi kirish): UI bo'sh ro'yxat o'rniga yuklanish ko'rsatadi. */
     override fun observeSyncStatus(): Flow<SyncStatus> = combine(
         syncEngine.isSyncing,
         syncEngine.observeCursor()
@@ -72,6 +83,7 @@ internal class ChatRepositoryImpl @Inject constructor(
         SyncStatus(isSyncing = isSyncing, isBootstrapped = cursor != null)
     }.distinctUntilChanged()
 
+    /** Pull-to-refresh: kursordan keyingi update'larni serverdan tortib oladi. */
     override suspend fun refresh(): AppResult<Unit> = syncEngine.catchUp()
 
     /**
@@ -87,7 +99,7 @@ internal class ChatRepositoryImpl @Inject constructor(
             }
 
     /** Server yangilangan chat qatorini qaytaradi — uni darhol yozamiz, ro'yxatdagi belgi shu zahoti o'zgarsin. */
-    override suspend fun setMuted(chatId: String, muted: Boolean): AppResult<Unit> =
-        safeApiCall { chatApi.updateSettings(chatId, ChatSettingsRequest(muted = muted)) }
+    override suspend fun setMuted(chatId: String, muted: Boolean, mutedUntil: Long?): AppResult<Unit> =
+        safeApiCall { chatApi.updateSettings(chatId, ChatSettingsRequest(muted = muted, mutedUntil = mutedUntil.takeIf { muted })) }
             .map { chatDao.upsert(it.toEntity()) }
 }

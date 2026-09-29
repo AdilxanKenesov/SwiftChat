@@ -7,6 +7,11 @@ import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 import uz.relay.data.source.local.database.entity.MemberCursorEntity
 
+/**
+ * `member_cursors` jadvali uchun DAO: har bir a'zoning o'qish/yetkazilish kursorlari.
+ * UpdateApplier `read`/`delivered` update'larini [raise] orqali yozadi, suhbat ekrani va chatlar
+ * ro'yxati ✓/✓✓ belgilarini shu ma'lumotdan hisoblaydi.
+ */
 @Dao
 interface MemberCursorDao {
 

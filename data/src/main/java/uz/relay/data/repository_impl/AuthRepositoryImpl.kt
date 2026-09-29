@@ -15,6 +15,7 @@ import uz.relay.data.mapper.toSession
 import uz.relay.data.model.request.OtpRequest
 import uz.relay.data.model.request.VerifyOtpRequest
 import uz.relay.data.source.local.SessionStorage
+import uz.relay.data.media.MediaFiles
 import uz.relay.data.outbox.OutboxScheduler
 import uz.relay.data.source.local.database.RelayDatabase
 import uz.relay.data.source.network.api.AuthApi
@@ -25,16 +26,27 @@ import uz.relay.domain.model.AuthState
 import uz.relay.domain.repository.AuthRepository
 import javax.inject.Inject
 
+/**
+ * [AuthRepository] implementatsiyasi: OTP orqali kirish, profilni to'ldirish bosqichi va chiqish.
+ *
+ * Vazifasi — sessiyani (tokenlar) [SessionStorage]ga saqlash va [authState]ni undan hosil qilish:
+ * ilova qaysi ekranni ko'rsatishni (login / profil / asosiy) shu bitta Flow'dan biladi, alohida
+ * "logged in" bayrog'i saqlanmaydi. Chiqishda socket, outbox, baza va media fayllari tartib bilan
+ * tozalanadi — bir qurilmada hisob almashganda ma'lumot aralashmasligi uchun.
+ * Auth feature ViewModel'lari va MainViewModel ishlatadi.
+ */
 internal class AuthRepositoryImpl @Inject constructor(
     private val authApi: AuthApi,
     private val sessionApi: SessionApi,
     private val realtimeClient: RealtimeClient,
     private val outboxScheduler: OutboxScheduler,
+    private val mediaFiles: MediaFiles,
     private val sessionStorage: SessionStorage,
     private val database: RelayDatabase,
     private val dispatchers: AppDispatchers
 ) : AuthRepository {
 
+    /** Sessiya yo'q → LOGGED_OUT; yangi foydalanuvchi profilni to'ldirmagan → NEEDS_PROFILE; aks holda LOGGED_IN. */
     override val authState: Flow<AuthState> = combine(
         sessionStorage.session,
         sessionStorage.profileSetupPending
@@ -46,9 +58,11 @@ internal class AuthRepositoryImpl @Inject constructor(
         }
     }.distinctUntilChanged()
 
+    /** Telefon raqamiga (yoki Telegram orqali) bir martalik kod yuborishni so'raydi. */
     override suspend fun requestOtp(phone: String): AppResult<Unit> =
         safeApiCall { authApi.requestOtp(OtpRequest(phone)) }
 
+    /** Kodni tekshiradi va sessiyani saqlaydi. `true` — yangi foydalanuvchi (profil ekraniga o'tish kerak). */
     override suspend fun verifyOtp(phone: String, code: String): AppResult<Boolean> =
         safeApiCall { authApi.verifyOtp(VerifyOtpRequest(phone, code, deviceName())) }
             .onSuccess { tokens ->
@@ -61,6 +75,7 @@ internal class AuthRepositoryImpl @Inject constructor(
             }
             .map { it.isNewUser }
 
+    /** Profil to'ldirilgach chaqiriladi — authState LOGGED_IN ga o'tadi va asosiy ekran ochiladi. */
     override suspend fun completeProfileSetup() {
         sessionStorage.setProfileSetupPending(false)
     }
@@ -88,9 +103,13 @@ internal class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-    /** `clearAllTables()` bloklovchi chaqiruv — main thread'da chaqirib bo'lmaydi. */
+    /**
+     * `clearAllTables()` bloklovchi chaqiruv — main thread'da chaqirib bo'lmaydi. Media fayllari va rasm keshi
+     * ham shu yerda: boshqa hisobga kirilganda oldingi hisobning rasmlari ko'rinmasin.
+     */
     private suspend fun clearLocalData() = withContext(dispatchers.io) {
         database.clearAllTables()
+        mediaFiles.clearAll()
     }
 
     /** Server har bir `deviceName` uchun alohida qurilma yozuvini saqlaydi. */

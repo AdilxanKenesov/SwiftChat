@@ -9,12 +9,16 @@ import uz.relay.core.common.result.AppResult
 import uz.relay.data.model.response.ErrorResponse
 import java.io.IOException
 
+/** Xato body'larini parse qilish uchun yengil Json: server yangi maydon qo'shsa ham yiqilmaydi. */
 private val errorJson = Json { ignoreUnknownKeys = true }
 
 /**
- * Wraps a Retrofit call into [AppResult]:
- * HttpException → the `{code, message, retryable}` body, IOException → [AppError.Network].
- * CancellationException is rethrown so coroutine cancellation is never swallowed as an error.
+ * Retrofit chaqiruvini [AppResult] ga o'raydi — repository'lar exception o'rniga natija qaytaradi.
+ *
+ * - HttpException -> server'ning `{code, message, retryable}` body'si [AppError.Api] ga aylanadi;
+ * - IOException -> [AppError.Network] (internet yo'q, timeout va h.k.);
+ * - SerializationException -> [AppError.Unknown].
+ * CancellationException qayta tashlanadi — coroutine bekor qilinishi hech qachon "xato" sifatida yutilib ketmasligi kerak.
  */
 internal suspend fun <T> safeApiCall(block: suspend () -> T): AppResult<T> = try {
     AppResult.Success(block())
@@ -28,6 +32,7 @@ internal suspend fun <T> safeApiCall(block: suspend () -> T): AppResult<T> = try
     AppResult.Error(AppError.Unknown(e))
 }
 
+/** HTTP xatoni domain [AppError.Api] ga o'giradi; body bo'lmasa status koddan kelib chiqadi. */
 private fun HttpException.toAppError(): AppError {
     val status = code()
     val body = response()?.errorBody()?.string()?.let { raw ->
@@ -35,9 +40,10 @@ private fun HttpException.toAppError(): AppError {
     }
     return AppError.Api(
         httpStatus = status,
-        // No JSON body (e.g. an nginx HTML page): derive a code from the status.
+        // JSON body yo'q (masalan, nginx'ning HTML sahifasi): kodni status'dan yasaymiz.
         code = body?.code ?: "HTTP_$status",
         message = body?.message ?: message(),
+        // Server aytmagan bo'lsa: 5xx va 429 (rate limit) vaqtinchalik — qayta urinish mumkin.
         retryable = body?.retryable ?: (status >= 500 || status == 429),
         botUrl = body?.botUrl
     )

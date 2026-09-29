@@ -11,22 +11,25 @@ import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/** Token yangilash natijasi — chaqiruvchi (REST yoki WebSocket) keyin nima qilishni shunga qarab hal qiladi. */
 sealed interface RefreshOutcome {
+    /** Yangi (yoki boshqa oqim allaqachon olgan) access token. */
     data class Refreshed(val accessToken: String) : RefreshOutcome
 
-    /** The refresh token was rejected (TOKEN_REUSED, expired, logged out): the session is cleared. */
+    /** Refresh token rad etildi (TOKEN_REUSED, muddati o'tgan, logout qilingan): sessiya tozalanadi. */
     data object SessionEnded : RefreshOutcome
 
-    /** No connection or 5xx: the session is still valid, try again later. */
+    /** Internet yo'q yoki 5xx: sessiya hali yaroqli, keyinroq qayta urinish kerak. */
     data object TemporaryFailure : RefreshOutcome
 }
 
 /**
- * The single place that refreshes the access token (REST authenticator now, WebSocket 4001 later).
+ * Access token'ni yangilaydigan YAGONA joy: REST'da [TokenAuthenticator] (401), WebSocket'da
+ * RealtimeClient (4001 yopilish kodi) shu yerni chaqiradi.
  *
- * The refresh token is single-use: if two requests refreshed with it at once, the second would be
- * answered TOKEN_REUSED and the whole device session revoked. The Mutex lets one caller refresh;
- * the others see the new token and reuse it.
+ * Nega Mutex: refresh token bir martalik (rotatsiya). Ikki so'rov bir vaqtda o'sha token bilan yangilasa,
+ * ikkinchisiga TOKEN_REUSED keladi va server qurilmaning butun sessiyasini bekor qiladi. Mutex faqat
+ * bittasiga yangilashga ruxsat beradi; qolganlari navbat kutib, yangi token'ni ko'radi va o'shani ishlatadi.
  */
 @Singleton
 class TokenRefresher @Inject constructor(
@@ -35,10 +38,14 @@ class TokenRefresher @Inject constructor(
 ) {
     private val mutex = Mutex()
 
-    /** @param failedAccessToken the token that got 401; if storage already holds a newer one, it is returned. */
+    /**
+     * @param failedAccessToken 401 olgan token; omborda allaqachon yangirog'i bo'lsa, tarmoqqa chiqmasdan
+     * o'sha qaytariladi.
+     */
     suspend fun refresh(failedAccessToken: String?): RefreshOutcome = mutex.withLock {
         val session = sessionStorage.current() ?: return@withLock RefreshOutcome.SessionEnded
 
+        // Mutex'ni kutayotgan paytda boshqa oqim token'ni allaqachon yangilagan.
         if (failedAccessToken != null && session.accessToken != failedAccessToken) {
             return@withLock RefreshOutcome.Refreshed(session.accessToken)
         }
@@ -48,10 +55,11 @@ class TokenRefresher @Inject constructor(
             sessionStorage.updateTokens(tokens.accessToken, tokens.refreshToken)
             RefreshOutcome.Refreshed(tokens.accessToken)
         } catch (e: CancellationException) {
+            // Korutina bekor qilinishini yutib yubormaymiz.
             throw e
         } catch (e: HttpException) {
             if (e.code() in 400..499) {
-                // TOKEN_REUSED / expired / invalid: retrying is pointless, the user must log in again.
+                // TOKEN_REUSED / muddati o'tgan / yaroqsiz: qayta urinish befoyda, foydalanuvchi qaytadan kirishi kerak.
                 sessionStorage.clear()
                 RefreshOutcome.SessionEnded
             } else {

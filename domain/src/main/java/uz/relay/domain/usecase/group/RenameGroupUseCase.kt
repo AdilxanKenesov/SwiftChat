@@ -4,6 +4,11 @@ import uz.relay.core.common.result.AppResult
 import uz.relay.domain.repository.GroupRepository
 import javax.inject.Inject
 
+/**
+ * Guruh nomini o'zgartiradi.
+ *
+ * Kichik mantiq: nom trim qilinadi, keyin repository'ga uzatiladi.
+ */
 class RenameGroupUseCase @Inject constructor(
     private val repository: GroupRepository
 ) {

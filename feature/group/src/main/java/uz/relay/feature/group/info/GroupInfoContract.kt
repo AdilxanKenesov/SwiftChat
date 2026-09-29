@@ -7,12 +7,21 @@ import uz.relay.domain.model.ChatSummary
 import uz.relay.domain.model.GroupPermissions
 import uz.relay.domain.model.MemberRole
 
+/**
+ * Guruh ma'lumotlari ekranining Orbit MVI shartnomasi (contract).
+ *
+ * Ekran chat ekranidagi sarlavha bosilganda ochiladi: guruh nomi, a'zolar ro'yxati, ovozsiz/qidiruv/qo'shish
+ * tugmalari va a'zolar bilan ishlash (rol berish, chiqarish). Hamma tur — Intent, UiState, SideEffect, Directions —
+ * bitta interfeysda, shuning uchun ekran mantiqini bir joydan ko'rish mumkin.
+ */
 interface GroupInfoContract {
 
+    /** UI ViewModel bilan faqat shu interfeys orqali gaplashadi: holat oqimi + bitta kirish nuqtasi [onEventDispatcher]. */
     interface ViewModel : OrbitContainerHost<UiState, UiState, SideEffect> {
         fun onEventDispatcher(intent: Intent)
     }
 
+    /** Foydalanuvchi harakatlari. Tasdiqlash dialoglari UI'da; ViewModel'ga faqat tasdiqlangan amal keladi. */
     sealed interface Intent {
         object OnBack : Intent
         object OnToggleMute : Intent
@@ -25,10 +34,12 @@ interface GroupInfoContract {
         object OnLeave : Intent
     }
 
+    /** Bir martalik hodisalar (snackbar) — holatda saqlanmaydi. */
     sealed interface SideEffect {
         data class ShowError(val error: AppError) : SideEffect
     }
 
+    /** Ekranning yagona o'zgarmas holati: chat va a'zolar lokal bazadan keladi, qolgan maydonlar ulardan hisoblanadi. */
     data class UiState(
         val chat: ChatSummary? = null,
         val members: List<ChatMember> = emptyList(),
@@ -41,6 +52,7 @@ interface GroupInfoContract {
         val onlineCount: Int get() = members.count { it.online }
     }
 
+    /** Ekrandan chiqish yo'llari — ViewModel qaysi Nav3 kalit ishlatilishini bilmaydi, test uchun almashtirish oson. */
     interface Directions {
         suspend fun back()
         suspend fun navigateToAddMembers(chatId: String)

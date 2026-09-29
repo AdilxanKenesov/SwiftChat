@@ -16,6 +16,7 @@ data class SyncStateEntity(
     val updateSeq: Long
 ) {
     companion object {
+        // Jadvalda doim bitta qator — id doim shu qiymat, upsert o'sha qatorni yangilaydi.
         const val SINGLE_ROW_ID = 0
     }
 }

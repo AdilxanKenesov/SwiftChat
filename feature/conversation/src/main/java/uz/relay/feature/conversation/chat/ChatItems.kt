@@ -4,7 +4,13 @@ import uz.relay.domain.model.Message
 import uz.relay.domain.model.MessageType
 import uz.relay.feature.conversation.util.dayStartMillis
 
-/** Suhbat ro'yxatidagi bitta element. [key] — LazyColumn uchun barqaror kalit (animatsiya va scroll to'g'ri ishlashi uchun). */
+/**
+ * Suhbat ro'yxatidagi bitta element. [key] — LazyColumn uchun barqaror kalit (animatsiya va scroll to'g'ri ishlashi uchun).
+ *
+ * Nega xabarlar to'g'ridan-to'g'ri emas, ChatItem sifatida beriladi: sana ajratgichlari va "ketma-ketlik"
+ * (ism/avatar qachon ko'rinishi) ViewModel'da bir marta hisoblanadi. Shunda Composable'lar faqat tayyor
+ * ma'lumotni chizadi, har recomposition'da qo'shni xabarlarni solishtirmaydi va mantiq alohida test qilinadi.
+ */
 sealed interface ChatItem {
     val key: String
 
@@ -18,6 +24,7 @@ sealed interface ChatItem {
         override val key: String get() = message.clientMessageId
     }
 
+    /** Oddiy xabar bubble'i va uni chizish uchun oldindan hisoblangan bayroqlar. */
     data class Bubble(
         val message: Message,
         /** Javob berilgan xabar (bazada bo'lsa) — bubble ichidagi iqtibos uchun. */

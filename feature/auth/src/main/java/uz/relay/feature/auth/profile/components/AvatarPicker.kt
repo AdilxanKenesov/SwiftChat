@@ -21,15 +21,17 @@ import uz.relay.core.designsystem.theme.Brand
 import uz.relay.core.designsystem.theme.SwiftTheme
 
 /**
- * 112dp avatar placeholder: primaryContainer circle with a camera, double ring
- * (5dp bg gap + 2dp primaryContainer) and a 38dp brand "+" badge.
- * Photo upload comes with the media feature.
+ * 112dp avatar joy egallovchisi: kamerali primaryContainer doira, qo'sh halqa
+ * (5dp fon oralig'i + 2dp primaryContainer) va 38dp brend rangli "+" belgisi.
+ * Rasm yuklash media feature bilan qo'shiladi, hozircha faqat ko'rinish.
+ *
+ * Qatlamlar Box ichida ustma-ust qo'yilgan, offset o'rniga alignment/padding ishlatilgan.
  */
 @Composable
 fun AvatarPicker(contentDescription: String, modifier: Modifier = Modifier) {
     val colors = SwiftTheme.colors
 
-    // 112 + 2 × (5dp gap + 2dp ring) = 126
+    // 112 + 2 × (5dp oraliq + 2dp halqa) = 126
     Box(
         modifier = modifier
             .size(126.dp)
@@ -54,6 +56,7 @@ fun AvatarPicker(contentDescription: String, modifier: Modifier = Modifier) {
                 modifier = Modifier.size(36.dp)
             )
         }
+        // Belgi ichki doiraning pastki o'ng burchagiga tekislanadi, shuning uchun 112dp o'lchamli qatlam ichida.
         Box(modifier = Modifier.size(112.dp)) {
             Box(
                 modifier = Modifier
@@ -61,6 +64,7 @@ fun AvatarPicker(contentDescription: String, modifier: Modifier = Modifier) {
                     .padding(bottom = 2.dp)
                     .size(38.dp)
                     .shadow(elevation = 6.dp, shape = CircleShape, ambientColor = Brand, spotColor = Brand)
+                    // Fon rangidagi 3dp chegara belgini avatardan ajratib turadi.
                     .background(colors.bg, CircleShape)
                     .padding(3.dp)
                     .background(Brand, CircleShape),

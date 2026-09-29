@@ -7,6 +7,13 @@ import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 import uz.relay.data.source.local.database.entity.MessageEntity
 
+/**
+ * `messages` jadvali uchun DAO — ham server xabarlari, ham outbox (hali yuborilmaganlar) shu yerda.
+ *
+ * Hamma yozuvlar `clientMessageId` bo'yicha upsert: server javobi, tarix sahifasi va WebSocket echo'si
+ * bir xil xabarni ikki marta qo'shmaydi. Tahrir/o'chirish esa `serverId` bo'yicha, max-wins qoidasi bilan.
+ * Foydalanuvchilar: MessageRepositoryImpl, UpdateApplier, OutboxSender.
+ */
 @Dao
 interface MessageDao {
 
@@ -51,9 +58,11 @@ interface MessageDao {
     @Insert
     suspend fun insert(message: MessageEntity)
 
+    /** Lokal eng eski xabar — tarixni yuqoriga qarab sahifalash shu seq'dan boshlanadi. */
     @Query("SELECT MIN(serverSeq) FROM messages WHERE chatId = :chatId")
     suspend fun minSeq(chatId: String): Long?
 
+    /** Lokal eng yangi xabar — o'qish kursorini yuborish va serverSeq "teshigi"ni aniqlash uchun. */
     @Query("SELECT MAX(serverSeq) FROM messages WHERE chatId = :chatId")
     suspend fun maxSeq(chatId: String): Long?
 
@@ -78,6 +87,9 @@ interface MessageDao {
     @Query("DELETE FROM messages WHERE status = 'SENT'")
     suspend fun deleteAllSynced()
 
+    @Query("DELETE FROM messages WHERE clientMessageId = :clientMessageId")
+    suspend fun delete(clientMessageId: String)
+
     @Query("DELETE FROM messages WHERE chatId = :chatId")
     suspend fun deleteByChat(chatId: String)
 
@@ -87,6 +99,10 @@ interface MessageDao {
     @Query("SELECT * FROM messages WHERE status = 'PENDING' ORDER BY createdAt ASC LIMIT 1")
     suspend fun nextPending(): MessageEntity?
 
+    /**
+     * Server qabul qildi: server id/seq/vaqt yoziladi. `createdAt` server vaqtiga almashtiriladi —
+     * shunda tartib boshqa qurilmalardagidek bo'ladi.
+     */
     @Query(
         """
         UPDATE messages
@@ -97,9 +113,11 @@ interface MessageDao {
     )
     suspend fun markSent(clientMessageId: String, serverId: Long, serverSeq: Long, serverCreatedAt: Long)
 
+    /** Qayta urinib bo'lmaydigan xato — foydalanuvchi o'zi "qayta yuborish"ni bosishi kerak. */
     @Query("UPDATE messages SET status = 'FAILED', sendError = :error WHERE clientMessageId = :clientMessageId")
     suspend fun markFailed(clientMessageId: String, error: String)
 
+    /** "Qayta yuborish": faqat FAILED xabar PENDING'ga qaytadi, keyin outbox uni yana oladi. */
     @Query(
         """
         UPDATE messages SET status = 'PENDING', sendError = NULL

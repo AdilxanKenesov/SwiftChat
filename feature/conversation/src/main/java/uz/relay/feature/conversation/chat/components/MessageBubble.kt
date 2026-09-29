@@ -44,7 +44,7 @@ import uz.relay.feature.conversation.util.formatMessageTime
 import kotlin.math.max
 
 /** Bubble ranglari: kiruvchi va chiquvchi xabar uchun turlicha (spec 1.1). */
-private data class BubbleColors(
+internal data class BubbleColors(
     val container: Color,
     val content: Color,
     val meta: Color,
@@ -53,8 +53,12 @@ private data class BubbleColors(
     val replySnippet: Color
 )
 
+/**
+ * Yo'nalishga qarab bubble ranglarini SwiftTheme'dan yig'adi. Ranglar bitta joyda tanlanadi, shunda matnli,
+ * media va fayl bubble'lari (hamda iqtibos) bir xil palitradan foydalanadi.
+ */
 @Composable
-private fun bubbleColors(isOut: Boolean): BubbleColors {
+internal fun bubbleColors(isOut: Boolean): BubbleColors {
     val colors = SwiftTheme.colors
     return if (isOut) {
         BubbleColors(
@@ -78,14 +82,17 @@ private fun bubbleColors(isOut: Boolean): BubbleColors {
 }
 
 /** Radius 18, "dum" burchagi 6: kiruvchida pastki-chap, chiquvchida pastki-o'ng (spec 1.3). */
-private val IncomingShape = RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp, bottomEnd = 18.dp, bottomStart = 6.dp)
-private val OutgoingShape = RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp, bottomEnd = 6.dp, bottomStart = 18.dp)
+internal val IncomingShape = RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp, bottomEnd = 18.dp, bottomStart = 6.dp)
+internal val OutgoingShape = RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp, bottomEnd = 6.dp, bottomStart = 18.dp)
 
 /** Guruhdagi yuboruvchi ismining rangi — userId'dan barqaror hisoblanadi (ikkala bubble rangida ham o'qiladi). */
 fun senderNameColor(userId: String): Color = SenderNameColors[Math.floorMod(userId.hashCode(), SenderNameColors.size)]
 
 /**
  * Xabar bubble'i (maksimal eni 264dp): [ism] · [javob iqtibosi] · matn/media + ichki meta (vaqt, ✓).
+ *
+ * MessageRow ichida chaqiriladi. Media xabarlar (rasm/video/fayl) MessageMedia.kt'dagi alohida bubble'larga
+ * yo'naltiriladi — shu sababli bu funksiya "dispatcher" vazifasini ham bajaradi va ekran bitta kirish nuqtasini biladi.
  *
  * @param senderName guruhda ketma-ketlikning birinchi xabarida ko'rsatiladi, aks holda `null`.
  * @param replied javob berilgan xabar (bazada bo'lsa); [repliedSenderName] — uning egasi.
@@ -97,8 +104,28 @@ fun MessageBubble(
     replied: Message?,
     repliedSenderName: String?,
     onReplyClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** Fayl yuklab olinmoqda (0..1). */
+    downloadProgress: Float? = null,
+    onCancelUpload: () -> Unit = {}
 ) {
+    // Media xabar — o'z ko'rinishi (o'chirilgan media esa oddiy "Xabar oʻchirildi" bubble'i).
+    val media = message.media.firstOrNull()?.takeIf { !message.isDeleted }
+    if (media != null) {
+        val activeReply = replied
+        when (message.type) {
+            MessageType.IMAGE, MessageType.VIDEO -> {
+                VisualMessageBubble(message, media, senderName, activeReply, repliedSenderName, onReplyClick, onCancelUpload, modifier)
+                return
+            }
+            MessageType.FILE -> {
+                FileMessageBubble(message, media, senderName, activeReply, repliedSenderName, downloadProgress, onReplyClick, onCancelUpload, modifier)
+                return
+            }
+            else -> Unit
+        }
+    }
+
     val isOut = message.isMine
     val bubble = bubbleColors(isOut)
 
@@ -155,7 +182,7 @@ private fun bodyText(message: Message, bubble: BubbleColors): AnnotatedString {
                     append(deleted)
                     pop()
                 }
-                // Media ko'rinishi media bosqichida qo'shiladi; hozircha turi va izohi ko'rsatiladi.
+                // Media meta'si hali kelmagan (masalan, eski lokal yozuv) — turi va izohi matn sifatida.
                 mediaLabel != null -> {
                     pushStyle(SpanStyle(color = bubble.replyAccent, fontWeight = FontWeight.SemiBold))
                     append(mediaLabel)
@@ -183,7 +210,7 @@ fun snippetOf(message: Message): String = when {
 
 /** Javob iqtibosi: radius 10, chapda 3dp rangli chiziq, ism (13/700) + bir qatorli matn. Bosilsa asl xabarga o'tadi. */
 @Composable
-private fun ReplyQuote(
+internal fun ReplyQuote(
     senderName: String?,
     snippet: String,
     colors: BubbleColors,
@@ -228,7 +255,7 @@ private fun ReplyQuote(
 
 /** Meta (12sp): ["tahrirlangan"] · vaqt · [holat belgisi — faqat o'zimning xabarimda]. */
 @Composable
-private fun MessageMeta(message: Message, color: Color) {
+internal fun MessageMeta(message: Message, color: Color) {
     val colors = SwiftTheme.colors
     Row(
         horizontalArrangement = Arrangement.spacedBy(3.dp),
@@ -273,7 +300,7 @@ private data class StatusIcon(val icon: Int, val description: Int, val tint: Col
  * saqlanadi (Compose state emas) — u o'lchash paytida yoziladi va darhol o'qiladi, qayta chizishga sabab bo'lmaydi.
  */
 @Composable
-private fun TextWithInlineMeta(
+internal fun TextWithInlineMeta(
     text: AnnotatedString,
     textColor: Color,
     meta: @Composable () -> Unit

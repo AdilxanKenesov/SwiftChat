@@ -11,11 +11,19 @@ import uz.relay.domain.usecase.chat.ObserveConnectionStatusUseCase
 import uz.relay.domain.usecase.chat.ObserveTypingUseCase
 import uz.relay.domain.usecase.chat.ObserveSyncStatusUseCase
 import uz.relay.domain.usecase.chat.RefreshChatsUseCase
+import uz.relay.domain.usecase.chat.SetChatMutedUseCase
 import uz.relay.domain.usecase.user.ObserveMeUseCase
 import uz.relay.domain.usecase.user.ObserveUserNamesUseCase
 import uz.relay.domain.usecase.user.RefreshMeUseCase
 import javax.inject.Inject
 
+/**
+ * Chatlar ro'yxati ViewModel'i (Orbit MVI). Vazifalari:
+ *  - lokal bazadagi chatlar, ismlar, o'z profilim, ulanish holati va "yozmoqda"ni bitta [ChatsContract.UiState]ga yig'ish;
+ *  - ochilganda server bilan sync qilish;
+ *  - ovozsiz qilish va navigatsiya intent'larini bajarish.
+ * Hilt inject qiladi; runtime argument yo'q, shuning uchun oddiy @Inject (AssistedInject kerak emas).
+ */
 @HiltViewModel
 class ChatsViewModel @Inject constructor(
     private val observeChats: ObserveChatsUseCase,
@@ -26,9 +34,11 @@ class ChatsViewModel @Inject constructor(
     private val observeTyping: ObserveTypingUseCase,
     private val refreshChats: RefreshChatsUseCase,
     private val refreshMe: RefreshMeUseCase,
+    private val setChatMuted: SetChatMutedUseCase,
     private val directions: ChatsContract.Directions
 ) : ViewModel(), ChatsContract.ViewModel {
 
+    // Container yaratilganda (ekran birinchi ochilganda) bir marta: kuzatish, sync va profilni yuklash.
     override val container =
         orbitContainer<ChatsContract.UiState, ChatsContract.SideEffect>(ChatsContract.UiState()) {
             observeData()
@@ -36,12 +46,16 @@ class ChatsViewModel @Inject constructor(
             loadMe()
         }
 
+    /** UI'dan kelgan har bir Intent shu yerda tegishli amalga yo'naltiriladi. */
     override fun onEventDispatcher(intent: ChatsContract.Intent) {
         when (intent) {
             ChatsContract.Intent.OnRetrySync -> sync()
             is ChatsContract.Intent.OnChatClick -> intent { directions.navigateToChat(intent.chatId) }
             ChatsContract.Intent.OnSearchClick -> intent { directions.navigateToSearch() }
+            ChatsContract.Intent.OnNewMessageClick -> intent { directions.navigateToNewMessage() }
             ChatsContract.Intent.OnMyProfileClick -> intent { directions.navigateToMyProfile() }
+            is ChatsContract.Intent.OnMute -> mute { setChatMuted(intent.chatId, intent.duration) }
+            is ChatsContract.Intent.OnUnmute -> mute { setChatMuted(intent.chatId, muted = false) }
         }
     }
 
@@ -84,6 +98,12 @@ class ChatsViewModel @Inject constructor(
             is AppResult.Error ->
                 if (result.error.isRetryable) postSideEffect(ChatsContract.SideEffect.ShowError(result.error))
         }
+    }
+
+    /** Natija (belgi, badge rangi) ro'yxatga bazadan keladi — server javobi darhol yoziladi. Bu yerda faqat xato. */
+    private fun mute(block: suspend () -> AppResult<Unit>) = intent {
+        val result = block()
+        if (result is AppResult.Error) postSideEffect(ChatsContract.SideEffect.ShowActionError(result.error))
     }
 
     /** O'z profilim (app bar avatari uchun). Xato jimgina o'tkaziladi — avatar keyingi safar yuklanadi. */

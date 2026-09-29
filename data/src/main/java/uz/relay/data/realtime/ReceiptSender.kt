@@ -14,12 +14,16 @@ import javax.inject.Singleton
  *
  * Nega javob kutilmaydi: ikkalasi ham max-wins va "clamped" — qiymat yo'qolsa, keyingi (kattaroq yoki teng)
  * qiymat uni to'liq qoplaydi. Takroriy yoki eski qiymat esa serverda shunchaki no-op.
+ *
+ * Chaqiruvchilar: [uz.relay.data.sync.UpdateApplier] (yangi xabar kelganda `received`) va chat ekrani
+ * repository orqali (xabarlar ko'rilganda `read`).
  */
 @Singleton
 class ReceiptSender @Inject constructor(
     private val realtimeClient: RealtimeClient,
     private val messageApi: MessageApi
 ) {
+    /** "O'qildi": chatdagi [upToSeq] gacha bo'lgan xabarlar ko'rildi (yuboruvchida ko'k ✓✓). */
     suspend fun read(chatId: String, upToSeq: Long): AppResult<Unit> =
         if (realtimeClient.send(ClientFrame.Read(chatId, upToSeq))) {
             AppResult.Success(Unit)

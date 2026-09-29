@@ -9,6 +9,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
+// Formatter'lar thread-safe va qimmat — bir marta yaratilib qayta ishlatiladi.
 private val TIME = DateTimeFormatter.ofPattern("HH:mm")
 private val DAY_MONTH = DateTimeFormatter.ofPattern("dd.MM")
 
@@ -40,6 +41,7 @@ fun formatChatTime(
     }
 }
 
+/** Hafta kunining qisqa nomi — tilga qarab string resursdan olinadi. */
 private fun DayOfWeek.shortNameRes(): Int = when (this) {
     DayOfWeek.MONDAY -> R.string.day_mon
     DayOfWeek.TUESDAY -> R.string.day_tue
@@ -48,4 +50,17 @@ private fun DayOfWeek.shortNameRes(): Int = when (this) {
     DayOfWeek.FRIDAY -> R.string.day_fri
     DayOfWeek.SATURDAY -> R.string.day_sat
     DayOfWeek.SUNDAY -> R.string.day_sun
+}
+
+private val DAY_MONTH_TIME = DateTimeFormatter.ofPattern("dd.MM HH:mm")
+
+/** Ovozsiz qilish tugaydigan vaqt: bugun bo'lsa "18:30", aks holda "01.10 18:30". */
+fun formatMuteUntil(
+    epochMillis: Long,
+    now: Long = System.currentTimeMillis(),
+    zone: ZoneId = ZoneId.systemDefault()
+): String {
+    val dateTime = Instant.ofEpochMilli(epochMillis).atZone(zone)
+    val today = LocalDate.ofInstant(Instant.ofEpochMilli(now), zone)
+    return if (dateTime.toLocalDate() == today) TIME.format(dateTime) else DAY_MONTH_TIME.format(dateTime)
 }

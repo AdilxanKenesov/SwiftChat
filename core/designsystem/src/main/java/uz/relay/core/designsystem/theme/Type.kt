@@ -9,6 +9,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import uz.relay.core.designsystem.R
 
+/**
+ * Figtree shrifti — dizayn spec'idagi shrift: zamonaviy, geometrik va kichik o'lchamda ham o'qilishi oson. Fayllar `res/font` da — ilovaga qo'shilgan, shuning uchun tarmoqsiz ham ishlaydi
+ * (downloadable fonts'ga bog'liq emas).
+ */
 val FigtreeFontFamily = FontFamily(
     Font(R.font.figtree_regular, FontWeight.Normal),
     Font(R.font.figtree_medium, FontWeight.Medium),
@@ -17,24 +21,26 @@ val FigtreeFontFamily = FontFamily(
     Font(R.font.figtree_extrabold, FontWeight.ExtraBold),
 )
 
+/** Ilovaning matn uslublari (dizayn spec'idagi shkala). [LocalSwiftTypography] orqali beriladi. */
 @Immutable
 data class SwiftTypography(
-    // Screen h1
+    // Ekran sarlavhasi (h1)
     val displayTitle: TextStyle,
-    // Chat list app bar wordmark
+    // Chatlar ro'yxati app bar'idagi wordmark
     val appTitle: TextStyle,
-    // Chat header, profile name (17–24)
+    // Chat sarlavhasi, profil ismi (17–24)
     val title: TextStyle,
-    // Message body
+    // Xabar matni
     val body: TextStyle,
-    // Row title
+    // Qator sarlavhasi
     val bodyStrong: TextStyle,
-    // Last message, subtitle (13–15)
+    // Oxirgi xabar, izoh qatori (13–15)
     val supporting: TextStyle,
-    // Badges, tabs, chips (12–15)
+    // Belgilar (badge), tab'lar, chip'lar (12–15)
     val label: TextStyle,
 )
 
+/** Figtree uslubini qisqa yaratish uchun yordamchi; lineHeight berilmasa — standart. */
 private fun figtree(size: Int, weight: FontWeight, lineHeight: Int? = null, letterSpacing: Double = 0.0) = TextStyle(
     fontFamily = FigtreeFontFamily,
     fontWeight = weight,
@@ -43,6 +49,7 @@ private fun figtree(size: Int, weight: FontWeight, lineHeight: Int? = null, lett
     letterSpacing = letterSpacing.sp,
 )
 
+/** Standart matn shkalasi (hamma temada bir xil). */
 val DefaultSwiftTypography = SwiftTypography(
     displayTitle = figtree(28, FontWeight.Bold, lineHeight = 34, letterSpacing = -0.4),
     appTitle = figtree(22, FontWeight.ExtraBold),
@@ -53,7 +60,7 @@ val DefaultSwiftTypography = SwiftTypography(
     label = figtree(13, FontWeight.SemiBold),
 )
 
-// Material components fall back to these; every style uses Figtree.
+// Material komponentlar (masalan, Dialog, TextButton) shu uslublarga tayanadi — hammasida Figtree bo'lsin.
 internal val SwiftMaterialTypography = Typography().run {
     Typography(
         displayLarge = displayLarge.copy(fontFamily = FigtreeFontFamily),

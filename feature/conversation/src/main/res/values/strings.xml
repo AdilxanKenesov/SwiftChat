@@ -61,8 +61,34 @@
     <string name="send">Yuborish</string>
     <string name="save">Saqlash</string>
 
+    <!-- Media -->
+    <string name="gallery">Galereya</string>
+    <string name="camera">Kamera</string>
+    <string name="play_video">Videoni ijro etish</string>
+    <string name="cancel_upload">Yuklashni bekor qilish</string>
+    <string name="download">Yuklab olish</string>
+    <string name="size_progress">%1$s / %2$s</string>
+    <string name="file_meta">%1$s · %2$s</string>
+    <string name="size_mb">%1$s MB</string>
+    <string name="size_kb">%1$s KB</string>
+    <string name="close">Yopish</string>
+    <string name="pager_position">%1$d / %2$d</string>
+    <string name="viewer_when">%1$s, %2$s</string>
+    <string name="play">Ijro etish</string>
+    <string name="pause">Pauza</string>
+    <string name="mute_sound">Ovozni oʻchirish</string>
+    <string name="unmute_sound">Ovozni yoqish</string>
+    <string name="saving_to_gallery">Saqlanmoqda — jarayon bildirishnomada</string>
+    <string name="no_app_to_open">Bu faylni ochadigan ilova topilmadi</string>
+    <string name="no_camera_app">Kamera ilovasi topilmadi</string>
+    <string name="error_too_large">Fayl 100 MB dan katta</string>
+    <string name="error_media_prepare">Faylni oʻqib boʻlmadi</string>
+
     <!-- Guruh -->
-    <string name="members_n">%1$d aʼzo</string>
+    <plurals name="members_n">
+        <item quantity="one">%1$d aʼzo</item>
+        <item quantity="other">%1$d aʼzo</item>
+    </plurals>
 
     <!-- Chat ichida qidiruv -->
     <string name="search_in_chat_hint">Xabarlardan qidirish</string>

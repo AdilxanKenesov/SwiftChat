@@ -10,6 +10,13 @@ import dagger.hilt.components.SingletonComponent
 import uz.relay.data.source.local.database.RelayDatabase
 import javax.inject.Singleton
 
+/**
+ * Room bazasi ([RelayDatabase]) va uning DAO'larini Hilt'ga beradi.
+ *
+ * Nega Room: ilova offline-first — UI faqat lokal bazadan o'qiydi (Flow orqali), tarmoq/sync esa bazaga
+ * yozadi. Shunda internet bo'lmasa ham chatlar ko'rinadi va yangilanishlar avtomatik UI'ga yetib boradi.
+ * Baza @Singleton (bitta ulanish havzasi); DAO'lar arzon getter bo'lgani uchun scope'siz beriladi.
+ */
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
@@ -40,4 +47,10 @@ object DatabaseModule {
 
     @Provides
     fun provideChatMemberDao(database: RelayDatabase) = database.chatMemberDao()
+
+    @Provides
+    fun provideUploadDao(database: RelayDatabase) = database.uploadDao()
+
+    @Provides
+    fun provideContactDao(database: RelayDatabase) = database.contactDao()
 }

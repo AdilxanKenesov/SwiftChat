@@ -5,7 +5,11 @@ import okhttp3.Response
 import uz.relay.data.source.local.SessionStorage
 import javax.inject.Inject
 
-/** Adds `Authorization: Bearer <access>`. Installed only on the authorized client. */
+/**
+ * Har bir so'rovga `Authorization: Bearer <access>` sarlavhasini qo'shadi. Faqat authorized klientga
+ * o'rnatiladi (public AuthApi klientiga emas). Token [SessionStorage.current] orqali xotiradagi keshdan
+ * o'qiladi — har so'rovda diskka tegilmaydi. Sessiya bo'lmasa so'rov o'zgarishsiz ketadi.
+ */
 class TokenInterceptor @Inject constructor(
     private val sessionStorage: SessionStorage
 ) : Interceptor {
@@ -19,6 +23,7 @@ class TokenInterceptor @Inject constructor(
         )
     }
 
+    // TokenAuthenticator ham shu konstantalar bilan eski token'ni sarlavhadan ajratib oladi.
     internal companion object {
         const val HEADER = "Authorization"
         const val BEARER_PREFIX = "Bearer "

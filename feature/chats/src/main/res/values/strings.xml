@@ -40,7 +40,6 @@
     <string name="my_profile">Mening profilim</string>
     <string name="new_chat">Yangi chat</string>
     <string name="no_chats">Hali chatlar yoʻq</string>
-    <string name="no_chats_sub">Username orqali odam toping</string>
     <string name="group">Guruh</string>
     <string name="muted">Ovozsiz</string>
     <string name="status_sending">Yuborilmoqda</string>
@@ -49,18 +48,40 @@
     <string name="status_delivered">Yetkazildi</string>
     <string name="status_read">Oʻqildi</string>
 
+    <!-- Ovozsiz qilish (long-press) -->
+    <string name="mute_long">Ovozsiz qilish</string>
+    <string name="mute_1h">1 soatga</string>
+    <string name="mute_8h">8 soatga</string>
+    <string name="mute_1d">1 kunga</string>
+    <string name="mute_forever">Butunlay</string>
+    <string name="unmute">Ovozni yoqish</string>
+    <string name="muted_until">%1$s gacha ovozsiz</string>
+    <string name="muted_forever">Ovozsiz</string>
+
     <!-- Qidiruv -->
     <string name="back">Orqaga</string>
     <string name="search_hint">Username boʻyicha qidirish</string>
     <string name="clear">Tozalash</string>
     <string name="new_group">Yangi guruh</string>
     <string name="users">Foydalanuvchilar</string>
-    <string name="nobody_found">Hech kim topilmadi</string>
-    <string name="no_results_for">«%1$s» boʻyicha natija yoʻq</string>
 
     <!-- Xatolar -->
     <string name="retry">Qayta urinish</string>
     <string name="no_internet">Internet aloqasi yoʻq</string>
     <string name="error_rate_limited">Juda koʻp urinish. Birozdan soʻng qayta urining</string>
     <string name="error_unknown">Nimadir xato ketdi. Qayta urining</string>
+
+    <!-- Yangi xabar va kontaktlar (kontaktlar faqat shu qurilmada saqlanadi) -->
+    <string name="new_message">Yangi xabar</string>
+    <string name="new_contact">Yangi kontakt</string>
+    <string name="contacts">Kontaktlar</string>
+    <string name="no_contacts">Hali kontakt yoʻq</string>
+    <string name="chats_section">Chatlar</string>
+    <string name="nothing_found">Hech narsa topilmadi</string>
+    <string name="add">Qoʻshish</string>
+    <string name="in_contacts">Kontaktlarda</string>
+    <string name="contact_added">%1$s kontaktlarga qoʻshildi</string>
+    <string name="remove_contact_title">%1$s kontaktlardan oʻchirilsinmi?</string>
+    <string name="remove">Oʻchirish</string>
+    <string name="cancel">Bekor qilish</string>
 </resources>

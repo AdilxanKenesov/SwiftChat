@@ -3,6 +3,9 @@ package uz.relay.core.navigation.key
 import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 
+// Ilovaning asosiy qismi ekranlari kalitlari (login'dan keyin).
+
+/** Chatlar ro'yxati — asosiy ekran. */
 @Serializable
 data object ChatsKey : NavKey
 
@@ -21,6 +24,7 @@ data object SearchKey : NavKey
 @Serializable
 data class GroupCreateKey(val addToChatId: String? = null) : NavKey
 
+/** Guruh ma'lumoti: a'zolar, nom, ovozsiz qilish, chiqish. */
 @Serializable
 data class GroupInfoKey(val chatId: String) : NavKey
 
@@ -39,3 +43,15 @@ data object EditProfileKey : NavKey
 /** Boshqa foydalanuvchining profili. */
 @Serializable
 data class UserProfileKey(val userId: String) : NavKey
+
+/** Rasm/video ko'ruvchi: shu chatdagi hamma rasm va videolar orasida suriladi, [clientMessageId] dan boshlanadi. */
+@Serializable
+data class MediaViewerKey(val chatId: String, val clientMessageId: String) : NavKey
+
+/** "Yangi xabar" (chatlar ekranidagi FAB): yangi guruh, yangi kontakt va kontaktlar ro'yxati — Telegram kabi. */
+@Serializable
+data object NewMessageKey : NavKey
+
+/** Username bo'yicha topib, qurilmadagi kontaktlarga qo'shish. */
+@Serializable
+data object AddContactKey : NavKey

@@ -35,6 +35,14 @@ import uz.relay.domain.model.MemberRole
 import uz.relay.domain.repository.GroupRepository
 import javax.inject.Inject
 
+/**
+ * [GroupRepository] implementatsiyasi: guruh yaratish, a'zolar ro'yxati, rol, nom va guruhdan chiqish.
+ *
+ * Server a'zolar ro'yxatini faqat ADMIN/OWNER'ga beradi, shuning uchun oddiy a'zo uchun ro'yxat tarixdagi
+ * SYSTEM xabarlardan tiklanadi. Har bir muvaffaqiyatli so'rov natijasi darhol Room'ga yoziladi (bir nechta
+ * jadval bo'lsa — `withTransaction` ichida, UI oraliq holatni ko'rmasligi uchun).
+ * Guruh yaratish va guruh ma'lumoti ekranlari ishlatadi.
+ */
 @OptIn(ExperimentalCoroutinesApi::class) // flatMapLatest
 internal class GroupRepositoryImpl @Inject constructor(
     private val database: RelayDatabase,
@@ -49,6 +57,7 @@ internal class GroupRepositoryImpl @Inject constructor(
     private val json: Json
 ) : GroupRepository {
 
+    /** Guruh a'zolarini profil (ism, online) bilan birga kuzatadi; `isMe` uchun joriy userId kerak. */
     override fun observeMembers(chatId: String): Flow<List<ChatMember>> = sessionStorage.session
         .map { it?.userId }
         .distinctUntilChanged()
@@ -57,6 +66,7 @@ internal class GroupRepositoryImpl @Inject constructor(
             else memberDao.observe(chatId).map { items -> items.map { it.toDomain(me) } }
         }
 
+    /** A'zolar ro'yxatini serverdan yangilaydi; ruxsat bo'lmasa (403) lokal tarixdan tiklaydi. */
     override suspend fun refreshMembers(chatId: String): AppResult<Unit> {
         // Bo'sh ro'yxat bilan "qo'shish" — hech kim qo'shilmaydi, lekin to'liq ro'yxat qaytadi (faqat ADMIN/OWNER).
         return when (val result = safeApiCall { chatApi.addMembers(chatId, AddMembersRequest(emptyList())) }) {
@@ -120,6 +130,7 @@ internal class GroupRepositoryImpl @Inject constructor(
         }
     }
 
+    /** Guruh yaratadi va yangi chat id'sini qaytaradi (UI darhol suhbatni ochadi). Yaratuvchi — OWNER. */
     override suspend fun createGroup(title: String, memberIds: List<String>): AppResult<String> =
         safeApiCall { chatApi.createGroup(CreateGroupRequest(title = title, memberIds = memberIds)) }
             .map { chat ->
@@ -135,18 +146,22 @@ internal class GroupRepositoryImpl @Inject constructor(
                 chat.id
             }
 
+    /** Server javobi to'liq ro'yxat — lokal ro'yxat u bilan almashtiriladi. */
     override suspend fun addMembers(chatId: String, userIds: List<String>): AppResult<Unit> =
         safeApiCall { chatApi.addMembers(chatId, AddMembersRequest(userIds)) }
             .map { saveSnapshot(chatId, it.members) }
 
+    /** A'zoni guruhdan chiqaradi (ADMIN/OWNER) va lokal ro'yxatdan darhol o'chiradi. */
     override suspend fun removeMember(chatId: String, userId: String): AppResult<Unit> =
         safeApiCall { chatApi.removeMember(chatId, userId) }
             .map { memberDao.delete(chatId, userId) }
 
+    /** Rolni o'zgartiradi (faqat OWNER); server yangilangan a'zo qatorini qaytaradi. */
     override suspend fun changeRole(chatId: String, userId: String, role: MemberRole): AppResult<Unit> =
         safeApiCall { chatApi.changeRole(chatId, userId, ChangeRoleRequest(role.name)) }
             .map { memberDao.upsert(it.toEntity(chatId)) }
 
+    /** Guruh nomini o'zgartiradi; yangilangan chat qatori darhol yoziladi — sarlavha shu zahoti o'zgaradi. */
     override suspend fun rename(chatId: String, title: String): AppResult<Unit> =
         safeApiCall { chatApi.updateChat(chatId, UpdateChatRequest(title = title)) }
             .map { chatDao.upsert(it.toEntity()) }

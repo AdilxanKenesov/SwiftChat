@@ -11,8 +11,10 @@ import uz.relay.core.common.result.AppError
 import uz.relay.core.common.result.AppResult
 import uz.relay.core.common.result.isRetryable
 import uz.relay.data.mapper.toSendRequest
+import uz.relay.data.media.MediaUploader
 import uz.relay.data.model.response.SendMessageResultResponse
 import uz.relay.data.source.local.database.dao.MessageDao
+import uz.relay.data.source.local.database.dao.UploadDao
 import uz.relay.data.source.local.database.entity.MessageEntity
 import uz.relay.data.source.network.api.MessageApi
 import uz.relay.data.source.network.realtime.ClientFrame
@@ -23,6 +25,7 @@ import uz.relay.data.utils.safeApiCall
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/** [OutboxSender.flush] natijasi — [OutboxWorker] uni WorkManager'ning success/retry'iga aylantiradi. */
 enum class FlushResult {
     /** Kutayotgan xabar qolmadi. */
     DONE,
@@ -34,6 +37,15 @@ enum class FlushResult {
 /**
  * Outbox'dagi (PENDING) xabarlarni yuboradi.
  *
+ * Outbox g'oyasi: foydalanuvchi "Yuborish"ni bosganda xabar avval lokal bazaga PENDING holatida yoziladi
+ * va darhol chatda ko'rinadi (optimistik UI). Tarmoqqa jo'natish esa alohida — shu klass orqali, fonda.
+ * Shuning uchun internet yo'q bo'lsa ham xabar yo'qolmaydi, ilova qayta ochilganda ham navbatda turadi.
+ * Chaqiruvchilar: [OutboxWorker] (WorkManager) — [OutboxScheduler] orqali ishga tushiriladi.
+ *
+ * Navbat qat'iy tartibda (eng eskisidan) yuboriladi: vaqtinchalik xatoda to'xtaymiz, doimiy xatoda esa
+ * xabarni FAILED qilib keyingisiga o'tamiz (foydalanuvchi uni qo'lda qayta yuborishi mumkin).
+ * Media xabarda avval fayl [MediaUploader] bilan yuklanadi, keyin xabar `mediaIds` bilan jo'natiladi.
+ *
  * Yo'l tanlash: socket ulangan bo'lsa — `send` frame (tezroq, HTTP yuki yo'q), aks holda REST. Ikkalasi
  * serverda bitta servis va bitta idempotentlik kaliti (`clientMessageId`): shuning uchun bitta xabarni ikki
  * yo'l bilan yuborish ham xavfsiz — server ikkinchisiga asl natijani qaytaradi, dublikat yaratmaydi.
@@ -41,19 +53,41 @@ enum class FlushResult {
 @Singleton
 class OutboxSender @Inject constructor(
     private val messageDao: MessageDao,
+    private val uploadDao: UploadDao,
+    private val mediaUploader: MediaUploader,
     private val messageApi: MessageApi,
     private val realtimeClient: RealtimeClient
 ) {
     /** Ikki flush parallel ketsa, bitta xabar ikki marta yuborilardi (zararsiz, lekin befoyda). */
     private val mutex = Mutex()
 
+    /** Navbat bo'shaguncha yoki vaqtinchalik xatoga uchraguncha PENDING xabarlarni ketma-ket yuboradi. */
     suspend fun flush(): FlushResult = mutex.withLock { flushLocked() }
 
+    /** [flush]ning asosiy tsikli; Mutex allaqachon olingan. */
     private suspend fun flushLocked(): FlushResult {
         while (true) {
             val message = messageDao.nextPending() ?: return FlushResult.DONE
 
-            when (val result = sendViaSocket(message) ?: sendViaRest(message)) {
+            // Media xabar: avval fayl (to'xtagan joyidan), keyin xabarning o'zi `mediaIds` bilan.
+            // Navbat tartibi saqlanadi — katta video yuklanayotganda undan keyingi matn ham kutadi.
+            val mediaIds = uploadDao.get(message.clientMessageId)?.let { upload ->
+                when (val uploaded = mediaUploader.upload(upload)) {
+                    is AppResult.Success -> listOf(uploaded.data)
+                    is AppResult.Error -> {
+                        // Foydalanuvchi bekor qildi — xabar allaqachon o'chirilgan, keyingisiga o'tamiz.
+                        if (messageDao.get(message.clientMessageId) == null) continue
+                        if (uploaded.error.isRetryable) return FlushResult.RETRY_LATER
+                        // Doimiy xato (masalan, fayl juda katta yoki taqiqlangan tur) — qayta urinish befoyda.
+                        messageDao.markFailed(message.clientMessageId, uploaded.error.code())
+                        continue
+                    }
+                }
+            }
+
+            // Avval socket; u natija bermasa (`null`) — xuddi shu clientMessageId bilan REST.
+            when (val result = sendViaSocket(message, mediaIds) ?: sendViaRest(message, mediaIds)) {
+                // PENDING qator server bergan id/seq bilan SENT bo'ladi (echo oldinroq kelgan bo'lsa ham zararsiz).
                 is AppResult.Success -> messageDao.markSent(
                     clientMessageId = message.clientMessageId,
                     serverId = result.data.serverId,
@@ -77,7 +111,7 @@ class OutboxSender @Inject constructor(
      * Ack yo'qolishi mumkin (uzilish, chaos mode) — shuning uchun kutish vaqti cheklangan. Keyin xuddi shu
      * clientMessageId REST'da yuboriladi: xabar allaqachon saqlangan bo'lsa server asl natijani qaytaradi.
      */
-    private suspend fun sendViaSocket(message: MessageEntity): AppResult<SendMessageResultResponse>? {
+    private suspend fun sendViaSocket(message: MessageEntity, mediaIds: List<String>?): AppResult<SendMessageResultResponse>? {
         if (realtimeClient.state.value != RealtimeState.CONNECTED) return null
 
         return coroutineScope {
@@ -96,9 +130,11 @@ class OutboxSender @Inject constructor(
                     chatId = message.chatId,
                     messageType = message.type,
                     body = message.body,
+                    mediaIds = mediaIds,
                     replyTo = message.replyToClientMessageId
                 )
             )
+            // Frame socket'ga yozilmadi (shu lahzada uzilgan) — obunani bekor qilib REST'ga o'tamiz.
             if (!sent) {
                 reply.cancel()
                 return@coroutineScope null
@@ -112,6 +148,7 @@ class OutboxSender @Inject constructor(
                 is ServerFrame.Nack -> AppResult.Error(
                     AppError.Api(httpStatus = 0, code = frame.code, message = frame.message, retryable = frame.retryable)
                 )
+                // Timeout: ack kelmadi — REST'ga o'tamiz (idempotentlik dublikatdan saqlaydi).
                 else -> {
                     reply.cancel()
                     null
@@ -121,9 +158,10 @@ class OutboxSender @Inject constructor(
     }
 
     /** 201 — yangi, 200 — replay (javob avval yo'qolgan edi). Ikkalasida ham natija bir xil. */
-    private suspend fun sendViaRest(message: MessageEntity): AppResult<SendMessageResultResponse> =
-        safeApiCall { messageApi.sendMessage(message.chatId, message.toSendRequest()) }
+    private suspend fun sendViaRest(message: MessageEntity, mediaIds: List<String>?): AppResult<SendMessageResultResponse> =
+        safeApiCall { messageApi.sendMessage(message.chatId, message.toSendRequest(mediaIds)) }
 
+    /** FAILED xabarga yoziladigan xato kodi (UI sababni ko'rsatishi uchun). */
     private fun AppError.code(): String = when (this) {
         is AppError.Api -> code
         AppError.Network -> "NETWORK"
@@ -131,6 +169,7 @@ class OutboxSender @Inject constructor(
     }
 
     private companion object {
+        /** Socket orqali ack'ni kutish chegarasi; o'tsa REST'ga o'tiladi. */
         const val ACK_TIMEOUT_MS = 10_000L
     }
 }

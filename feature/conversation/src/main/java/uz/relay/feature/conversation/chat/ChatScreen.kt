@@ -1,5 +1,15 @@
 package uz.relay.feature.conversation.chat
 
+import uz.relay.core.designsystem.R as DesignR
+import uz.relay.core.designsystem.component.SwiftDialog
+import uz.relay.core.designsystem.component.SwiftSnackbarHost
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.core.content.FileProvider
+import uz.relay.feature.conversation.chat.components.AttachSheet
+import java.io.File
 import android.content.ClipData
 import android.os.Build
 import androidx.compose.foundation.background
@@ -21,12 +31,9 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -72,6 +79,16 @@ import uz.relay.feature.conversation.util.formatDateSeparator
 import uz.relay.feature.conversation.util.messageRes
 import uz.relay.feature.conversation.util.systemText
 
+/**
+ * Suhbat ekrani (Nav3 entry: ChatKey). Chatlar ro'yxatidan, push'dan, profil yoki qidiruvdan ochiladi; bu yerdan
+ * guruh ma'lumoti, foydalanuvchi profili va media ko'ruvchiga o'tiladi.
+ *
+ * Bu "stateful" qism: ViewModel'ni (AssistedInject factory orqali `chatId` bilan) oladi, state'ni kuzatadi va
+ * SideEffect'larni Snackbar yoki tashqi Intent'ga aylantiradi. Chizish esa [ChatScreenContent]da — u faqat
+ * state va callback oladi, shuning uchun Preview'da ViewModel'siz ishlaydi.
+ *
+ * @param focusMessageId qidiruvdan kelinganda shu xabarga bir marta scroll qilinadi.
+ */
 @Composable
 internal fun ChatScreen(chatId: String, focusMessageId: String? = null) {
     val viewModel = hiltViewModel<ChatViewModel, ChatViewModel.Factory>(
@@ -85,6 +102,11 @@ internal fun ChatScreen(chatId: String, focusMessageId: String? = null) {
         when (sideEffect) {
             is ChatContract.SideEffect.ShowError ->
                 snackbarHostState.showSnackbar(context.getString(sideEffect.error.messageRes()))
+
+            is ChatContract.SideEffect.OpenFile ->
+                if (!openFile(context, sideEffect.path, sideEffect.mimeType)) {
+                    snackbarHostState.showSnackbar(context.getString(R.string.no_app_to_open))
+                }
         }
     }
 
@@ -96,6 +118,15 @@ internal fun ChatScreen(chatId: String, focusMessageId: String? = null) {
     )
 }
 
+/**
+ * Chat UI'si: sarlavha, xabarlar ro'yxati, yozish paneli va ustki qatlamlar (biriktirish sheet'i, xabar menyusi,
+ * o'chirish dialogi).
+ *
+ * Ro'yxat `reverseLayout = true` LazyColumn: 0-element (eng yangi xabar) pastda turadi. Shunday qilinganda
+ * chat ochilganda qo'shimcha scroll kerak emas, yangi xabar qo'shilganda pozitsiya sakramaydi va eski sahifalar
+ * ro'yxat oxiriga (ekranda yuqoriga) qo'shiladi. Menyu/dialog kabi vaqtinchalik UI holati ViewModel'ga emas,
+ * shu yerda `remember` ichida saqlanadi — bu faqat ko'rinishga tegishli.
+ */
 @Composable
 private fun ChatScreenContent(
     uiState: ChatContract.UiState,
@@ -112,6 +143,8 @@ private fun ChatScreenContent(
     val items = uiState.items
 
     var menuTarget by remember { mutableStateOf<MenuTarget?>(null) }
+    // Saveable: kamera/fayl tanlovchi ochiq paytda Activity qayta yaratilsa ham natija shu sheet'ga qaytadi.
+    var showAttach by rememberSaveable { mutableStateOf(false) }
     var deleteTarget by remember { mutableStateOf<Message?>(null) }
 
     // reverseLayout: 0-element ekranning eng pastida. Pastda turibmizmi — o'qildi kvitansiyasi shunga bog'liq.
@@ -164,7 +197,7 @@ private fun ChatScreenContent(
                 names = uiState.userNames,
                 memberCount = uiState.memberCount,
                 onBack = { onEventDispatcher(ChatContract.Intent.OnBack) },
-                // Guruhda — guruh ma'lumoti. Shaxsiy chatda foydalanuvchi profili profil bosqichida qo'shiladi.
+                // Guruhda — guruh ma'lumoti, shaxsiy chatda — suhbatdoshning profili (tanlovni ViewModel qiladi).
                 onTitleClick = { onEventDispatcher(ChatContract.Intent.OnOpenInfo) },
                 onMoreClick = { onEventDispatcher(ChatContract.Intent.OnOpenInfo) },
                 modifier = Modifier
@@ -197,7 +230,10 @@ private fun ChatScreenContent(
                                 val index = items.indexOfFirst { it.key == item.message.replyToClientMessageId }
                                 if (index >= 0) scope.launch { listState.animateScrollToItem(index) }
                             },
-                            onRetry = { onEventDispatcher(ChatContract.Intent.OnRetry(item.message)) }
+                            onRetry = { onEventDispatcher(ChatContract.Intent.OnRetry(item.message)) },
+                            onMediaClick = { onEventDispatcher(ChatContract.Intent.OnMediaClick(item.message)) },
+                            onCancelUpload = { onEventDispatcher(ChatContract.Intent.OnCancelUpload(item.message)) },
+                            downloadProgress = uiState.fileDownloads[item.message.clientMessageId]
                         )
                     }
                 }
@@ -223,8 +259,7 @@ private fun ChatScreenContent(
                 onTextChange = { onEventDispatcher(ChatContract.Intent.OnTextChange(it)) },
                 onSend = { onEventDispatcher(ChatContract.Intent.OnSend) },
                 onCancelMode = { onEventDispatcher(ChatContract.Intent.OnCancelComposerMode) },
-                // Rasm/video/fayl yuborish media bosqichida qo'shiladi.
-                onAttach = {},
+                onAttach = { showAttach = true },
                 // Klaviatura ochiq bo'lsa uning balandligi, yopiq bo'lsa navigatsiya paneli — qaysi katta bo'lsa.
                 modifier = Modifier
                     .background(colors.bg)
@@ -232,13 +267,24 @@ private fun ChatScreenContent(
             )
         }
 
-        SnackbarHost(
+        SwiftSnackbarHost(
             hostState = snackbarHostState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 72.dp)
-                .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars).only(WindowInsetsSides.Bottom))
+            modifier = Modifier.align(Alignment.TopCenter)
         )
+
+        if (showAttach) {
+            AttachSheet(
+                onDismiss = { showAttach = false },
+                onPicked = { attachment ->
+                    showAttach = false
+                    onEventDispatcher(ChatContract.Intent.OnAttach(attachment))
+                },
+                onCameraUnavailable = {
+                    showAttach = false
+                    scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.no_camera_app)) }
+                }
+            )
+        }
 
         menuTarget?.let { target ->
             MessageMenuOverlay(
@@ -272,24 +318,19 @@ private fun ChatScreenContent(
         }
 
         deleteTarget?.let { message ->
-            AlertDialog(
-                onDismissRequest = { deleteTarget = null },
-                containerColor = colors.menu,
-                title = { Text(stringResource(R.string.delete_title), color = colors.text) },
-                text = { Text(stringResource(R.string.delete_text), color = colors.text2) },
-                confirmButton = {
-                    TextButton(onClick = {
-                        deleteTarget = null
-                        onEventDispatcher(ChatContract.Intent.OnDelete(message))
-                    }) {
-                        Text(stringResource(R.string.delete), color = colors.error, fontWeight = FontWeight.SemiBold)
-                    }
+            // Qisqa savol + bir qatorli izoh ("hamma uchun o'chiriladi" — qaytarib bo'lmasligini bildiradi).
+            SwiftDialog(
+                title = stringResource(R.string.delete_title),
+                text = stringResource(R.string.delete_text),
+                confirmText = stringResource(R.string.delete),
+                dismissText = stringResource(R.string.cancel),
+                icon = DesignR.drawable.ic_trash,
+                destructive = true,
+                onConfirm = {
+                    deleteTarget = null
+                    onEventDispatcher(ChatContract.Intent.OnDelete(message))
                 },
-                dismissButton = {
-                    TextButton(onClick = { deleteTarget = null }) {
-                        Text(stringResource(R.string.cancel), color = colors.primary)
-                    }
-                }
+                onDismiss = { deleteTarget = null }
             )
         }
     }
@@ -299,6 +340,7 @@ private fun ChatScreenContent(
 private const val LOAD_OLDER_THRESHOLD = 8
 
 // ---------------- Preview'lar ----------------
+// Shaxsiy chat: turli holatdagi xabarlar (yuborilmoqda, xato, o'chirilgan, tahrirlangan, javob), javob va tahrir rejimlari.
 
 private const val ME = "me"
 private const val PEER = "jasur"
@@ -391,3 +433,21 @@ private fun ChatReplyLightPreview() =
 @Composable
 private fun ChatEditDarkPreview() =
     ChatPreview(true, previewState(ChatContract.ComposerMode.Edit(PreviewMessages[2]), "Yetib borgach darhol yozaman"))
+
+/**
+ * Faylni tizimdagi mos ilovada ochadi (PDF ko'ruvchi, Excel...). `file://` boshqa ilovaga berilmaydi —
+ * FileProvider `content://` beradi va faqat o'qish ruxsatini vaqtincha ulashadi.
+ * @return `false` — bunday faylni ochadigan ilova yo'q.
+ */
+private fun openFile(context: Context, path: String, mimeType: String): Boolean {
+    val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", File(path))
+    val intent = Intent(Intent.ACTION_VIEW)
+        .setDataAndType(uri, mimeType)
+        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    return try {
+        context.startActivity(Intent.createChooser(intent, null).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        true
+    } catch (e: ActivityNotFoundException) {
+        false
+    }
+}

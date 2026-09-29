@@ -1,7 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- NetworkMonitor: internet bor-yo'qligini kuzatish uchun (ConnectivityManager). -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!--
+        Galereyaga saqlash foreground service'da ishlaydi (MediaSaveWorker → WorkManager'ning
+        SystemForegroundService'i): foydalanuvchi ilovadan chiqib ketsa ham tizim uni to'xtatmaydi va
+        jarayon bildirishnomada ko'rinib turadi. Android 14+ da har bir foreground service turini e'lon qilish shart.
+    -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <!-- Android 13+: bildirishnoma ko'rsatish uchun runtime ruxsat (ko'ruvchi ekranida so'raladi). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application>
+        <!-- WorkManager'ning o'z servisi — unga faqat foreground turi qo'shiladi (tools:node="merge"). -->
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            android:foregroundServiceType="dataSync"
+            tools:node="merge" />
+    </application>
 
 </manifest>

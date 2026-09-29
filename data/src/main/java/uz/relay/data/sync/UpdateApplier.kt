@@ -38,7 +38,11 @@ import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** `kind` bo'yicha o'qilgan update. Noma'lum `kind` lar bu yerga umuman kirmaydi. */
+/**
+ * `kind` bo'yicha o'qilgan (typed) update. Noma'lum `kind` lar bu yerga umuman kirmaydi.
+ * Xom JSON payload'ni avval bir marta decode qilib olamiz — keyingi bosqichlar (tarmoq, tranzaksiya)
+ * tayyor obyektlar bilan ishlaydi va JSON'ni qayta-qayta parse qilmaydi.
+ */
 private sealed interface Decoded {
     data class NewMessage(val message: MessageResponse) : Decoded
     data class Edit(val payload: MessageEditPayload) : Decoded
@@ -50,8 +54,12 @@ private sealed interface Decoded {
 }
 
 /**
- * Update'larni lokal bazaga qo'llaydi. REST catch-up ham, keyinroq WebSocket'ning jonli frame'lari ham
- * shu yerdan o'tadi — mantiq bitta joyda.
+ * Update'larni lokal bazaga qo'llaydi. REST catch-up ham, WebSocket'ning jonli frame'lari ham
+ * shu yerdan o'tadi — mantiq bitta joyda. Faqat [SyncEngine] chaqiradi (uning Mutex'i ostida), shuning
+ * uchun bu klassning o'zi parallel chaqiruvlardan himoyalanmagan.
+ *
+ * UI to'g'ridan-to'g'ri Room'dan o'qiydi (Flow orqali), shuning uchun bu yerda bazaga yozilgan har bir
+ * o'zgarish ekranga avtomatik chiqadi — UI bilan alohida aloqa kerak emas.
  *
  * Asosiy qoida — IDEMPOTENTLIK: bitta update ikki marta kelsa ham natija bir xil bo'lishi kerak
  * (chaos mode dublikatlari, bootstrap bilan catch-up'ning ustma-ust tushishi):
@@ -65,6 +73,7 @@ private sealed interface Decoded {
  *     ichida tarmoqni kutish bazani uzoq qulflab, UI'ni qotirardi.
  *  2. Bitta tranzaksiya: hamma o'zgarishlar + kursor birga yoziladi. Ilova o'rtada o'ldirilsa, hech narsa
  *     yarim qolmaydi — yo hammasi qo'llangan, yo hech biri (va keyingi sync ularni qaytadan beradi).
+ *  3. Tranzaksiyadan keyin tashqi yon ta'sirlar: typing belgisini tozalash va "yetkazildi" kvitansiyasi.
  */
 @Singleton
 class UpdateApplier @Inject constructor(
@@ -145,6 +154,7 @@ class UpdateApplier @Inject constructor(
             .forEach { (chatId, upToSeq) -> receiptSender.received(chatId, upToSeq) }
     }
 
+    /** Bitta decode qilingan update'ni bazaga yozadi. Faqat tranzaksiya ichida chaqiriladi. */
     private suspend fun applyOne(update: Decoded, myUserId: String) {
         when (update) {
             is Decoded.NewMessage -> applyNewMessage(update.message, myUserId)
@@ -200,6 +210,10 @@ class UpdateApplier @Inject constructor(
         }
     }
 
+    /**
+     * Yangi xabarni `clientMessageId` bo'yicha upsert qiladi va chat qatorini (oxirgi xabar, topSeq,
+     * o'qilmaganlar soni) yangilaydi. Dublikat yoki eski nusxa kelsa, holat buzilmaydi.
+     */
     private suspend fun applyNewMessage(message: MessageResponse, myUserId: String) {
         val existing = messageDao.get(message.clientMessageId)
         // Server bergan va keyin tahrirlangan/o'chirilgan xabarni eski nusxa bilan bosib ketmaymiz
@@ -258,6 +272,7 @@ class UpdateApplier @Inject constructor(
         if (last.serverId == serverId) chatDao.upsert(chat.copy(lastMessage = change(last)))
     }
 
+    /** Xom update'ni `kind` bo'yicha typed [Decoded]ga aylantiradi; noma'lum yoki buzuq bo'lsa — `null`. */
     private fun decode(update: UpdateResponse): Decoded? = try {
         when (update.kind) {
             UpdateKinds.MESSAGE_NEW -> Decoded.NewMessage(json.decodeFromJsonElement(MessageResponse.serializer(), update.payload))
@@ -274,6 +289,7 @@ class UpdateApplier @Inject constructor(
         // Bitta buzuq payload butun oqimni to'xtatib qo'ymasin.
         null
     } catch (e: IllegalArgumentException) {
+        // Majburiy maydon yetishmasa kotlinx.serialization shu xatoni ham tashlashi mumkin.
         null
     }
 
@@ -285,5 +301,6 @@ class UpdateApplier @Inject constructor(
     }
 }
 
+// Server qaytaradigan rol nomlari (ChatMemberEntity.role bilan bir xil satrlar).
 private const val ROLE_OWNER = "OWNER"
 private const val ROLE_MEMBER = "MEMBER"

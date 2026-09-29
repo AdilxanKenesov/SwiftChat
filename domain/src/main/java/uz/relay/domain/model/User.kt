@@ -1,5 +1,9 @@
 package uz.relay.domain.model
 
+/**
+ * Foydalanuvchi profili (o'zim yoki boshqa odam). Lokal keshdan o'qiladi; online holati socket'dagi
+ * `presence` hodisalari bilan yangilanadi.
+ */
 data class User(
     val id: String,
     val username: String?,

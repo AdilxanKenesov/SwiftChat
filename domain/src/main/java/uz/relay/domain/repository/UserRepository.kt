@@ -4,8 +4,16 @@ import kotlinx.coroutines.flow.Flow
 import uz.relay.core.common.result.AppResult
 import uz.relay.domain.model.User
 
+/**
+ * Foydalanuvchilar: mening profilim, boshqalar profili, qidiruv va ismlar keshi.
+ *
+ * Nega interface: domain toza Kotlin moduli (Android'ga bog'liq emas) va faqat shartnomani belgilaydi,
+ * amalga oshirish esa `data` modulida (Retrofit + Room). Shunda feature modullar data'ni bilmaydi,
+ * use case'larni fake repository bilan oson test qilish mumkin (clean architecture, dependency inversion).
+ */
 interface UserRepository {
 
+    /** Ism va username'ni serverda yangilaydi; javob keshga ham yoziladi. */
     suspend fun updateProfile(displayName: String, username: String): AppResult<User>
 
     /** Mening profilim (lokal keshdan). Hali yuklanmagan bo'lsa `null`. */

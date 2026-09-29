@@ -16,7 +16,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import uz.relay.core.designsystem.theme.Brand
 
-/** Brand background, white icon, colored glow. Same color in dark theme. */
+/**
+ * Brand rangli fon, oq ikonka va rangli "nur" (glow) soyali kvadrat plitka — login ekranlaridagi
+ * brend ikonkalari uchun. Tungi temada ham rang o'zgarmaydi ([Brand] ikkala temada bir xil).
+ */
 @Composable
 fun BrandTile(
     @DrawableRes icon: Int,

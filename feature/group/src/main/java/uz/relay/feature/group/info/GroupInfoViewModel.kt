@@ -20,6 +20,13 @@ import uz.relay.domain.usecase.group.RefreshMembersUseCase
 import uz.relay.domain.usecase.group.RemoveMemberUseCase
 import uz.relay.domain.usecase.group.RenameGroupUseCase
 
+/**
+ * Guruh ma'lumotlari ekranining ViewModel'i (Orbit MVI).
+ *
+ * `chatId` Nav3 kalitidan runtime'da keladi, shuning uchun `@AssistedInject` + [Factory] ishlatiladi —
+ * qolgan use case'larni Hilt o'zi beradi. Ma'lumot manbasi — lokal baza (Room): ekran uni kuzatadi, amallar esa
+ * serverga yuboriladi va natija sinxronizatsiya orqali bazaga, u yerdan UI'ga qaytadi (yagona haqiqat manbasi).
+ */
 @HiltViewModel(assistedFactory = GroupInfoViewModel.Factory::class)
 class GroupInfoViewModel @AssistedInject constructor(
     @Assisted private val chatId: String,
@@ -35,17 +42,20 @@ class GroupInfoViewModel @AssistedInject constructor(
     private val directions: GroupInfoContract.Directions
 ) : ViewModel(), GroupInfoContract.ViewModel {
 
+    /** Hilt generatsiya qiladigan factory: ekran `hiltViewModel(creationCallback = ...)` ichida chaqiradi. */
     @AssistedFactory
     interface Factory {
         fun create(chatId: String): GroupInfoViewModel
     }
 
+    // Container yaratilganda: bazani kuzatish boshlanadi va a'zolar ro'yxati serverdan bir marta yangilanadi.
     override val container =
         orbitContainer<GroupInfoContract.UiState, GroupInfoContract.SideEffect>(GroupInfoContract.UiState()) {
             observeData()
             refresh()
         }
 
+    /** UI'dan keladigan barcha Intent'lar uchun yagona kirish nuqtasi. */
     override fun onEventDispatcher(intent: GroupInfoContract.Intent) {
         when (intent) {
             GroupInfoContract.Intent.OnBack -> intent { directions.back() }
@@ -62,6 +72,7 @@ class GroupInfoViewModel @AssistedInject constructor(
 
     /** Ekran lokal bazani kuzatadi: a'zo qo'shilsa/chiqarilsa (o'zim yoki boshqa qurilma, socket) ro'yxat o'zi yangilanadi. */
     private fun observeData() = intent {
+        // `repeatOnSubscription`: ekran ko'rinib turgandagina kuzatadi, fonda keraksiz ishlamaydi.
         repeatOnSubscription {
             combine(observeChat(chatId), observeMembers(chatId)) { chat, members -> chat to members }
                 .collect { (chat, members) -> reduce { state.copy(chat = chat, members = members) } }
@@ -76,11 +87,13 @@ class GroupInfoViewModel @AssistedInject constructor(
         }
     }
 
+    /** Ovozsiz rejimni almashtiradi (joriy holat bazadagi chatdan olinadi). */
     private fun toggleMute() = intent {
         val muted = state.chat?.muted ?: return@intent
         runAction { setChatMuted(chatId, !muted) }
     }
 
+    /** A'zo bilan shaxsiy chatni ochadi (bo'lmasa server yaratadi) va unga o'tadi. */
     private fun writeMessage(userId: String) = intent {
         when (val result = openDirectChat(userId)) {
             is AppResult.Success -> directions.navigateToChat(result.data)
@@ -88,6 +101,7 @@ class GroupInfoViewModel @AssistedInject constructor(
         }
     }
 
+    /** Guruhdan chiqish: muvaffaqiyatda chatlar ro'yxatiga qaytiladi, chunki guruh chati endi mavjud emas. */
     private fun leave() = intent {
         if (state.isBusy) return@intent
         reduce { state.copy(isBusy = true) }
@@ -106,6 +120,7 @@ class GroupInfoViewModel @AssistedInject constructor(
     /** Oddiy amal: natija ro'yxatga baza orqali keladi, bu yerda faqat xato ko'rsatiladi. */
     private fun action(block: suspend () -> AppResult<Unit>) = intent { runAction(block) }
 
+    /** `isBusy` bilan himoyalangan umumiy amal: ikki marta bosishda so'rov takrorlanmaydi, xato bo'lsa snackbar. */
     private suspend fun Syntax<GroupInfoContract.UiState, GroupInfoContract.SideEffect>.runAction(
         block: suspend () -> AppResult<Unit>
     ) {

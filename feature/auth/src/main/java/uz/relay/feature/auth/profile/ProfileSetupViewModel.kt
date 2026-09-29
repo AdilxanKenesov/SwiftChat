@@ -12,6 +12,12 @@ import uz.relay.domain.usecase.auth.CompleteProfileSetupUseCase
 import uz.relay.domain.usecase.user.UpdateProfileUseCase
 import javax.inject.Inject
 
+/**
+ * Profil sozlash ekranining ViewModel'i: ism va username'ni tekshiradi, profilni serverga saqlaydi.
+ *
+ * Username band bo'lsa (409 USERNAME_TAKEN) xatoni snackbar emas, maydon ostida ko'rsatadi va
+ * bosib tanlash mumkin bo'lgan muqobil variantlarni taklif qiladi.
+ */
 @HiltViewModel
 class ProfileSetupViewModel @Inject constructor(
     private val updateProfile: UpdateProfileUseCase,
@@ -31,11 +37,12 @@ class ProfileSetupViewModel @Inject constructor(
         }
     }
 
-    // Text input must update synchronously, otherwise fast typing makes the cursor jump.
+    // Matn kiritish sinxron yangilanishi kerak (blockingIntent), aks holda tez yozganda kursor sakraydi.
     private fun setName(name: String) = blockingIntent {
         reduce { state.copy(name = name.take(ProfileRules.NAME_MAX)) }
     }
 
+    // Faqat lotin harflari, raqamlar va "_" qabul qilinadi; yangi qiymat kiritilgach "band" xatosi va takliflar tozalanadi.
     private fun setUsername(username: String) = blockingIntent {
         reduce {
             state.copy(
@@ -53,7 +60,7 @@ class ProfileSetupViewModel @Inject constructor(
 
         when (val result = updateProfile(displayName = state.name.trim(), username = state.username)) {
             is AppResult.Success -> {
-                // The profile is complete: drop the flag, then open the main part.
+                // Profil to'ldirildi: bayroqni olib tashlaymiz, keyin asosiy qismni ochamiz.
                 completeProfileSetup()
                 reduce { state.copy(saving = false) }
                 directions.navigateToChats()
@@ -73,7 +80,7 @@ class ProfileSetupViewModel @Inject constructor(
         }
     }
 
-    /** Two suggestions, e.g. `name_dev`, `name01`; the base is cut so they stay within 32 chars. */
+    /** Ikkita taklif, masalan `name_dev`, `name01`; asos 32 belgidan oshmasligi uchun qirqiladi. */
     private fun suggestionsFor(username: String): List<String> = listOf("_dev", "01")
         .map { suffix -> username.take(ProfileRules.USERNAME_MAX - suffix.length) + suffix }
         .filter(ProfileRules::isUsernameValid)

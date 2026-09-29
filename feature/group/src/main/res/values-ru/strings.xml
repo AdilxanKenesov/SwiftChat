@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ruscha tarjima. Kalitlar values/strings.xml (o'zbekcha, asosiy) bilan bir xil. -->
+<resources>
+    <string name="back">Назад</string>
+    <string name="new_group">Новая группа</string>
+    <string name="add_members">Добавить участников</string>
+    <plurals name="selected_n">
+        <item quantity="one">Выбран %1$d</item>
+        <item quantity="few">Выбрано %1$d</item>
+        <item quantity="many">Выбрано %1$d</item>
+        <item quantity="other">Выбрано %1$d</item>
+    </plurals>
+    <string name="search_hint">Поиск по имени пользователя</string>
+    <string name="name_and_photo">Название и фото</string>
+    <string name="group_name">Название группы</string>
+    <plurals name="members_n">
+        <item quantity="one">%1$d участник</item>
+        <item quantity="few">%1$d участника</item>
+        <item quantity="many">%1$d участников</item>
+        <item quantity="other">%1$d участника</item>
+    </plurals>
+    <string name="next">Далее</string>
+    <string name="create_group">Создать группу</string>
+    <string name="remove_selected">Убрать</string>
+    <string name="no_people">Никого не найдено</string>
+    <string name="edit">Изменить</string>
+    <string name="members_online">%1$s · %2$d в сети</string>
+    <string name="mute">Без звука</string>
+    <string name="search">Поиск</string>
+    <string name="add">Добавить</string>
+    <string name="members">Участники</string>
+    <string name="you_suffix">%1$s (вы)</string>
+    <string name="owner">Владелец</string>
+    <string name="admin">Админ</string>
+    <string name="member">Участник</string>
+    <string name="make_admin">Сделать админом</string>
+    <string name="make_member">Сделать участником</string>
+    <string name="write_message">Написать сообщение</string>
+    <string name="remove_from_group">Удалить из группы</string>
+    <string name="leave_group">Покинуть группу</string>
+    <string name="leave_title">Покинуть группу?</string>
+    <string name="leave_confirm">Выйти</string>
+    <string name="remove_title">Удалить %1$s из группы?</string>
+    <string name="remove_confirm">Удалить</string>
+    <string name="rename_title">Название группы</string>
+    <string name="save">Сохранить</string>
+    <string name="cancel">Отмена</string>
+    <string name="unknown_user">Неизвестный</string>
+    <string name="no_internet">Нет подключения к интернету</string>
+    <string name="error_rate_limited">Слишком много попыток. Повторите чуть позже</string>
+    <string name="error_forbidden">Нет прав на это действие</string>
+    <string name="error_unknown">Что-то пошло не так. Повторите попытку</string>
+</resources>

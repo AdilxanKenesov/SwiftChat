@@ -11,6 +11,13 @@ import uz.relay.domain.model.ConnectionStatus
 import uz.relay.domain.repository.ConnectionRepository
 import javax.inject.Inject
 
+/**
+ * [ConnectionRepository] implementatsiyasi: sarlavhadagi "Ulanmoqda... / Yangilanmoqda..." indikatori uchun
+ * yagona holat.
+ *
+ * Uch manbani birlashtiradi — tarmoq ([NetworkMonitor]), socket holati ([RealtimeClient]) va sync
+ * ([SyncEngine]) — UI har birini alohida kuzatib, mantiqni takrorlamasligi uchun. Chat ro'yxati ekrani ishlatadi.
+ */
 internal class ConnectionRepositoryImpl @Inject constructor(
     networkMonitor: NetworkMonitor,
     realtimeClient: RealtimeClient,

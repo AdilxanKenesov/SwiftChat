@@ -2,6 +2,10 @@ package uz.relay.data.model.response
 
 import kotlinx.serialization.Serializable
 
+/**
+ * `GET /v1/users/me` — o'zimning profilim. [UserResponse] dan farqi: telefon raqami ham keladi
+ * (u faqat egasiga ko'rsatiladi). [avatarVersion] avatar keshini yangilash uchun ishlatiladi.
+ */
 @Serializable
 data class UserMeResponse(
     val id: String,
