@@ -8,6 +8,7 @@ import uz.relay.data.repository_impl.AuthRepositoryImpl
 import uz.relay.data.repository_impl.ChatRepositoryImpl
 import uz.relay.data.repository_impl.ConnectionRepositoryImpl
 import uz.relay.data.repository_impl.GroupRepositoryImpl
+import uz.relay.data.repository_impl.MediaRepositoryImpl
 import uz.relay.data.repository_impl.MessageRepositoryImpl
 import uz.relay.data.realtime.TypingTracker
 import uz.relay.data.repository_impl.SettingsRepositoryImpl
@@ -16,6 +17,7 @@ import uz.relay.domain.repository.AuthRepository
 import uz.relay.domain.repository.ChatRepository
 import uz.relay.domain.repository.ConnectionRepository
 import uz.relay.domain.repository.GroupRepository
+import uz.relay.domain.repository.MediaRepository
 import uz.relay.domain.repository.MessageRepository
 import uz.relay.domain.repository.SettingsRepository
 import uz.relay.domain.repository.TypingRepository
@@ -49,4 +51,7 @@ internal interface RepositoryModule {
 
     @Binds
     fun bindSettingsRepository(impl: SettingsRepositoryImpl): SettingsRepository
+
+    @Binds
+    fun bindMediaRepository(impl: MediaRepositoryImpl): MediaRepository
 }

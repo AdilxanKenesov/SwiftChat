@@ -47,4 +47,14 @@ object ErrorCodes {
     const val EDIT_WINDOW_EXPIRED = "EDIT_WINDOW_EXPIRED"
     const val RATE_LIMITED = "RATE_LIMITED"
     const val SERVER_ERROR = "SERVER_ERROR"
+
+    // Media
+    const val PAYLOAD_TOO_LARGE = "PAYLOAD_TOO_LARGE"
+    const val OFFSET_MISMATCH = "OFFSET_MISMATCH"
+    const val UPLOAD_EXPIRED = "UPLOAD_EXPIRED"
+    const val SHA256_MISMATCH = "SHA256_MISMATCH"
+    const val MEDIA_NOT_READY = "MEDIA_NOT_READY"
+
+    /** Klient kodi: yuboriladigan fayl qurilmadan yo'qolgan (o'chirilgan) — qayta urinish befoyda. */
+    const val MEDIA_FILE_MISSING = "MEDIA_FILE_MISSING"
 }

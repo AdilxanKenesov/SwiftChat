@@ -2,6 +2,7 @@ package uz.relay.feature.conversation.chat
 
 import org.orbitmvi.orbit.OrbitContainerHost
 import uz.relay.core.common.result.AppError
+import uz.relay.domain.model.Attachment
 import uz.relay.domain.model.ChatSummary
 import uz.relay.domain.model.ChatType
 import uz.relay.domain.model.GroupPermissions
@@ -31,10 +32,17 @@ interface ChatContract {
         object OnBottomVisible : Intent
         /** Sarlavha yoki "ko'proq" bosildi — guruhda guruh ma'lumoti ochiladi. */
         object OnOpenInfo : Intent
+        /** Galereya/kamera/fayldan tanlandi. Maydondagi matn rasm/videoga izoh bo'lib ketadi. */
+        data class OnAttach(val attachment: Attachment) : Intent
+        data class OnCancelUpload(val message: Message) : Intent
+        /** Rasm/video — ko'ruvchi; fayl — yuklab olib, tizimdagi mos ilovada ochish. */
+        data class OnMediaClick(val message: Message) : Intent
     }
 
     sealed interface SideEffect {
         data class ShowError(val error: AppError) : SideEffect
+        /** Yuklab olingan faylni boshqa ilovada ochish (FileProvider orqali — bu UI qatlami ishi). */
+        data class OpenFile(val path: String, val mimeType: String) : SideEffect
     }
 
     data class UiState(
@@ -52,7 +60,11 @@ interface ChatContract {
         /** Guruh a'zolari soni (sarlavhadagi "12 aʼzo"). DIRECT chatda 0. */
         val memberCount: Int = 0,
         /** Guruhdagi rolim — boshqalarning xabarini o'chirish huquqi shunga bog'liq. */
-        val myRole: MemberRole? = null
+        val myRole: MemberRole? = null,
+        /** `clientMessageId → 0..1`: hozir yuklab olinayotgan fayllar. */
+        val fileDownloads: Map<String, Float> = emptyMap(),
+        /** Fayl tayyorlanmoqda (nusxalash/hash) — katta videoda bir necha soniya. */
+        val isPreparingMedia: Boolean = false
     ) {
         val isGroup: Boolean get() = chat?.type == ChatType.GROUP
         val canSend: Boolean get() = composerText.isNotBlank()
@@ -70,6 +82,7 @@ interface ChatContract {
         suspend fun back()
         suspend fun navigateToGroupInfo(chatId: String)
         suspend fun navigateToUserProfile(userId: String)
+        suspend fun navigateToMediaViewer(chatId: String, clientMessageId: String)
     }
 }
 

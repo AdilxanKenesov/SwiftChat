@@ -19,3 +19,19 @@ data class SendMessageRequest(
 data class EditMessageRequest(
     val body: String
 )
+
+/** `POST /v1/media/uploads` — faylni e'lon qilish (baytlar keyin bo'laklab yuboriladi). */
+@Serializable
+data class StartUploadRequest(
+    /** IMAGE | VIDEO | FILE */
+    val kind: String,
+    val mimeType: String,
+    val sizeBytes: Long,
+    /** Butun faylning SHA-256 (hex). Oxirgi bo'lakdan keyin server tekshiradi. */
+    val sha256: String,
+    val width: Int? = null,
+    val height: Int? = null,
+    val durationMs: Long? = null,
+    /** ≤ 8 KB kichik rasm (base64). Server uni saqlaydi, lekin hozircha qaytarmaydi. */
+    val thumbBase64: String? = null
+)

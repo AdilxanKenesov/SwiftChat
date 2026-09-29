@@ -5,6 +5,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import org.orbitmvi.orbit.blockingIntent
 import org.orbitmvi.orbit.syntax.Syntax
@@ -13,11 +14,18 @@ import uz.relay.core.common.result.AppError
 import uz.relay.core.common.result.AppResult
 import uz.relay.domain.model.ChatSummary
 import uz.relay.domain.model.ChatType
+import uz.relay.domain.model.DownloadState
+import uz.relay.domain.model.Message
+import uz.relay.domain.model.MessageMedia
+import uz.relay.domain.model.MessageType
 import uz.relay.domain.model.MemberRole
 import uz.relay.domain.usecase.chat.ObserveChatUseCase
 import uz.relay.domain.usecase.chat.ObserveTypingUseCase
 import uz.relay.domain.usecase.group.ObserveMembersUseCase
 import uz.relay.domain.usecase.group.RefreshMembersUseCase
+import uz.relay.domain.usecase.media.CancelUploadUseCase
+import uz.relay.domain.usecase.media.DownloadMediaUseCase
+import uz.relay.domain.usecase.media.SendMediaMessageUseCase
 import uz.relay.domain.usecase.message.DeleteMessageUseCase
 import uz.relay.domain.usecase.message.EditMessageUseCase
 import uz.relay.domain.usecase.message.LoadLatestMessagesUseCase
@@ -49,6 +57,9 @@ class ChatViewModel @AssistedInject constructor(
     private val markChatRead: MarkChatReadUseCase,
     private val observeMembers: ObserveMembersUseCase,
     private val refreshMembers: RefreshMembersUseCase,
+    private val sendMediaMessage: SendMediaMessageUseCase,
+    private val cancelUpload: CancelUploadUseCase,
+    private val downloadMedia: DownloadMediaUseCase,
     private val directions: ChatContract.Directions
 ) : ViewModel(), ChatContract.ViewModel {
 
@@ -106,7 +117,66 @@ class ChatViewModel @AssistedInject constructor(
                     peerUserId != null -> directions.navigateToUserProfile(peerUserId)
                 }
             }
+            is ChatContract.Intent.OnAttach -> sendMedia(intent)
+            is ChatContract.Intent.OnCancelUpload -> intent { cancelUpload(intent.message.clientMessageId) }
+            is ChatContract.Intent.OnMediaClick -> openMedia(intent.message)
         }
+    }
+
+    /**
+     * Rasm/video uchun maydondagi matn izoh bo'ladi (javob rejimi ham saqlanadi). Fayl uchun izoh yo'q —
+     * `body`da fayl nomi ketadi, shuning uchun matn maydonda qoladi.
+     */
+    private fun sendMedia(intent: ChatContract.Intent.OnAttach) = intent {
+        if (state.isPreparingMedia) return@intent
+        val mode = state.composerMode
+        val replyTo = (mode as? ChatContract.ComposerMode.Reply)?.message?.clientMessageId
+        val caption = if (intent.attachment.asFile || mode is ChatContract.ComposerMode.Edit) null else state.composerText.trim()
+        reduce {
+            state.copy(
+                isPreparingMedia = true,
+                composerText = if (caption != null) "" else state.composerText,
+                composerMode = if (mode is ChatContract.ComposerMode.Reply) ChatContract.ComposerMode.None else mode
+            )
+        }
+        val result = sendMediaMessage(chatId, intent.attachment, caption, replyTo)
+        reduce { state.copy(isPreparingMedia = false) }
+        if (result is AppResult.Error) showError(result.error)
+    }
+
+    private fun openMedia(message: Message) = intent {
+        val media = message.media.firstOrNull() ?: return@intent
+        when (message.type) {
+            MessageType.IMAGE, MessageType.VIDEO -> directions.navigateToMediaViewer(chatId, message.clientMessageId)
+            MessageType.FILE -> downloadAndOpen(message, media)
+            else -> Unit
+        }
+    }
+
+    /**
+     * Fayl keshga yuklab olinadi (progress bubble'da), keyin ochiladi. Oldin yuklangan bo'lsa — darhol ochiladi.
+     * Bir fayl ikki marta bosilsa, ikkinchi yuklash boshlanmaydi.
+     */
+    private fun downloadAndOpen(message: Message, media: MessageMedia) = intent {
+        val id = message.clientMessageId
+        if (id in state.fileDownloads) return@intent
+        val fileName = message.text?.takeIf { it.isNotBlank() } ?: media.mediaId ?: id
+        downloadMedia(media, fileName)
+            .catch {
+                reduce { state.copy(fileDownloads = state.fileDownloads - id) }
+                showError(AppError.Network)
+            }
+            .collect { download ->
+                when (download) {
+                    is DownloadState.Progress -> reduce {
+                        state.copy(fileDownloads = state.fileDownloads + (id to download.downloadedBytes.toFloat() / download.totalBytes.coerceAtLeast(1)))
+                    }
+                    is DownloadState.Done -> {
+                        reduce { state.copy(fileDownloads = state.fileDownloads - id) }
+                        postSideEffect(ChatContract.SideEffect.OpenFile(download.path, media.mimeType))
+                    }
+                }
+            }
     }
 
     /**

@@ -39,3 +39,7 @@ data object EditProfileKey : NavKey
 /** Boshqa foydalanuvchining profili. */
 @Serializable
 data class UserProfileKey(val userId: String) : NavKey
+
+/** Rasm/video ko'ruvchi: shu chatdagi hamma rasm va videolar orasida suriladi, [clientMessageId] dan boshlanadi. */
+@Serializable
+data class MediaViewerKey(val chatId: String, val clientMessageId: String) : NavKey

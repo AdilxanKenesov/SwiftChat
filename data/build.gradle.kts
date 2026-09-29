@@ -60,6 +60,11 @@ dependencies {
 
     implementation(libs.androidx.lifecycle.process)
 
+    // Media: rasmlarni token bilan yuklovchi ImageLoader va video oqimi uchun DataSource (ikkalasi ham
+    // authorized OkHttp klient ustida — token eskirsa o'zi yangilanadi).
+    implementation(libs.coil.network.okhttp)
+    implementation(libs.media3.datasource.okhttp)
+
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
     implementation(libs.kotlinx.coroutines.play.services)

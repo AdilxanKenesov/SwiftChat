@@ -11,8 +11,10 @@ import uz.relay.core.common.result.AppError
 import uz.relay.core.common.result.AppResult
 import uz.relay.core.common.result.isRetryable
 import uz.relay.data.mapper.toSendRequest
+import uz.relay.data.media.MediaUploader
 import uz.relay.data.model.response.SendMessageResultResponse
 import uz.relay.data.source.local.database.dao.MessageDao
+import uz.relay.data.source.local.database.dao.UploadDao
 import uz.relay.data.source.local.database.entity.MessageEntity
 import uz.relay.data.source.network.api.MessageApi
 import uz.relay.data.source.network.realtime.ClientFrame
@@ -41,6 +43,8 @@ enum class FlushResult {
 @Singleton
 class OutboxSender @Inject constructor(
     private val messageDao: MessageDao,
+    private val uploadDao: UploadDao,
+    private val mediaUploader: MediaUploader,
     private val messageApi: MessageApi,
     private val realtimeClient: RealtimeClient
 ) {
@@ -53,7 +57,22 @@ class OutboxSender @Inject constructor(
         while (true) {
             val message = messageDao.nextPending() ?: return FlushResult.DONE
 
-            when (val result = sendViaSocket(message) ?: sendViaRest(message)) {
+            // Media xabar: avval fayl (to'xtagan joyidan), keyin xabarning o'zi `mediaIds` bilan.
+            // Navbat tartibi saqlanadi — katta video yuklanayotganda undan keyingi matn ham kutadi.
+            val mediaIds = uploadDao.get(message.clientMessageId)?.let { upload ->
+                when (val uploaded = mediaUploader.upload(upload)) {
+                    is AppResult.Success -> listOf(uploaded.data)
+                    is AppResult.Error -> {
+                        // Foydalanuvchi bekor qildi — xabar allaqachon o'chirilgan, keyingisiga o'tamiz.
+                        if (messageDao.get(message.clientMessageId) == null) continue
+                        if (uploaded.error.isRetryable) return FlushResult.RETRY_LATER
+                        messageDao.markFailed(message.clientMessageId, uploaded.error.code())
+                        continue
+                    }
+                }
+            }
+
+            when (val result = sendViaSocket(message, mediaIds) ?: sendViaRest(message, mediaIds)) {
                 is AppResult.Success -> messageDao.markSent(
                     clientMessageId = message.clientMessageId,
                     serverId = result.data.serverId,
@@ -77,7 +96,7 @@ class OutboxSender @Inject constructor(
      * Ack yo'qolishi mumkin (uzilish, chaos mode) — shuning uchun kutish vaqti cheklangan. Keyin xuddi shu
      * clientMessageId REST'da yuboriladi: xabar allaqachon saqlangan bo'lsa server asl natijani qaytaradi.
      */
-    private suspend fun sendViaSocket(message: MessageEntity): AppResult<SendMessageResultResponse>? {
+    private suspend fun sendViaSocket(message: MessageEntity, mediaIds: List<String>?): AppResult<SendMessageResultResponse>? {
         if (realtimeClient.state.value != RealtimeState.CONNECTED) return null
 
         return coroutineScope {
@@ -96,6 +115,7 @@ class OutboxSender @Inject constructor(
                     chatId = message.chatId,
                     messageType = message.type,
                     body = message.body,
+                    mediaIds = mediaIds,
                     replyTo = message.replyToClientMessageId
                 )
             )
@@ -121,8 +141,8 @@ class OutboxSender @Inject constructor(
     }
 
     /** 201 — yangi, 200 — replay (javob avval yo'qolgan edi). Ikkalasida ham natija bir xil. */
-    private suspend fun sendViaRest(message: MessageEntity): AppResult<SendMessageResultResponse> =
-        safeApiCall { messageApi.sendMessage(message.chatId, message.toSendRequest()) }
+    private suspend fun sendViaRest(message: MessageEntity, mediaIds: List<String>?): AppResult<SendMessageResultResponse> =
+        safeApiCall { messageApi.sendMessage(message.chatId, message.toSendRequest(mediaIds)) }
 
     private fun AppError.code(): String = when (this) {
         is AppError.Api -> code

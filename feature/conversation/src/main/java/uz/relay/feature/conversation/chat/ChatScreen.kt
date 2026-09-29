@@ -1,5 +1,12 @@
 package uz.relay.feature.conversation.chat
 
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.core.content.FileProvider
+import uz.relay.feature.conversation.chat.components.AttachSheet
+import java.io.File
 import android.content.ClipData
 import android.os.Build
 import androidx.compose.foundation.background
@@ -85,6 +92,11 @@ internal fun ChatScreen(chatId: String, focusMessageId: String? = null) {
         when (sideEffect) {
             is ChatContract.SideEffect.ShowError ->
                 snackbarHostState.showSnackbar(context.getString(sideEffect.error.messageRes()))
+
+            is ChatContract.SideEffect.OpenFile ->
+                if (!openFile(context, sideEffect.path, sideEffect.mimeType)) {
+                    snackbarHostState.showSnackbar(context.getString(R.string.no_app_to_open))
+                }
         }
     }
 
@@ -112,6 +124,8 @@ private fun ChatScreenContent(
     val items = uiState.items
 
     var menuTarget by remember { mutableStateOf<MenuTarget?>(null) }
+    // Saveable: kamera/fayl tanlovchi ochiq paytda Activity qayta yaratilsa ham natija shu sheet'ga qaytadi.
+    var showAttach by rememberSaveable { mutableStateOf(false) }
     var deleteTarget by remember { mutableStateOf<Message?>(null) }
 
     // reverseLayout: 0-element ekranning eng pastida. Pastda turibmizmi — o'qildi kvitansiyasi shunga bog'liq.
@@ -197,7 +211,10 @@ private fun ChatScreenContent(
                                 val index = items.indexOfFirst { it.key == item.message.replyToClientMessageId }
                                 if (index >= 0) scope.launch { listState.animateScrollToItem(index) }
                             },
-                            onRetry = { onEventDispatcher(ChatContract.Intent.OnRetry(item.message)) }
+                            onRetry = { onEventDispatcher(ChatContract.Intent.OnRetry(item.message)) },
+                            onMediaClick = { onEventDispatcher(ChatContract.Intent.OnMediaClick(item.message)) },
+                            onCancelUpload = { onEventDispatcher(ChatContract.Intent.OnCancelUpload(item.message)) },
+                            downloadProgress = uiState.fileDownloads[item.message.clientMessageId]
                         )
                     }
                 }
@@ -223,8 +240,7 @@ private fun ChatScreenContent(
                 onTextChange = { onEventDispatcher(ChatContract.Intent.OnTextChange(it)) },
                 onSend = { onEventDispatcher(ChatContract.Intent.OnSend) },
                 onCancelMode = { onEventDispatcher(ChatContract.Intent.OnCancelComposerMode) },
-                // Rasm/video/fayl yuborish media bosqichida qo'shiladi.
-                onAttach = {},
+                onAttach = { showAttach = true },
                 // Klaviatura ochiq bo'lsa uning balandligi, yopiq bo'lsa navigatsiya paneli — qaysi katta bo'lsa.
                 modifier = Modifier
                     .background(colors.bg)
@@ -239,6 +255,20 @@ private fun ChatScreenContent(
                 .padding(bottom = 72.dp)
                 .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars).only(WindowInsetsSides.Bottom))
         )
+
+        if (showAttach) {
+            AttachSheet(
+                onDismiss = { showAttach = false },
+                onPicked = { attachment ->
+                    showAttach = false
+                    onEventDispatcher(ChatContract.Intent.OnAttach(attachment))
+                },
+                onCameraUnavailable = {
+                    showAttach = false
+                    scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.no_camera_app)) }
+                }
+            )
+        }
 
         menuTarget?.let { target ->
             MessageMenuOverlay(
@@ -391,3 +421,21 @@ private fun ChatReplyLightPreview() =
 @Composable
 private fun ChatEditDarkPreview() =
     ChatPreview(true, previewState(ChatContract.ComposerMode.Edit(PreviewMessages[2]), "Yetib borgach darhol yozaman"))
+
+/**
+ * Faylni tizimdagi mos ilovada ochadi (PDF ko'ruvchi, Excel...). `file://` boshqa ilovaga berilmaydi —
+ * FileProvider `content://` beradi va faqat o'qish ruxsatini vaqtincha ulashadi.
+ * @return `false` — bunday faylni ochadigan ilova yo'q.
+ */
+private fun openFile(context: Context, path: String, mimeType: String): Boolean {
+    val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", File(path))
+    val intent = Intent(Intent.ACTION_VIEW)
+        .setDataAndType(uri, mimeType)
+        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    return try {
+        context.startActivity(Intent.createChooser(intent, null).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        true
+    } catch (e: ActivityNotFoundException) {
+        false
+    }
+}

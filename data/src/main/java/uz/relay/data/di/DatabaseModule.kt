@@ -40,4 +40,7 @@ object DatabaseModule {
 
     @Provides
     fun provideChatMemberDao(database: RelayDatabase) = database.chatMemberDao()
+
+    @Provides
+    fun provideUploadDao(database: RelayDatabase) = database.uploadDao()
 }

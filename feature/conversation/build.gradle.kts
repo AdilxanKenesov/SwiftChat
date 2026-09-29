@@ -44,6 +44,12 @@ dependencies {
     implementation(libs.orbit.compose)
     implementation(libs.androidx.paging.compose)
 
+    // Media: rasm bubble'lari/ko'ruvchi (Coil) va video ijrosi (Media3). DataSource'ning o'zi (token bilan)
+    // data modulida yaratiladi va Hilt orqali keladi — bu yerda faqat interfeyslar.
+    implementation(libs.coil.compose)
+    implementation(libs.media3.exoplayer)
+    implementation(libs.media3.ui.compose)
+
     debugImplementation(libs.androidx.compose.ui.tooling)
 
     testImplementation(libs.junit)

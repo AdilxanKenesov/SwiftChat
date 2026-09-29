@@ -78,6 +78,9 @@ interface MessageDao {
     @Query("DELETE FROM messages WHERE status = 'SENT'")
     suspend fun deleteAllSynced()
 
+    @Query("DELETE FROM messages WHERE clientMessageId = :clientMessageId")
+    suspend fun delete(clientMessageId: String)
+
     @Query("DELETE FROM messages WHERE chatId = :chatId")
     suspend fun deleteByChat(chatId: String)
 

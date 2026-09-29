@@ -8,6 +8,7 @@ import retrofit2.Retrofit
 import retrofit2.create
 import uz.relay.data.source.network.api.AuthApi
 import uz.relay.data.source.network.api.ChatApi
+import uz.relay.data.source.network.api.MediaApi
 import uz.relay.data.source.network.api.MessageApi
 import uz.relay.data.source.network.api.SessionApi
 import uz.relay.data.source.network.api.SyncApi
@@ -41,4 +42,8 @@ object ApiModule {
     @Provides
     @Singleton
     fun provideSessionApi(@AuthorizedClient retrofit: Retrofit): SessionApi = retrofit.create()
+
+    @Provides
+    @Singleton
+    fun provideMediaApi(@MediaClient retrofit: Retrofit): MediaApi = retrofit.create()
 }

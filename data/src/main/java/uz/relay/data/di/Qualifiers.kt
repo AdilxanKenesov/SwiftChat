@@ -11,3 +11,11 @@ annotation class PublicClient
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class AuthorizedClient
+
+/**
+ * Media uchun (yuklash/yuklab olish, Coil, ExoPlayer): token va refresh xuddi [AuthorizedClient] dagidek,
+ * lekin logging'siz — BODY darajadagi logger 100 MB faylni xotiraga to'liq o'qib olardi.
+ */
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class MediaClient

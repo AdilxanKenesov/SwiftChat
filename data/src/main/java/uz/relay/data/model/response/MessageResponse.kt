@@ -20,10 +20,27 @@ data class MessageResponse(
     /** TEXT uchun matn yoki caption; SYSTEM uchun JSON satr (SystemMessageBody). */
     val body: String? = null,
     val replyToClientMessageId: String? = null,
+    /** IMAGE/VIDEO/FILE xabarning fayllari. Thumbnail yo'q — server uni hech qayerda qaytarmaydi. */
+    val media: List<MediaMetaResponse> = emptyList(),
     val createdAt: Long,
     val editedAt: Long? = null,
     val editVersion: Int = 0,
     val deletedAt: Long? = null
+)
+
+/** Media meta'si (`MediaMeta`). */
+@Serializable
+data class MediaMetaResponse(
+    val mediaId: String,
+    /** IMAGE | VIDEO | FILE */
+    val kind: String,
+    val mimeType: String,
+    val sizeBytes: Long,
+    val width: Int? = null,
+    val height: Int? = null,
+    val durationMs: Long? = null,
+    /** UPLOADING | READY */
+    val status: String = "READY"
 )
 
 /** SYSTEM xabarning `body`si ichidagi JSON. */

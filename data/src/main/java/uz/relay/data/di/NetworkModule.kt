@@ -60,6 +60,21 @@ object NetworkModule {
         .authenticator(tokenAuthenticator)
         .build()
 
+    /** Uzoq davom etadigan oqimlar uchun: timeout'lar kattaroq, logger olib tashlangan. */
+    @Provides
+    @Singleton
+    @MediaClient
+    fun provideMediaOkHttp(@AuthorizedClient authorized: OkHttpClient): OkHttpClient = authorized.newBuilder()
+        .apply { interceptors().removeAll { it is HttpLoggingInterceptor } }
+        .readTimeout(60, TimeUnit.SECONDS)
+        .writeTimeout(60, TimeUnit.SECONDS)
+        .build()
+
+    @Provides
+    @Singleton
+    @MediaClient
+    fun provideMediaRetrofit(@MediaClient client: OkHttpClient, json: Json): Retrofit = retrofit(client, json)
+
     @Provides
     @Singleton
     @PublicClient

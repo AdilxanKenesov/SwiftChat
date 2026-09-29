@@ -8,6 +8,8 @@ import uz.relay.feature.conversation.chat.ChatContract
 import uz.relay.feature.conversation.chat.ChatDirectionsImpl
 import uz.relay.feature.conversation.search.ChatSearchContract
 import uz.relay.feature.conversation.search.ChatSearchDirectionsImpl
+import uz.relay.feature.conversation.viewer.MediaViewerContract
+import uz.relay.feature.conversation.viewer.MediaViewerDirectionsImpl
 
 /** Directions faqat ViewModel'larga kerak va holatsiz — shuning uchun ViewModel doirasida. */
 @Module
@@ -19,4 +21,7 @@ internal interface ConversationDirectionsModule {
 
     @Binds
     fun bindChatSearchDirections(impl: ChatSearchDirectionsImpl): ChatSearchContract.Directions
+
+    @Binds
+    fun bindMediaViewerDirections(impl: MediaViewerDirectionsImpl): MediaViewerContract.Directions
 }

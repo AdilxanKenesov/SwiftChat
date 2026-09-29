@@ -15,6 +15,7 @@ import uz.relay.data.mapper.toSession
 import uz.relay.data.model.request.OtpRequest
 import uz.relay.data.model.request.VerifyOtpRequest
 import uz.relay.data.source.local.SessionStorage
+import uz.relay.data.media.MediaFiles
 import uz.relay.data.outbox.OutboxScheduler
 import uz.relay.data.source.local.database.RelayDatabase
 import uz.relay.data.source.network.api.AuthApi
@@ -30,6 +31,7 @@ internal class AuthRepositoryImpl @Inject constructor(
     private val sessionApi: SessionApi,
     private val realtimeClient: RealtimeClient,
     private val outboxScheduler: OutboxScheduler,
+    private val mediaFiles: MediaFiles,
     private val sessionStorage: SessionStorage,
     private val database: RelayDatabase,
     private val dispatchers: AppDispatchers
@@ -88,9 +90,13 @@ internal class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-    /** `clearAllTables()` bloklovchi chaqiruv — main thread'da chaqirib bo'lmaydi. */
+    /**
+     * `clearAllTables()` bloklovchi chaqiruv — main thread'da chaqirib bo'lmaydi. Media fayllari va rasm keshi
+     * ham shu yerda: boshqa hisobga kirilganda oldingi hisobning rasmlari ko'rinmasin.
+     */
     private suspend fun clearLocalData() = withContext(dispatchers.io) {
         database.clearAllTables()
+        mediaFiles.clearAll()
     }
 
     /** Server har bir `deviceName` uchun alohida qurilma yozuvini saqlaydi. */

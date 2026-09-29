@@ -23,5 +23,9 @@ data class Message(
     /** O'chirilgan xabar tombstone bo'lib qoladi: "Xabar oʻchirildi", joyi saqlanadi. */
     val isDeleted: Boolean,
     /** Faqat o'zimning xabarim uchun ma'noli. */
-    val status: MessageStatus
+    val status: MessageStatus,
+    /** IMAGE/VIDEO/FILE xabarning fayllari (odatda bitta). TEXT va SYSTEM uchun bo'sh. */
+    val media: List<MessageMedia> = emptyList(),
+    /** Fayl hali serverga yuklanmoqda (faqat o'zim yuborayotgan xabar). */
+    val upload: UploadProgress? = null
 )
