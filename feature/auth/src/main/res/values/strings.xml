@@ -1,0 +1,41 @@
+<resources>
+    <!-- Phone -->
+    <string name="phone_title">Telefon raqamingiz</string>
+    <string name="phone_subtitle">Kodni Telegram orqali yuboramiz</string>
+    <string name="phone_label">Telefon raqam</string>
+    <string name="get_code">Kod olish</string>
+
+    <!-- Telegram link sheet -->
+    <string name="tg_link_title">Telegramʼni ulang</string>
+    <string name="tg_step1">Botni oching</string>
+    <string name="tg_step2">Start tugmasini bosing</string>
+    <string name="tg_step3">Raqamingizni ulashing</string>
+    <string name="open_bot">Botni ochish</string>
+    <string name="resend_code">Kodni qayta yuborish</string>
+
+    <!-- OTP -->
+    <string name="otp_title">Kodni kiriting</string>
+    <string name="otp_sent">Telegramʼga yuborildi · %1$s</string>
+    <string name="resend_in">Qayta yuborish %1$s</string>
+    <string name="otp_wrong">Notoʻgʻri kod · %1$d ta urinish qoldi</string>
+    <string name="otp_expired">Kod muddati tugadi</string>
+    <string name="otp_locked">Kod bloklandi</string>
+    <string name="otp_locked_sub">5 marta xato kiritildi</string>
+    <string name="new_code">Yangi kod olish</string>
+    <string name="back">Orqaga</string>
+
+    <!-- Profile setup -->
+    <string name="profile_title">Profilingiz</string>
+    <string name="name">Ism</string>
+    <string name="username">Username</string>
+    <string name="username_rules">3–32 belgi · a–z, 0–9, _</string>
+    <string name="username_taken">Bu username band</string>
+    <string name="continue_button">Davom etish</string>
+    <string name="pick_photo">Rasm tanlash</string>
+
+    <!-- Errors -->
+    <string name="no_internet">Internet aloqasi yoʻq</string>
+    <string name="error_rate_limited">Juda koʻp urinish. Birozdan soʻng qayta urining</string>
+    <string name="error_otp_unavailable">Kod yuborib boʻlmadi. Birozdan soʻng qayta urining</string>
+    <string name="error_unknown">Nimadir xato ketdi. Qayta urining</string>
+</resources>

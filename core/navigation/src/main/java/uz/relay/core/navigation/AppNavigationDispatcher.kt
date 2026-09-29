@@ -1,39 +1,24 @@
 package uz.relay.core.navigation
 
-import androidx.navigation3.runtime.NavKey
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
+import javax.inject.Inject
+import javax.inject.Singleton
 
-object AppNavigationDispatcher : AppNavigator, AppNavigationHandler {
+/**
+ * Navigation is an event, not state: a Channel delivers each command exactly once, so a rotation
+ * does not replay it. The buffer keeps commands sent before the UI starts collecting.
+ */
+@Singleton
+class AppNavigationDispatcher @Inject constructor() : AppNavigator, AppNavigationHandler {
 
-    private val commands = Channel<AppNavigationParam>(Channel.BUFFERED)
+    private val channel = Channel<AppNavigationParam>(capacity = 16, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-    override val backStack: Flow<AppNavigationParam> = commands.receiveAsFlow()
+    override val params: Flow<AppNavigationParam> = channel.receiveAsFlow()
 
-    private fun navigate(param: AppNavigationParam) {
-        commands.trySend(param)
-    }
-
-    override fun navigateTo(route: NavKey) = navigate {
-        add(route)
-    }
-
-    override fun replaceTo(route: NavKey) = navigate {
-        if (isNotEmpty()) removeAt(lastIndex)
-        add(route)
-    }
-
-    override fun replaceAll(route: NavKey) = navigate {
-        clear()
-        add(route)
-    }
-
-    override fun back() = navigate {
-        if (size > 1) removeAt(lastIndex)
-    }
-
-    override fun backTo(predicate: (NavKey) -> Boolean) = navigate {
-        while (size > 1 && !predicate(last())) removeAt(lastIndex)
+    override suspend fun navigate(param: AppNavigationParam) {
+        channel.send(param)
     }
 }

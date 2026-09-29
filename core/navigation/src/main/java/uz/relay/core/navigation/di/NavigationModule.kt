@@ -1,23 +1,21 @@
 package uz.relay.core.navigation.di
 
+import dagger.Binds
 import dagger.Module
-import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import uz.relay.core.navigation.AppNavigationDispatcher
 import uz.relay.core.navigation.AppNavigationHandler
 import uz.relay.core.navigation.AppNavigator
-import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object AppNavigationModule {
+internal interface NavigationModule {
 
-    @Provides
-    @Singleton
-    fun provideAppNavigator(): AppNavigator = AppNavigationDispatcher
+    // Both interfaces bind to the one @Singleton dispatcher, so commands reach the UI.
+    @Binds
+    fun bindAppNavigator(impl: AppNavigationDispatcher): AppNavigator
 
-    @Provides
-    @Singleton
-    fun provideAppNavigationHandler(): AppNavigationHandler = AppNavigationDispatcher
+    @Binds
+    fun bindAppNavigationHandler(impl: AppNavigationDispatcher): AppNavigationHandler
 }

@@ -51,6 +51,7 @@ dependencies {
     ksp(libs.androidx.room.compiler)
 
     implementation(libs.androidx.datastore.preferences)
+    implementation(libs.tink.android)
     implementation(libs.androidx.paging.runtime)
 
     implementation(libs.androidx.work.runtime.ktx)
