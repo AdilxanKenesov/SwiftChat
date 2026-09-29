@@ -1,5 +1,6 @@
 package uz.relay.feature.profile.edit
 
+import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,7 +19,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -67,13 +67,9 @@ internal fun EditProfileScreen(viewModel: EditProfileViewModel = hiltViewModel()
 
     Box(modifier = Modifier.fillMaxSize()) {
         EditProfileContent(uiState = uiState, onEventDispatcher = viewModel::onEventDispatcher)
-        SnackbarHost(
+        SwiftSnackbarHost(
             hostState = snackbarHostState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .navigationBarsPadding()
-                .imePadding()
-                .padding(bottom = 80.dp)
+            modifier = Modifier.align(Alignment.TopCenter)
         )
     }
 }

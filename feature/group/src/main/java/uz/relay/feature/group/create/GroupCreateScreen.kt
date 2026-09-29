@@ -1,5 +1,6 @@
 package uz.relay.feature.group.create
 
+import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -29,7 +30,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -97,13 +97,9 @@ internal fun GroupCreateScreen(addToChatId: String?) {
 
     Box(modifier = Modifier.fillMaxSize()) {
         GroupCreateContent(uiState = uiState, onEventDispatcher = viewModel::onEventDispatcher)
-        SnackbarHost(
+        SwiftSnackbarHost(
             hostState = snackbarHostState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .navigationBarsPadding()
-                .imePadding()
-                .padding(bottom = 80.dp)
+            modifier = Modifier.align(Alignment.TopCenter)
         )
     }
 }

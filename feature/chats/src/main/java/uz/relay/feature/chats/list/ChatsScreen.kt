@@ -1,5 +1,6 @@
 package uz.relay.feature.chats.list
 
+import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,7 +14,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
@@ -86,11 +86,9 @@ internal fun ChatsScreen(viewModel: ChatsViewModel = hiltViewModel()) {
     Box(modifier = Modifier.fillMaxSize()) {
         ChatsScreenContent(uiState = uiState, onEventDispatcher = viewModel::onEventDispatcher)
 
-        SnackbarHost(
+        SwiftSnackbarHost(
             hostState = snackbarHostState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .navigationBarsPadding()
+            modifier = Modifier.align(Alignment.TopCenter)
         )
     }
 }

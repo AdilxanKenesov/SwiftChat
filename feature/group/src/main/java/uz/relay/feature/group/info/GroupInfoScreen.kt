@@ -1,5 +1,6 @@
 package uz.relay.feature.group.info
 
+import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -28,7 +29,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -98,12 +98,9 @@ internal fun GroupInfoScreen(chatId: String) {
 
     Box(modifier = Modifier.fillMaxSize()) {
         GroupInfoContent(uiState = uiState, onEventDispatcher = viewModel::onEventDispatcher)
-        SnackbarHost(
+        SwiftSnackbarHost(
             hostState = snackbarHostState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .navigationBarsPadding()
-                .padding(bottom = 64.dp)
+            modifier = Modifier.align(Alignment.TopCenter)
         )
     }
 }

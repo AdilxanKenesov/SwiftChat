@@ -1,5 +1,6 @@
 package uz.relay.feature.profile.user
 
+import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -62,12 +62,9 @@ internal fun UserProfileScreen(userId: String) {
 
     Box(modifier = Modifier.fillMaxSize()) {
         UserProfileContent(userId = userId, uiState = uiState, onEventDispatcher = viewModel::onEventDispatcher)
-        SnackbarHost(
+        SwiftSnackbarHost(
             hostState = snackbarHostState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .navigationBarsPadding()
-                .padding(bottom = 16.dp)
+            modifier = Modifier.align(Alignment.TopCenter)
         )
     }
 }

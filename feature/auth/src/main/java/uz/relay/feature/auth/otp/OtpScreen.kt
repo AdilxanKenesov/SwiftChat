@@ -1,5 +1,6 @@
 package uz.relay.feature.auth.otp
 
+import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import androidx.compose.ui.res.pluralStringResource
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
@@ -20,7 +21,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -91,12 +91,9 @@ internal fun OtpScreen(phone: String) {
             onEventDispatcher = viewModel::onEventDispatcher
         )
 
-        SnackbarHost(
+        SwiftSnackbarHost(
             hostState = snackbarHostState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .navigationBarsPadding()
-                .imePadding()
+            modifier = Modifier.align(Alignment.TopCenter)
         )
     }
 }

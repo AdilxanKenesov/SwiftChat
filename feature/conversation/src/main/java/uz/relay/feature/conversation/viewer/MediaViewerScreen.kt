@@ -1,5 +1,6 @@
 package uz.relay.feature.conversation.viewer
 
+import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import android.os.Build
 import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
@@ -32,7 +33,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -130,12 +130,9 @@ internal fun MediaViewerScreen(chatId: String, clientMessageId: String) {
                 onEventDispatcher = viewModel::onEventDispatcher
             )
         }
-        SnackbarHost(
+        SwiftSnackbarHost(
             hostState = snackbarHostState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .navigationBarsPadding()
-                .padding(bottom = 120.dp)
+            modifier = Modifier.align(Alignment.TopCenter)
         )
     }
 }

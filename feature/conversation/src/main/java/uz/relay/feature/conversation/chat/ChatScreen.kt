@@ -1,5 +1,6 @@
 package uz.relay.feature.conversation.chat
 
+import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -30,7 +31,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -267,12 +267,9 @@ private fun ChatScreenContent(
             )
         }
 
-        SnackbarHost(
+        SwiftSnackbarHost(
             hostState = snackbarHostState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 72.dp)
-                .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars).only(WindowInsetsSides.Bottom))
+            modifier = Modifier.align(Alignment.TopCenter)
         )
 
         if (showAttach) {

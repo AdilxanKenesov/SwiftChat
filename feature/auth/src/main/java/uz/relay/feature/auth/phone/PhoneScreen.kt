@@ -1,5 +1,6 @@
 package uz.relay.feature.auth.phone
 
+import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import androidx.compose.foundation.background
@@ -15,7 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -83,12 +83,9 @@ internal fun PhoneScreen(viewModel: PhoneViewModel = hiltViewModel()) {
             onEventDispatcher = viewModel::onEventDispatcher
         )
 
-        SnackbarHost(
+        SwiftSnackbarHost(
             hostState = snackbarHostState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .navigationBarsPadding()
-                .imePadding()
+            modifier = Modifier.align(Alignment.TopCenter)
         )
     }
 

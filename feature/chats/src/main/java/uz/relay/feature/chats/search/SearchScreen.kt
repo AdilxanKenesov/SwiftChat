@@ -1,5 +1,6 @@
 package uz.relay.feature.chats.search
 
+import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -24,7 +25,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -83,12 +83,9 @@ internal fun SearchScreen(viewModel: SearchViewModel = hiltViewModel()) {
 
     Box(modifier = Modifier.fillMaxSize()) {
         SearchScreenContent(uiState = uiState, onEventDispatcher = viewModel::onEventDispatcher)
-        SnackbarHost(
+        SwiftSnackbarHost(
             hostState = snackbarHostState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .navigationBarsPadding()
-                .imePadding()
+            modifier = Modifier.align(Alignment.TopCenter)
         )
     }
 }

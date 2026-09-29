@@ -1,5 +1,6 @@
 package uz.relay.feature.profile.me
 
+import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -25,7 +26,6 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -87,12 +87,9 @@ internal fun MyProfileScreen(viewModel: MyProfileViewModel = hiltViewModel()) {
 
     Box(modifier = Modifier.fillMaxSize()) {
         MyProfileContent(uiState = uiState, onEventDispatcher = viewModel::onEventDispatcher)
-        SnackbarHost(
+        SwiftSnackbarHost(
             hostState = snackbarHostState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .navigationBarsPadding()
-                .padding(bottom = 80.dp)
+            modifier = Modifier.align(Alignment.TopCenter)
         )
     }
 }
