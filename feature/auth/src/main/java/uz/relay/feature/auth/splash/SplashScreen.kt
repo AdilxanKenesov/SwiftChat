@@ -6,21 +6,22 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -47,7 +48,8 @@ private fun SplashScreenContent() {
         Column(
             modifier = Modifier
                 .align(Alignment.Center)
-                .offset(y = (-40).dp),
+                // 80dp of bottom space lifts the centered block 40dp above center.
+                .padding(bottom = 80.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(22.dp)
         ) {
@@ -75,18 +77,16 @@ private fun SplashProgress(modifier: Modifier = Modifier) {
         label = "splashProgressOffset"
     )
 
-    Box(
-        modifier = modifier
-            .size(width = 40.dp, height = 4.dp)
-            .clip(RoundedCornerShape(2.dp))
-            .background(colors.surface2)
-    ) {
-        Box(
-            modifier = Modifier
-                .offset(x = 24.dp * fraction)
-                .size(width = 16.dp, height = 4.dp)
-                .clip(RoundedCornerShape(2.dp))
-                .background(colors.primary)
+    Canvas(modifier = modifier.size(width = 40.dp, height = 4.dp)) {
+        val radius = CornerRadius(size.height / 2)
+        val indicatorWidth = 16.dp.toPx()
+
+        drawRoundRect(color = colors.surface2, cornerRadius = radius)
+        drawRoundRect(
+            color = colors.primary,
+            topLeft = Offset(x = (size.width - indicatorWidth) * fraction, y = 0f),
+            size = Size(indicatorWidth, size.height),
+            cornerRadius = radius
         )
     }
 }
