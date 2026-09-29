@@ -10,8 +10,6 @@ import uz.relay.feature.auth.phone.PhoneContract
 import uz.relay.feature.auth.phone.PhoneDirectionsImpl
 import uz.relay.feature.auth.profile.ProfileSetupContract
 import uz.relay.feature.auth.profile.ProfileSetupDirectionsImpl
-import uz.relay.feature.auth.splash.SplashContract
-import uz.relay.feature.auth.splash.SplashDirectionsImpl
 
 /**
  * Auth ekranlarining `Contract.Directions` interfeyslarini ularning `DirectionsImpl`'lariga bog'laydi.
@@ -24,9 +22,6 @@ import uz.relay.feature.auth.splash.SplashDirectionsImpl
 @Module
 @InstallIn(ViewModelComponent::class)
 internal interface AuthDirectionsModule {
-
-    @Binds
-    fun bindSplashDirections(impl: SplashDirectionsImpl): SplashContract.Directions
 
     @Binds
     fun bindPhoneDirections(impl: PhoneDirectionsImpl): PhoneContract.Directions

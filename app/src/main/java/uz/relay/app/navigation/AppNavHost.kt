@@ -10,7 +10,6 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import uz.relay.core.navigation.AppNavigationHandler
 import uz.relay.core.navigation.AppNavigationParam
-import uz.relay.core.navigation.key.SplashKey
 import uz.relay.feature.auth.authEntries
 import uz.relay.feature.chats.chatsEntries
 import uz.relay.feature.conversation.conversationEntries
@@ -23,9 +22,9 @@ import uz.relay.feature.profile.profileEntries
  * ro'yxatdan o'tadi — app moduli faqat ularni yig'adi.
  */
 @Composable
-fun AppNavHost(navigationHandler: AppNavigationHandler) {
+fun AppNavHost(navigationHandler: AppNavigationHandler, startKey: NavKey) {
     // Kalitlar @Serializable: stek jarayon o'ldirilganda (process death) ham saqlanib, qayta tiklanadi.
-    val backStack = rememberNavBackStack(SplashKey)
+    val backStack = rememberNavBackStack(startKey)
 
     LaunchedEffect(navigationHandler) {
         navigationHandler.params.collect { param -> backStack.apply(param) }

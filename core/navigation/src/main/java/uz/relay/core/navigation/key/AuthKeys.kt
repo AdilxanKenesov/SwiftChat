@@ -7,10 +7,6 @@ import kotlinx.serialization.Serializable
 // @Serializable — Navigation 3 back stack'ni saqlaydi, jarayon o'ldirilsa (process death) ham stek tiklanadi.
 // Kalitda faqat id/oddiy qiymatlar: katta obyektlar emas, ma'lumot ekranda bazadan o'qiladi.
 
-/** Splash: auth holatiga qarab boshlang'ich ekranni tanlaydi. */
-@Serializable
-data object SplashKey : NavKey
-
 /** Telefon raqamini kiritish (login'ning birinchi qadami; logout'dan keyin ham shu yerga qaytiladi). */
 @Serializable
 data object PhoneKey : NavKey

@@ -50,7 +50,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // Tema DataStore'dan o'qilmaguncha splash ushlab turiladi — noto'g'ri tema bir lahza miltillamasligi uchun.
-        installSplashScreen().setKeepOnScreenCondition { viewModel.themeMode.value == null }
+        // Tizim splash'i tema VA boshlang'ich ekran aniqlanguncha turadi — shu bilan yagona splash (ikkinchisi yo'q).
+        installSplashScreen().setKeepOnScreenCondition { viewModel.themeMode.value == null || viewModel.startKey.value == null }
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         observeLanguage()
@@ -71,7 +72,9 @@ class MainActivity : ComponentActivity() {
             }
 
             SwiftChatTheme(darkTheme = darkTheme) {
-                AppNavHost(navigationHandler = viewModel.navigationHandler)
+                val startKey by viewModel.startKey.collectAsState()
+                // null bo'lsa ekranda tizim splash'i turibdi — hech narsa chizish shart emas.
+                startKey?.let { AppNavHost(navigationHandler = viewModel.navigationHandler, startKey = it) }
             }
         }
     }
