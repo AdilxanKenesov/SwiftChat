@@ -16,6 +16,9 @@ interface ChatRepository {
     /** Bitta chat (suhbat ekrani sarlavhasi uchun). Bazada yo'q bo'lsa `null`. */
     fun observeChat(chatId: String): Flow<ChatSummary?>
 
+    /** Shu odam bilan shaxsiy chat (bo'lmasa `null`) — foydalanuvchi profilidagi "Ovozsiz qilish" uchun. */
+    fun observeDirectChat(peerUserId: String): Flow<ChatSummary?>
+
     fun observeSyncStatus(): Flow<SyncStatus>
 
     /**

@@ -46,6 +46,17 @@ internal class UserRepositoryImpl @Inject constructor(
             .onSuccess { userDao.upsert(it.toEntity()) }
             .map { it.toUser() }
 
+    override fun observeUser(userId: String): Flow<User?> = userDao.observe(userId).map { it?.toDomain() }
+
+    /** Kesh bo'lsa ham qayta yuklanadi: profil ochilganda ism/username va online holat eng yangisi bo'lsin. */
+    override suspend fun refreshUser(userId: String): AppResult<User> =
+        safeApiCall { userApi.getUser(userId) }
+            .map { response ->
+                val entity = response.toEntity()
+                userDao.upsert(entity)
+                entity.toDomain()
+            }
+
     override suspend fun search(query: String): AppResult<List<User>> =
         safeApiCall { userApi.search(query) }
             .map { response ->

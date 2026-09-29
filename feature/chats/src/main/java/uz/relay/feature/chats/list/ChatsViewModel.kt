@@ -41,6 +41,7 @@ class ChatsViewModel @Inject constructor(
             ChatsContract.Intent.OnRetrySync -> sync()
             is ChatsContract.Intent.OnChatClick -> intent { directions.navigateToChat(intent.chatId) }
             ChatsContract.Intent.OnSearchClick -> intent { directions.navigateToSearch() }
+            ChatsContract.Intent.OnMyProfileClick -> intent { directions.navigateToMyProfile() }
         }
     }
 

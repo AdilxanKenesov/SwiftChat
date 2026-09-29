@@ -61,6 +61,23 @@ interface ChatDao {
     )
     fun observeChat(chatId: String, myUserId: String): Flow<ChatListItem?>
 
+    /** Shu odam bilan shaxsiy chat — ro'yxatdagi so'rovning o'zi, faqat `peerUserId` bo'yicha. */
+    @Query(
+        """
+        SELECT c.*, u.displayName AS peerDisplayName, u.online AS peerOnline, u.lastSeenAt AS peerLastSeenAt,
+               mc.maxRead AS peerReadUpToSeq, mc.maxDelivered AS peerDeliveredUpToSeq
+        FROM chats c
+        LEFT JOIN users u ON u.id = c.peerUserId
+        LEFT JOIN (
+            SELECT chatId, MAX(readUpToSeq) AS maxRead, MAX(deliveredUpToSeq) AS maxDelivered
+            FROM member_cursors WHERE userId != :myUserId GROUP BY chatId
+        ) mc ON mc.chatId = c.id
+        WHERE c.type = 'DIRECT' AND c.peerUserId = :peerUserId
+        LIMIT 1
+        """
+    )
+    fun observeDirectChat(peerUserId: String, myUserId: String): Flow<ChatListItem?>
+
     @Query("SELECT * FROM chats WHERE id = :chatId")
     suspend fun getChat(chatId: String): ChatEntity?
 

@@ -23,6 +23,12 @@ interface UserRepository {
     /** Username prefiksi bo'yicha qidiruv (serverda). Topilganlar keshga ham yoziladi. */
     suspend fun search(query: String): AppResult<List<User>>
 
+    /** Boshqa foydalanuvchining profili (lokal keshdan). Online holati socket'dagi `presence` bilan yangilanadi. */
+    fun observeUser(userId: String): Flow<User?>
+
+    /** `GET /v1/users/{id}` — profilni (ism, username, online holati) yangilab, keshga yozadi. */
+    suspend fun refreshUser(userId: String): AppResult<User>
+
     /** Keshdagi tanish foydalanuvchilar (o'zimdan tashqari) — guruhga a'zo tanlash uchun. */
     fun observeKnownUsers(): Flow<List<User>>
 }

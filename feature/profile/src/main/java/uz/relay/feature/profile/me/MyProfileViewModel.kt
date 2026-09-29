@@ -1,0 +1,94 @@
+package uz.relay.feature.profile.me
+
+import androidx.lifecycle.ViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.combine
+import org.orbitmvi.orbit.viewmodel.orbitContainer
+import uz.relay.domain.model.ConnectionStatus
+import uz.relay.domain.model.ThemeMode
+import uz.relay.domain.model.User
+import uz.relay.domain.usecase.auth.LogoutUseCase
+import uz.relay.domain.usecase.chat.ObserveConnectionStatusUseCase
+import uz.relay.domain.usecase.settings.ObserveNotificationsEnabledUseCase
+import uz.relay.domain.usecase.settings.ObserveThemeModeUseCase
+import uz.relay.domain.usecase.settings.SetNotificationsEnabledUseCase
+import uz.relay.domain.usecase.settings.SetThemeModeUseCase
+import uz.relay.domain.usecase.user.ObserveMeUseCase
+import uz.relay.domain.usecase.user.RefreshMeUseCase
+import javax.inject.Inject
+
+@HiltViewModel
+class MyProfileViewModel @Inject constructor(
+    private val observeMe: ObserveMeUseCase,
+    private val refreshMe: RefreshMeUseCase,
+    private val observeConnectionStatus: ObserveConnectionStatusUseCase,
+    private val observeThemeMode: ObserveThemeModeUseCase,
+    private val setThemeMode: SetThemeModeUseCase,
+    private val observeNotificationsEnabled: ObserveNotificationsEnabledUseCase,
+    private val setNotificationsEnabled: SetNotificationsEnabledUseCase,
+    private val logout: LogoutUseCase,
+    private val directions: MyProfileContract.Directions
+) : ViewModel(), MyProfileContract.ViewModel {
+
+    override val container =
+        orbitContainer<MyProfileContract.UiState, MyProfileContract.SideEffect>(MyProfileContract.UiState()) {
+            observeData()
+            refresh()
+        }
+
+    override fun onEventDispatcher(intent: MyProfileContract.Intent) {
+        when (intent) {
+            MyProfileContract.Intent.OnBack -> intent { directions.back() }
+            MyProfileContract.Intent.OnEdit -> intent { directions.navigateToEditProfile() }
+            is MyProfileContract.Intent.OnNotificationsChange -> intent { setNotificationsEnabled(intent.enabled) }
+            is MyProfileContract.Intent.OnDarkModeChange ->
+                intent { setThemeMode(if (intent.enabled) ThemeMode.DARK else ThemeMode.LIGHT) }
+            MyProfileContract.Intent.OnLogout -> logoutNow()
+        }
+    }
+
+    /**
+     * Profil keshdan, sozlamalar DataStore'dan o'qiladi — hammasi Flow: boshqa ekranda ism o'zgarsa yoki
+     * switch bosilsa, bu yerda ham o'zi yangilanadi (switch holati ViewModel'da alohida saqlanmaydi).
+     */
+    private fun observeData() = intent {
+        repeatOnSubscription {
+            combine(
+                observeMe(),
+                observeConnectionStatus(),
+                observeThemeMode(),
+                observeNotificationsEnabled()
+            ) { me, connection, themeMode, notifications -> ProfileData(me, connection, themeMode, notifications) }
+                .collect { data ->
+                    reduce {
+                        state.copy(
+                            me = data.me,
+                            connectionStatus = data.connectionStatus,
+                            themeMode = data.themeMode,
+                            notificationsEnabled = data.notificationsEnabled
+                        )
+                    }
+                }
+        }
+    }
+
+    /**
+     * Ekran avval keshdagini ko'rsatadi, keyin serverdan yangilaydi. Xato ko'rsatilmaydi: keshdagi profil
+     * yetarli, internet yo'qligi esa global banner orqali allaqachon ko'rinadi.
+     */
+    private fun refresh() = intent { refreshMe() }
+
+    private fun logoutNow() = intent {
+        if (state.loggingOut) return@intent
+        reduce { state.copy(loggingOut = true) }
+        logout()
+    }
+}
+
+/** `combine` natijasi — `reduce` ichida joriy holatga (masalan, `loggingOut`) qo'shiladi. */
+private data class ProfileData(
+    val me: User?,
+    val connectionStatus: ConnectionStatus,
+    val themeMode: ThemeMode,
+    val notificationsEnabled: Boolean
+)

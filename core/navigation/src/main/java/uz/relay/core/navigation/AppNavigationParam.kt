@@ -19,6 +19,12 @@ sealed interface AppNavigationParam {
     /** Pop back to [key]; with [inclusive] it is removed too. */
     data class BackTo(val key: NavKey, val inclusive: Boolean = false) : AppNavigationParam
 
+    /**
+     * [key] stekda bo'lsa — unga qaytish (ustidagilar yopiladi), bo'lmasa — yangisini ochish.
+     * Masalan: chat → profil → "Xabar" o'sha chatning ikkinchi nusxasini ochmasdan, unga qaytaradi.
+     */
+    data class BackToOrTo(val key: NavKey) : AppNavigationParam
+
     /** Clear the stack and leave only [key] (login, logout). */
     data class ResetTo(val key: NavKey) : AppNavigationParam
 }

@@ -97,8 +97,14 @@ class ChatViewModel @AssistedInject constructor(
             is ChatContract.Intent.OnRetry -> intent { retryMessage(intent.message.clientMessageId) }
             ChatContract.Intent.OnLoadOlder -> loadOlder()
             ChatContract.Intent.OnBottomVisible -> markRead()
+            // Guruh — guruh ma'lumoti, shaxsiy chat — suhbatdoshning profili.
             ChatContract.Intent.OnOpenInfo -> intent {
-                if (state.isGroup) directions.navigateToGroupInfo(chatId)
+                val chat = state.chat ?: return@intent
+                val peerUserId = chat.peerUserId
+                when {
+                    state.isGroup -> directions.navigateToGroupInfo(chatId)
+                    peerUserId != null -> directions.navigateToUserProfile(peerUserId)
+                }
             }
         }
     }
