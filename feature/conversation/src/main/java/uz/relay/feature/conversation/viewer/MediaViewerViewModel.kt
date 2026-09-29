@@ -130,14 +130,14 @@ class MediaViewerViewModel @AssistedInject constructor(
         player.playWhenReady = false
     }
 
-    /** Media'ni galereyaga (MediaStore) saqlaydi; fayl nomi yaratilgan vaqt va MIME kengaytmasidan tuziladi. */
+    /**
+     * Galereyaga saqlashni navbatga qo'yadi. Yuklab olish va yozish foreground service'da (bildirishnomada
+     * progress bilan) ketadi — shuning uchun bu yerda kutish yoki spinner yo'q: ko'ruvchidan chiqib ketsa ham davom etadi.
+     * Fayl nomi yaratilgan vaqt va MIME kengaytmasidan tuziladi.
+     */
     private fun save(item: ViewerItem) = intent {
-        if (state.isSaving) return@intent
-        reduce { state.copy(isSaving = true) }
         val extension = item.media.mimeType.substringAfter('/', "").substringBefore(';').ifEmpty { "bin" }
-        val result = saveMediaToGallery(item.media, "SwiftChat_${item.message.createdAt}.$extension")
-        reduce { state.copy(isSaving = false) }
-        when (result) {
+        when (val result = saveMediaToGallery(item.media, "SwiftChat_${item.message.createdAt}.$extension")) {
             is AppResult.Success -> postSideEffect(MediaViewerContract.SideEffect.Saved)
             is AppResult.Error -> postSideEffect(MediaViewerContract.SideEffect.ShowError(result.error))
         }

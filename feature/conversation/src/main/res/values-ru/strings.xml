@@ -67,7 +67,7 @@
     <string name="pause">Пауза</string>
     <string name="mute_sound">Выключить звук</string>
     <string name="unmute_sound">Включить звук</string>
-    <string name="saved_to_gallery">Сохранено в галерею</string>
+    <string name="saving_to_gallery">Сохранение — ход в уведомлении</string>
     <string name="no_app_to_open">Нет приложения, чтобы открыть этот файл</string>
     <string name="no_camera_app">Приложение камеры не найдено</string>
     <string name="error_too_large">Файл больше 100 МБ</string>

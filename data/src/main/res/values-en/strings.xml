@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Inglizcha tarjima. Kalitlar values/strings.xml (o'zbekcha, asosiy) bilan bir xil. -->
+<resources>
+    <string name="media_save_channel">Downloads</string>
+    <string name="media_save_channel_description">Saving photos and videos to your phone</string>
+    <string name="media_save_image">Saving photo</string>
+    <string name="media_save_video">Saving video</string>
+    <string name="media_save_done_image">Photo saved to gallery</string>
+    <string name="media_save_done_video">Video saved to gallery</string>
+    <string name="media_save_done_text">Tap to open</string>
+    <string name="media_save_failed">Could not save</string>
+    <string name="media_save_failed_text">Check your internet connection and try again</string>
+</resources>

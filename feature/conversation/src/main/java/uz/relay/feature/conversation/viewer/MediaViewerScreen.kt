@@ -1,5 +1,10 @@
 package uz.relay.feature.conversation.viewer
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import android.os.Build
 import androidx.annotation.OptIn
@@ -28,7 +33,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Slider
@@ -113,7 +117,7 @@ internal fun MediaViewerScreen(chatId: String, clientMessageId: String) {
 
     viewModel.collectSideEffect { sideEffect ->
         when (sideEffect) {
-            MediaViewerContract.SideEffect.Saved -> snackbarHostState.showSnackbar(context.getString(R.string.saved_to_gallery))
+            MediaViewerContract.SideEffect.Saved -> snackbarHostState.showSnackbar(context.getString(R.string.saving_to_gallery))
             is MediaViewerContract.SideEffect.ShowError ->
                 snackbarHostState.showSnackbar(context.getString(sideEffect.error.messageRes()))
         }
@@ -192,7 +196,6 @@ private fun BoxScope.ViewerContent(
         TopBar(
             item = current,
             senderName = if (current.message.isMine) stringResource(R.string.sys_you) else uiState.userNames[current.message.senderId].orEmpty(),
-            isSaving = uiState.isSaving,
             onBack = { onEventDispatcher(MediaViewerContract.Intent.OnBack) },
             onSave = { onEventDispatcher(MediaViewerContract.Intent.OnSave(current)) }
         )
@@ -207,10 +210,23 @@ private fun BoxScope.ViewerContent(
     }
 }
 
-/** 64dp: orqaga · ism + "Bugun, 10:20" · saqlash (Android 10+: MediaStore ruxsatsiz ishlaydi). */
+/**
+ * 64dp: orqaga · ism + "Bugun, 10:20" · saqlash (Android 10+: MediaStore ruxsatsiz ishlaydi).
+ *
+ * Saqlash bildirishnomada progress bilan ketadi. Android 13+ da bildirishnoma uchun ruxsat kerak — u shu
+ * tugma birinchi bosilganda so'raladi (foydalanuvchi nega so'ralayotganini tushunadigan payt). Javob qanday
+ * bo'lishidan qat'i nazar saqlash boshlanadi: ruxsat bo'lmasa faqat bildirishnoma ko'rinmaydi.
+ */
 @Composable
-private fun TopBar(item: ViewerItem, senderName: String, isSaving: Boolean, onBack: () -> Unit, onSave: () -> Unit) {
-    val resources = LocalContext.current.resources
+private fun TopBar(item: ViewerItem, senderName: String, onBack: () -> Unit, onSave: () -> Unit) {
+    val context = LocalContext.current
+    val resources = context.resources
+    val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { onSave() }
+    val requestSave = {
+        val needsPermission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        if (needsPermission) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS) else onSave()
+    }
     val createdAt = item.message.createdAt
     Row(
         modifier = Modifier
@@ -235,14 +251,8 @@ private fun TopBar(item: ViewerItem, senderName: String, isSaving: Boolean, onBa
         }
         // Serverga hali yetmagan (o'zim yuborayotgan) media — saqlash uchun lokal nusxa bor, lekin u baribir galereyadan olingan.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && item.media.mediaId != null) {
-            if (isSaving) {
-                Box(modifier = Modifier.size(48.dp), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
-                }
-            } else {
-                IconButton(onClick = onSave) {
-                    Icon(painter = painterResource(DesignR.drawable.ic_download), contentDescription = stringResource(R.string.download), tint = Color.White, modifier = Modifier.size(22.dp))
-                }
+            IconButton(onClick = requestSave) {
+                Icon(painter = painterResource(DesignR.drawable.ic_download), contentDescription = stringResource(R.string.download), tint = Color.White, modifier = Modifier.size(22.dp))
             }
         }
     }

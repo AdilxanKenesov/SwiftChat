@@ -38,8 +38,7 @@ interface MediaViewerContract {
         /** Ochilgan xabarning indeksi — ro'yxat birinchi marta kelganda bir marta hisoblanadi. */
         val initialIndex: Int? = null,
         val userNames: Map<String, String> = emptyMap(),
-        val myUserId: String? = null,
-        val isSaving: Boolean = false
+        val myUserId: String? = null
     )
 
     /** Ko'ruvchidan faqat orqaga (chatga) qaytiladi. */

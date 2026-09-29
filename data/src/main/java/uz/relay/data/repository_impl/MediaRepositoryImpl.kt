@@ -22,6 +22,8 @@ import uz.relay.core.common.result.AppError
 import uz.relay.core.common.result.AppResult
 import uz.relay.data.di.MediaClient
 import uz.relay.data.media.MediaFiles
+import uz.relay.data.media.MediaSaveScheduler
+import uz.relay.data.media.safeFileName
 import uz.relay.domain.model.DownloadState
 import uz.relay.domain.model.MediaKind
 import uz.relay.domain.model.MessageMedia
@@ -43,6 +45,7 @@ internal class MediaRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     @MediaClient private val client: OkHttpClient,
     private val mediaFiles: MediaFiles,
+    private val mediaSaveScheduler: MediaSaveScheduler,
     private val dispatchers: AppDispatchers
 ) : MediaRepository {
 
@@ -59,7 +62,7 @@ internal class MediaRepositoryImpl @Inject constructor(
         val mediaId = media.mediaId ?: throw IOException("Media is not uploaded yet")
         val url = media.url ?: throw IOException("Media has no url")
 
-        val target = File(mediaFiles.downloadsDir(mediaId), safeName(fileName))
+        val target = File(mediaFiles.downloadsDir(mediaId), safeFileName(fileName))
         if (target.exists() && target.length() == media.sizeBytes) {
             emit(DownloadState.Done(target.path))
             return@flow
@@ -106,52 +109,17 @@ internal class MediaRepositoryImpl @Inject constructor(
     }.flowOn(dispatchers.io)
 
     /**
-     * MediaStore orqali (Android 10+): ruxsat so'ralmaydi, fayl Pictures/SwiftChat yoki Movies/SwiftChat'ga
-     * tushadi. `IS_PENDING` — yozib bo'lingunicha galereya yarim faylni ko'rsatmaydi.
+     * Saqlash o'zi shu yerda bajarilmaydi — [MediaSaveWorker] (foreground service, bildirishnomada progress)
+     * navbatga qo'yiladi va darhol qaytiladi: ekran yopilsa ham saqlash davom etadi.
+     * Android 10 dan past versiyalarda MediaStore ruxsatsiz yozishni qo'llamaydi — xato qaytadi (UI tugmani yashiradi).
      */
     override suspend fun saveToGallery(media: MessageMedia, fileName: String): AppResult<Unit> {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return AppResult.Error(AppError.Unknown(UnsupportedOperationException("API < 29")))
-        return try {
-            val source = download(media, fileName).filterIsInstance<DownloadState.Done>().last()
-            withContext(dispatchers.io) { insertIntoGallery(File(source.path), media, fileName) }
-            AppResult.Success(Unit)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: IOException) {
-            AppResult.Error(AppError.Network)
-        } catch (e: NoSuchElementException) {
-            AppResult.Error(AppError.Unknown(e))
-        }
+        mediaSaveScheduler.schedule(media, fileName)
+        return AppResult.Success(Unit)
     }
-
-    /** Faylni MediaStore'ga ko'chiradi; xato bo'lsa yarim yozilgan yozuv o'chiriladi — galereyada "singan" rasm qolmasin. */
-    private fun insertIntoGallery(file: File, media: MessageMedia, fileName: String) {
-        val isVideo = media.kind == MediaKind.VIDEO
-        val collection = if (isVideo) MediaStore.Video.Media.EXTERNAL_CONTENT_URI else MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-        val values = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, safeName(fileName))
-            put(MediaStore.MediaColumns.MIME_TYPE, media.mimeType)
-            put(MediaStore.MediaColumns.RELATIVE_PATH, (if (isVideo) Environment.DIRECTORY_MOVIES else Environment.DIRECTORY_PICTURES) + "/SwiftChat")
-            put(MediaStore.MediaColumns.IS_PENDING, 1)
-        }
-        val resolver = context.contentResolver
-        val uri = resolver.insert(collection, values) ?: throw IOException("MediaStore insert failed")
-        try {
-            resolver.openOutputStream(uri)?.use { output -> FileInputStream(file).use { it.copyTo(output) } }
-                ?: throw IOException("Cannot open gallery output")
-            resolver.update(uri, ContentValues().apply { put(MediaStore.MediaColumns.IS_PENDING, 0) }, null, null)
-        } catch (e: IOException) {
-            resolver.delete(uri, null, null)
-            throw e
-        }
-    }
-
-    /** Fayl nomi boshqa odamdan keladi (`body`) — papka yo'lini buzadigan belgilar olib tashlanadi. */
-    private fun safeName(name: String): String =
-        name.replace(Regex("[\\\\/:*?\"<>|\\u0000-\\u001f]"), "_").trim().take(MAX_NAME).ifEmpty { "file" }
 
     private companion object {
         const val BUFFER_SIZE = 64 * 1024
-        const val MAX_NAME = 120
     }
 }

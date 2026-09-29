@@ -67,7 +67,7 @@
     <string name="pause">Pause</string>
     <string name="mute_sound">Mute</string>
     <string name="unmute_sound">Unmute</string>
-    <string name="saved_to_gallery">Saved to gallery</string>
+    <string name="saving_to_gallery">Saving — see the notification</string>
     <string name="no_app_to_open">No app can open this file</string>
     <string name="no_camera_app">No camera app found</string>
     <string name="error_too_large">The file is larger than 100 MB</string>

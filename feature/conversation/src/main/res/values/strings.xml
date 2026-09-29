@@ -78,7 +78,7 @@
     <string name="pause">Pauza</string>
     <string name="mute_sound">Ovozni oʻchirish</string>
     <string name="unmute_sound">Ovozni yoqish</string>
-    <string name="saved_to_gallery">Galereyaga saqlandi</string>
+    <string name="saving_to_gallery">Saqlanmoqda — jarayon bildirishnomada</string>
     <string name="no_app_to_open">Bu faylni ochadigan ilova topilmadi</string>
     <string name="no_camera_app">Kamera ilovasi topilmadi</string>
     <string name="error_too_large">Fayl 100 MB dan katta</string>
