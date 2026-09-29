@@ -8,6 +8,7 @@ import retrofit2.Retrofit
 import retrofit2.create
 import uz.relay.data.source.network.api.AuthApi
 import uz.relay.data.source.network.api.ChatApi
+import uz.relay.data.source.network.api.MessageApi
 import uz.relay.data.source.network.api.SyncApi
 import uz.relay.data.source.network.api.UserApi
 import javax.inject.Singleton
@@ -27,6 +28,10 @@ object ApiModule {
     @Provides
     @Singleton
     fun provideChatApi(@AuthorizedClient retrofit: Retrofit): ChatApi = retrofit.create()
+
+    @Provides
+    @Singleton
+    fun provideMessageApi(@AuthorizedClient retrofit: Retrofit): MessageApi = retrofit.create()
 
     @Provides
     @Singleton

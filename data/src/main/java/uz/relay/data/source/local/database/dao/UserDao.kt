@@ -25,6 +25,13 @@ interface UserDao {
     @Query("SELECT id FROM users WHERE id IN (:ids)")
     suspend fun existingIds(ids: List<String>): List<String>
 
+    /**
+     * WebSocket `presence` frame'idan. Keshda yo'q foydalanuvchi uchun hech narsa qilmaydi — uning profili
+     * kerak bo'lganda yuklanadi va o'shanda joriy holat ham keladi.
+     */
+    @Query("UPDATE users SET online = :online, lastSeenAt = :lastSeenAt WHERE id = :userId")
+    suspend fun updatePresence(userId: String, online: Boolean, lastSeenAt: Long?)
+
     @Upsert
     suspend fun upsert(user: UserEntity)
 

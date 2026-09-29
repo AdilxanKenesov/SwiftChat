@@ -4,6 +4,7 @@ import org.orbitmvi.orbit.OrbitContainerHost
 import uz.relay.core.common.result.AppError
 import uz.relay.domain.model.ChatSummary
 import uz.relay.domain.model.ChatType
+import uz.relay.domain.model.ConnectionStatus
 import uz.relay.domain.model.User
 
 interface ChatsContract {
@@ -28,7 +29,10 @@ interface ChatsContract {
         val userNames: Map<String, String> = emptyMap(),
         /** App bar'dagi o'z avatarim uchun. */
         val me: User? = null,
-        val isSyncing: Boolean = false,
+        /** Sarlavhadagi holat ("Yangilanmoqda…", "Ulanmoqda…") va "Internet aloqasi yoʻq" banneri uchun. */
+        val connectionStatus: ConnectionStatus = ConnectionStatus.CONNECTED,
+        /** `chatId → hozir yozayotgan userId'lar` (o'zim kirmayman). Oxirgi xabar o'rnida "yozmoqda…". */
+        val typing: Map<String, Set<String>> = emptyMap(),
         val isBootstrapped: Boolean = false
     ) {
         /** Baza hali birinchi marta to'ldirilmagan — "chat yo'q" emas, balki "hali yuklanmagan". */

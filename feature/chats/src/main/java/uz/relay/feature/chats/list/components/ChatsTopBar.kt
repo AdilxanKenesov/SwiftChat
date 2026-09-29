@@ -20,17 +20,19 @@ import uz.relay.core.designsystem.component.ConnectionTitle
 import uz.relay.core.designsystem.component.SwiftLogoTile
 import uz.relay.core.designsystem.component.SwiftWordmark
 import uz.relay.core.designsystem.theme.SwiftTheme
+import uz.relay.domain.model.ConnectionStatus
 import uz.relay.domain.model.User
 import uz.relay.feature.chats.R
 
 /**
  * 64dp app bar: logo (34) + "SwiftChat" · qidiruv · mening avatarim (34).
- * Sync ketayotganda logo va nom o'rniga "Yangilanmoqda…" holati ko'rsatiladi (spec 4-bo'lim).
+ * Ulanish tugallanmaguncha logo va nom o'rniga holat ko'rsatiladi (spec 4-bo'lim):
+ * sync ketayotganda "Yangilanmoqda…", socket ulanayotganda yoki internet yo'q bo'lsa "Ulanmoqda…".
  */
 @Composable
 internal fun ChatsTopBar(
     me: User?,
-    isSyncing: Boolean,
+    connectionStatus: ConnectionStatus,
     onSearchClick: () -> Unit,
     onMyProfileClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -44,8 +46,13 @@ internal fun ChatsTopBar(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(modifier = Modifier.weight(1f)) {
-            if (isSyncing) {
-                ConnectionTitle(text = stringResource(R.string.updating), modifier = Modifier.padding(start = 4.dp))
+            val statusText = when (connectionStatus) {
+                ConnectionStatus.UPDATING -> R.string.updating
+                ConnectionStatus.CONNECTING, ConnectionStatus.OFFLINE -> R.string.connecting
+                ConnectionStatus.CONNECTED -> null
+            }
+            if (statusText != null) {
+                ConnectionTitle(text = stringResource(statusText), modifier = Modifier.padding(start = 4.dp))
             } else {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     SwiftLogoTile(size = 34.dp, modifier = Modifier.padding(end = 12.dp))
