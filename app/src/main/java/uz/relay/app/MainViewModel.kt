@@ -3,15 +3,20 @@ package uz.relay.app
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import uz.relay.core.navigation.AppNavigationHandler
 import uz.relay.core.navigation.AppNavigationParam
 import uz.relay.core.navigation.AppNavigator
 import uz.relay.core.navigation.key.PhoneKey
 import uz.relay.domain.model.AuthState
+import uz.relay.domain.model.ThemeMode
 import uz.relay.domain.usecase.auth.ObserveAuthStateUseCase
+import uz.relay.domain.usecase.settings.ObserveThemeModeUseCase
 import javax.inject.Inject
 
 /**
@@ -21,9 +26,17 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     observeAuthState: ObserveAuthStateUseCase,
+    observeThemeMode: ObserveThemeModeUseCase,
     navigator: AppNavigator,
     val navigationHandler: AppNavigationHandler
 ) : ViewModel() {
+
+    /**
+     * Butun ilova temasi shu yerdan olinadi: profilda "Tungi rejim" bosilishi bilan hamma ekran darhol
+     * almashadi. Eagerly — DataStore splash ko'rinib turgan paytdayoq o'qiladi, tema "sakramaydi".
+     */
+    val themeMode: StateFlow<ThemeMode> = observeThemeMode()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, ThemeMode.SYSTEM)
 
     init {
         viewModelScope.launch {

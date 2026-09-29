@@ -15,6 +15,7 @@ import uz.relay.feature.auth.authEntries
 import uz.relay.feature.chats.chatsEntries
 import uz.relay.feature.conversation.conversationEntries
 import uz.relay.feature.group.groupEntries
+import uz.relay.feature.profile.profileEntries
 
 /** The single back stack: every Directions command lands here through [AppNavigationHandler]. */
 @Composable
@@ -40,6 +41,7 @@ fun AppNavHost(navigationHandler: AppNavigationHandler) {
             chatsEntries()
             conversationEntries()
             groupEntries()
+            profileEntries()
         }
     )
 }
@@ -65,6 +67,11 @@ internal fun MutableList<NavKey>.apply(param: AppNavigationParam) {
                 val keep = if (param.inclusive) index else index + 1
                 while (size > keep.coerceAtLeast(1)) removeAt(lastIndex)
             }
+        }
+
+        is AppNavigationParam.BackToOrTo -> {
+            val index = lastIndexOf(param.key)
+            if (index >= 0) while (size > index + 1) removeAt(lastIndex) else add(param.key)
         }
 
         is AppNavigationParam.ResetTo -> {

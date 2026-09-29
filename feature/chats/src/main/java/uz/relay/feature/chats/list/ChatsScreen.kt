@@ -105,7 +105,7 @@ private fun ChatsScreenContent(
                 me = uiState.me,
                 connectionStatus = uiState.connectionStatus,
                 onSearchClick = { onEventDispatcher(ChatsContract.Intent.OnSearchClick) },
-                onMyProfileClick = {}
+                onMyProfileClick = { onEventDispatcher(ChatsContract.Intent.OnMyProfileClick) }
             )
             if (uiState.connectionStatus == ConnectionStatus.OFFLINE) {
                 // Offline'da ham ro'yxat ko'rinadi (lokal bazadan) — banner faqat ogohlantiradi.

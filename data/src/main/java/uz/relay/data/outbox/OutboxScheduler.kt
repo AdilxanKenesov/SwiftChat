@@ -30,6 +30,11 @@ class OutboxScheduler @Inject constructor(
             .enqueueUniqueWork(UNIQUE_NAME, ExistingWorkPolicy.APPEND_OR_REPLACE, request)
     }
 
+    /** Logout: chiqib ketgan hisobning navbatdagi xabarlari endi yuborilmasligi kerak. */
+    fun cancel() {
+        WorkManager.getInstance(context).cancelUniqueWork(UNIQUE_NAME)
+    }
+
     private companion object {
         const val UNIQUE_NAME = "outbox"
     }

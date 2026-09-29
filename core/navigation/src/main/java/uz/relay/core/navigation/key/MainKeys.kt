@@ -27,3 +27,15 @@ data class GroupInfoKey(val chatId: String) : NavKey
 /** Chat ichida (qurilmadagi xabarlar bo'yicha) qidiruv. */
 @Serializable
 data class ChatSearchKey(val chatId: String) : NavKey
+
+/** Mening profilim va sozlamalar (tema, bildirishnomalar, chiqish). */
+@Serializable
+data object MyProfileKey : NavKey
+
+/** Ism va username'ni tahrirlash. */
+@Serializable
+data object EditProfileKey : NavKey
+
+/** Boshqa foydalanuvchining profili. */
+@Serializable
+data class UserProfileKey(val userId: String) : NavKey

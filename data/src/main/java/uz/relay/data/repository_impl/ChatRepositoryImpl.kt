@@ -57,6 +57,14 @@ internal class ChatRepositoryImpl @Inject constructor(
             else chatDao.observeChat(chatId, me).map { it?.toDomain(me, json) }
         }
 
+    override fun observeDirectChat(peerUserId: String): Flow<ChatSummary?> = sessionStorage.session
+        .map { it?.userId }
+        .distinctUntilChanged()
+        .flatMapLatest { me ->
+            if (me == null) flowOf(null)
+            else chatDao.observeDirectChat(peerUserId, me).map { it?.toDomain(me, json) }
+        }
+
     override fun observeSyncStatus(): Flow<SyncStatus> = combine(
         syncEngine.isSyncing,
         syncEngine.observeCursor()

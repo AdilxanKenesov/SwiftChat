@@ -69,6 +69,7 @@ interface ChatContract {
     interface Directions {
         suspend fun back()
         suspend fun navigateToGroupInfo(chatId: String)
+        suspend fun navigateToUserProfile(userId: String)
     }
 }
 
