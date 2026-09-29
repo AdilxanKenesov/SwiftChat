@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- System splash icon: the 112dp Brand logo tile centered in the 288dp splash icon area. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="288dp"
+    android:height="288dp"
+    android:viewportWidth="288"
+    android:viewportHeight="288">
+    <path
+        android:fillColor="#5B4FE9"
+        android:pathData="M122,88H166A34,34 0,0 1,200 122V166A34,34 0,0 1,166 200H122A34,34 0,0 1,88 166V122A34,34 0,0 1,122 88Z" />
+    <group
+        android:scaleX="1.5"
+        android:scaleY="1.5"
+        android:translateX="108"
+        android:translateY="108">
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M15,8.5H27A7,7 0,0 1,27 22.5H8V15.5A7,7 0,0 1,15 8.5Z" />
+        <path
+            android:fillAlpha="0.55"
+            android:fillColor="#FFFFFF"
+            android:pathData="M21,25.5H40V32.5A7,7 0,0 1,33 39.5H21A7,7 0,0 1,21 25.5Z" />
+    </group>
+</vector>
