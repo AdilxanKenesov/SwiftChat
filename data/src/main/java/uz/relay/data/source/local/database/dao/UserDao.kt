@@ -18,6 +18,10 @@ interface UserDao {
     @Query("SELECT * FROM users WHERE id = :id")
     fun observe(id: String): Flow<UserEntity?>
 
+    /** Keshdagi hamma foydalanuvchilar (o'zimdan tashqari) — guruh yaratishda "tanishlar" ro'yxati. */
+    @Query("SELECT * FROM users WHERE id != :exceptUserId ORDER BY displayName COLLATE NOCASE")
+    fun observeAllExcept(exceptUserId: String): Flow<List<UserEntity>>
+
     @Query("SELECT id, displayName FROM users")
     fun observeNames(): Flow<List<UserName>>
 

@@ -168,4 +168,10 @@ internal class MessageRepositoryImpl @Inject constructor(
         chatDao.markRead(chatId, upToSeq)
         return receiptSender.read(chatId, upToSeq)
     }
+
+    override suspend fun search(chatId: String, query: String): List<Message> {
+        val myUserId = sessionStorage.current()?.userId
+        // Qidiruv natijasida ✓ belgilari kerak emas — kursorlar hisoblanmaydi.
+        return messageDao.search(chatId, query).map { it.toDomain(myUserId, PeerCursors(), json) }
+    }
 }

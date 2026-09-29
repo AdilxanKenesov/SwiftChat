@@ -2,12 +2,6 @@
     <!-- Sarlavha -->
     <string name="back">Orqaga</string>
     <string name="more">Koʻproq</string>
-    <string name="online">online</string>
-    <string name="last_seen">oxirgi marta %1$s</string>
-    <string name="just_now">hozirgina</string>
-    <string name="minutes_ago">%1$d daqiqa oldin</string>
-    <string name="hours_ago">%1$d soat oldin</string>
-    <string name="yesterday_at">kecha %1$s</string>
     <string name="typing">yozmoqda…</string>
     <string name="typing_named">%1$s yozmoqda…</string>
 
@@ -66,6 +60,15 @@
     <string name="attach">Biriktirish</string>
     <string name="send">Yuborish</string>
     <string name="save">Saqlash</string>
+
+    <!-- Guruh -->
+    <string name="members_n">%1$d aʼzo</string>
+
+    <!-- Chat ichida qidiruv -->
+    <string name="search_in_chat_hint">Xabarlardan qidirish</string>
+    <string name="clear">Tozalash</string>
+    <string name="nothing_found">Hech narsa topilmadi</string>
+    <string name="search_local_note">Qurilmadagi xabarlar ichidan qidiriladi</string>
 
     <!-- Xatolar -->
     <string name="no_internet">Internet aloqasi yoʻq</string>

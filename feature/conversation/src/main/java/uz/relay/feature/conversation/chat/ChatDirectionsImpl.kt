@@ -2,6 +2,7 @@ package uz.relay.feature.conversation.chat
 
 import uz.relay.core.navigation.AppNavigationParam
 import uz.relay.core.navigation.AppNavigator
+import uz.relay.core.navigation.key.GroupInfoKey
 import javax.inject.Inject
 
 internal class ChatDirectionsImpl @Inject constructor(
@@ -9,4 +10,6 @@ internal class ChatDirectionsImpl @Inject constructor(
 ) : ChatContract.Directions {
 
     override suspend fun back() = navigator.navigate(AppNavigationParam.Back)
+
+    override suspend fun navigateToGroupInfo(chatId: String) = navigator.navigate(AppNavigationParam.To(GroupInfoKey(chatId)))
 }

@@ -19,4 +19,10 @@ interface UserRepository {
      * prefiksi va SYSTEM xabar matnlarini tuzish uchun kerak.
      */
     fun observeUserNames(): Flow<Map<String, String>>
+
+    /** Username prefiksi bo'yicha qidiruv (serverda). Topilganlar keshga ham yoziladi. */
+    suspend fun search(query: String): AppResult<List<User>>
+
+    /** Keshdagi tanish foydalanuvchilar (o'zimdan tashqari) — guruhga a'zo tanlash uchun. */
+    fun observeKnownUsers(): Flow<List<User>>
 }

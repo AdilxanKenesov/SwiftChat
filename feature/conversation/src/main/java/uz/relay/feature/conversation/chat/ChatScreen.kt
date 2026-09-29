@@ -73,7 +73,7 @@ import uz.relay.feature.conversation.util.messageRes
 import uz.relay.feature.conversation.util.systemText
 
 @Composable
-internal fun ChatScreen(chatId: String) {
+internal fun ChatScreen(chatId: String, focusMessageId: String? = null) {
     val viewModel = hiltViewModel<ChatViewModel, ChatViewModel.Factory>(
         creationCallback = { factory -> factory.create(chatId) }
     )
@@ -91,6 +91,7 @@ internal fun ChatScreen(chatId: String) {
     ChatScreenContent(
         uiState = uiState,
         snackbarHostState = snackbarHostState,
+        focusMessageId = focusMessageId,
         onEventDispatcher = viewModel::onEventDispatcher
     )
 }
@@ -99,7 +100,8 @@ internal fun ChatScreen(chatId: String) {
 private fun ChatScreenContent(
     uiState: ChatContract.UiState,
     snackbarHostState: SnackbarHostState,
-    onEventDispatcher: (ChatContract.Intent) -> Unit
+    onEventDispatcher: (ChatContract.Intent) -> Unit,
+    focusMessageId: String? = null
 ) {
     val colors = SwiftTheme.colors
     val context = LocalContext.current
@@ -116,10 +118,22 @@ private fun ChatScreenContent(
     val atBottom by remember { derivedStateOf { listState.firstVisibleItemIndex == 0 } }
     val firstKey = items.firstOrNull()?.key
 
+    // Qidiruvdan kelindi: kerakli xabar ro'yxatda paydo bo'lishi bilan unga BIR MARTA scroll qilamiz.
+    var focusHandled by remember(focusMessageId) { mutableStateOf(focusMessageId == null) }
+    LaunchedEffect(focusMessageId, items.size) {
+        if (focusHandled) return@LaunchedEffect
+        val index = items.indexOfFirst { it.key == focusMessageId }
+        if (index >= 0) {
+            focusHandled = true
+            listState.scrollToItem(index)
+        }
+    }
+
     // Yangi xabar qo'shildi: pastda edik yoki o'zim yubordim — yangi xabarga tushamiz (aks holda u ko'rinmay qoladi).
     LaunchedEffect(firstKey) {
         val first = items.firstOrNull() as? ChatItem.Bubble
         val mineJustSent = first?.message?.isMine == true && first.message.status == MessageStatus.SENDING
+        if (!focusHandled) return@LaunchedEffect
         if (listState.firstVisibleItemIndex <= 1 || mineJustSent) listState.animateScrollToItem(0)
     }
     // Pastda turib yangi xabarlarni ko'ryapmiz — o'qildi deb belgilaymiz (spec: "when bottom visible").
@@ -148,9 +162,11 @@ private fun ChatScreenContent(
                 chat = uiState.chat,
                 typingUserIds = uiState.typingUserIds,
                 names = uiState.userNames,
+                memberCount = uiState.memberCount,
                 onBack = { onEventDispatcher(ChatContract.Intent.OnBack) },
-                // Guruh/profil ma'lumoti ekrani keyingi bosqichda qo'shiladi.
-                onMoreClick = {},
+                // Guruhda — guruh ma'lumoti. Shaxsiy chatda foydalanuvchi profili profil bosqichida qo'shiladi.
+                onTitleClick = { onEventDispatcher(ChatContract.Intent.OnOpenInfo) },
+                onMoreClick = { onEventDispatcher(ChatContract.Intent.OnOpenInfo) },
                 modifier = Modifier
                     .background(colors.bg)
                     .statusBarsPadding()
@@ -228,6 +244,7 @@ private fun ChatScreenContent(
             MessageMenuOverlay(
                 target = target,
                 names = uiState.userNames,
+                canDeleteOthers = uiState.canDeleteOthers,
                 onReply = {
                     menuTarget = null
                     onEventDispatcher(ChatContract.Intent.OnReply(it))

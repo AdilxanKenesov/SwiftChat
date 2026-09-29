@@ -1,6 +1,7 @@
 package uz.relay.feature.conversation.chat.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,20 +30,22 @@ import uz.relay.core.designsystem.theme.SwiftTheme
 import uz.relay.domain.model.ChatSummary
 import uz.relay.domain.model.ChatType
 import uz.relay.feature.conversation.R
-import uz.relay.feature.conversation.util.formatLastSeen
+import uz.relay.core.designsystem.util.formatPresence
 
 /**
  * 64dp sarlavha: orqaga · avatar 40 · ism (17/700) + holat (13) · "ko'proq".
  *
  * Holat ustuvorligi (spec 3.8): yozmoqda (primary) > online (primary) > "oxirgi marta …" (text2).
- * Guruh a'zolari soni ("12 aʼzo") guruh bosqichida, a'zolar ro'yxati bilan birga qo'shiladi.
+ * Guruhda: yozmoqda > "12 aʼzo". Sarlavha bosilsa guruh ma'lumoti ochiladi.
  */
 @Composable
 fun ChatTopBar(
     chat: ChatSummary?,
     typingUserIds: Set<String>,
     names: Map<String, String>,
+    memberCount: Int,
     onBack: () -> Unit,
+    onTitleClick: () -> Unit,
     onMoreClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -56,10 +59,9 @@ fun ChatTopBar(
     }
     val (subtitle, highlighted) = when {
         typingText != null -> typingText to true
-        chat == null || isGroup -> null to false
-        chat.peerOnline -> stringResource(R.string.online) to true
-        chat.peerLastSeenAt != null -> formatLastSeen(chat.peerLastSeenAt!!, resources) to false
-        else -> null to false
+        chat == null -> null to false
+        isGroup -> (if (memberCount > 0) stringResource(R.string.members_n, memberCount) else null) to false
+        else -> formatPresence(chat.peerOnline, chat.peerLastSeenAt, resources) to chat.peerOnline
     }
 
     Column(modifier = modifier.background(colors.bg)) {
@@ -86,6 +88,7 @@ fun ChatTopBar(
             Column(
                 modifier = Modifier
                     .weight(1f)
+                    .clickable(onClick = onTitleClick)
                     .padding(start = 4.dp),
                 verticalArrangement = Arrangement.spacedBy(1.dp)
             ) {

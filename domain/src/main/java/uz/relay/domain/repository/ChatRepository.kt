@@ -23,4 +23,10 @@ interface ChatRepository {
      * o'tkazib yuborilgan hodisalar (`GET /v1/updates`). Natija [observeChats] orqali keladi.
      */
     suspend fun refresh(): AppResult<Unit>
+
+    /** Bu odam bilan DIRECT chat: bo'lsa o'sha, bo'lmasa yangisi (get-or-create). Qiymat — chat id'si. */
+    suspend fun openDirect(peerUserId: String): AppResult<String>
+
+    /** Faqat o'zim uchun ovozsiz qilish — boshqa a'zolar buni ko'rmaydi, push'lar ham to'xtaydi. */
+    suspend fun setMuted(chatId: String, muted: Boolean): AppResult<Unit>
 }

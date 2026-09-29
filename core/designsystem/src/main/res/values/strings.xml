@@ -1,0 +1,10 @@
+<resources>
+    <!-- Onlayn holat — bir nechta ekranda ishlatiladi (suhbat sarlavhasi, a'zolar, qidiruv). -->
+    <string name="presence_online">online</string>
+    <string name="presence_last_seen">oxirgi marta %1$s</string>
+    <string name="presence_recently">yaqinda</string>
+    <string name="presence_just_now">hozirgina</string>
+    <string name="presence_minutes_ago">%1$d daqiqa oldin</string>
+    <string name="presence_hours_ago">%1$d soat oldin</string>
+    <string name="presence_yesterday_at">kecha %1$s</string>
+</resources>

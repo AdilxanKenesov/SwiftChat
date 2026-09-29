@@ -13,8 +13,11 @@ import uz.relay.core.common.result.AppError
 import uz.relay.core.common.result.AppResult
 import uz.relay.domain.model.ChatSummary
 import uz.relay.domain.model.ChatType
+import uz.relay.domain.model.MemberRole
 import uz.relay.domain.usecase.chat.ObserveChatUseCase
 import uz.relay.domain.usecase.chat.ObserveTypingUseCase
+import uz.relay.domain.usecase.group.ObserveMembersUseCase
+import uz.relay.domain.usecase.group.RefreshMembersUseCase
 import uz.relay.domain.usecase.message.DeleteMessageUseCase
 import uz.relay.domain.usecase.message.EditMessageUseCase
 import uz.relay.domain.usecase.message.LoadLatestMessagesUseCase
@@ -44,6 +47,8 @@ class ChatViewModel @AssistedInject constructor(
     private val deleteMessage: DeleteMessageUseCase,
     private val sendTyping: SendTypingUseCase,
     private val markChatRead: MarkChatReadUseCase,
+    private val observeMembers: ObserveMembersUseCase,
+    private val refreshMembers: RefreshMembersUseCase,
     private val directions: ChatContract.Directions
 ) : ViewModel(), ChatContract.ViewModel {
 
@@ -92,6 +97,9 @@ class ChatViewModel @AssistedInject constructor(
             is ChatContract.Intent.OnRetry -> intent { retryMessage(intent.message.clientMessageId) }
             ChatContract.Intent.OnLoadOlder -> loadOlder()
             ChatContract.Intent.OnBottomVisible -> markRead()
+            ChatContract.Intent.OnOpenInfo -> intent {
+                if (state.isGroup) directions.navigateToGroupInfo(chatId)
+            }
         }
     }
 
@@ -104,15 +112,22 @@ class ChatViewModel @AssistedInject constructor(
             val content = combine(observeMessages(chatId), observeChat(chatId), observeUserNames()) { messages, chat, names ->
                 Triple(messages, chat, names)
             }
-            combine(content, observeMe(), observeTyping()) { (messages, chat, names), me, typing ->
+            combine(content, observeMe(), observeTyping(), observeMembers(chatId)) { (messages, chat, names), me, typing, members ->
                 ChatData(
                     chat = chat,
                     items = buildChatItems(messages, isGroup = chat?.type == ChatType.GROUP),
                     names = names,
                     myUserId = me?.id,
-                    typing = typing[chatId].orEmpty() - me?.id.orEmpty()
+                    typing = typing[chatId].orEmpty() - me?.id.orEmpty(),
+                    memberCount = members.size,
+                    myRole = members.firstOrNull { it.isMe }?.role
                 )
             }.collect { data ->
+                // Guruh ekanligi birinchi marta bilinganda a'zolar ro'yxati yangilanadi (soni va rolim uchun).
+                if (data.chat?.type == ChatType.GROUP && !membersRequested) {
+                    membersRequested = true
+                    refreshGroupMembers()
+                }
                 // Yozish paneli holati (matn, rejim) saqlanadi — faqat ma'lumot qismi yangilanadi.
                 reduce {
                     state.copy(
@@ -120,7 +135,9 @@ class ChatViewModel @AssistedInject constructor(
                         items = data.items,
                         userNames = data.names,
                         myUserId = data.myUserId,
-                        typingUserIds = data.typing
+                        typingUserIds = data.typing,
+                        memberCount = data.memberCount,
+                        myRole = data.myRole
                     )
                 }
             }
@@ -132,8 +149,16 @@ class ChatViewModel @AssistedInject constructor(
         val items: List<ChatItem>,
         val names: Map<String, String>,
         val myUserId: String?,
-        val typing: Set<String>
+        val typing: Set<String>,
+        val memberCount: Int,
+        val myRole: MemberRole?
     )
+
+    /** A'zolar faqat bir marta so'raladi — keyingi o'zgarishlar update'lar orqali bazaga keladi. */
+    private var membersRequested = false
+
+    /** Xato jimgina o'tkaziladi: a'zolar soni ko'rinmasa ham suhbat ishlayveradi. */
+    private fun refreshGroupMembers() = intent { refreshMembers(chatId) }
 
     /** Chat ochilganda eng yangi sahifa serverdan olinadi (lokal nusxa eskirgan yoki bo'sh bo'lishi mumkin). */
     private fun loadLatest() = intent {

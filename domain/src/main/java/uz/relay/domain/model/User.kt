@@ -6,5 +6,9 @@ data class User(
     val displayName: String,
     val avatarMediaId: String?,
     val avatarVersion: Int,
-    val phone: String?
+    val phone: String?,
+    /** Hozir kamida bitta jonli ulanishi bormi. */
+    val online: Boolean = false,
+    /** Oxirgi marta qachon online bo'lgan (online paytda yoki noma'lum bo'lsa `null`). */
+    val lastSeenAt: Long? = null
 )

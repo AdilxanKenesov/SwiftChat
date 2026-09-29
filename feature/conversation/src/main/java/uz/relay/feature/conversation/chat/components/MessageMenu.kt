@@ -54,7 +54,8 @@ data class MenuTarget(val item: ChatItem.Bubble, val bounds: Rect)
 
 /**
  * Xabar menyusi (spec 3.8): qoraytirilgan fon + o'z joyida "ko'tarilgan" bubble + menyu (radius 18, 48dp qatorlar):
- * "Javob berish", "Tahrirlash" (o'zimniki, < 48 soat), "Nusxalash", ajratgich, "Oʻchirish" (qizil).
+ * "Javob berish", "Tahrirlash" (o'zimniki, < 48 soat), "Nusxalash", ajratgich, "Oʻchirish" (qizil; o'zimniki
+ * yoki guruhda OWNER/ADMIN bo'lsam — boshqaniki ham).
  *
  * Nega custom Layout: bubble ro'yxatdagi joyida chizilishi kerak, menyu esa uning ostida (joy bo'lmasa ustida)
  * va chiquvchi xabarda o'ng chetga, kiruvchida chap chetga tekislanadi. Joylar faqat o'lchangandan keyin
@@ -64,6 +65,7 @@ data class MenuTarget(val item: ChatItem.Bubble, val bounds: Rect)
 fun MessageMenuOverlay(
     target: MenuTarget,
     names: Map<String, String>,
+    canDeleteOthers: Boolean,
     onReply: (Message) -> Unit,
     onEdit: (Message) -> Unit,
     onCopy: (Message) -> Unit,
@@ -97,6 +99,7 @@ fun MessageMenuOverlay(
                 )
                 MenuCard(
                     message = message,
+                    canDeleteOthers = canDeleteOthers,
                     onReply = { onReply(message) },
                     onEdit = { onEdit(message) },
                     onCopy = { onCopy(message) },
@@ -130,6 +133,7 @@ fun MessageMenuOverlay(
 @Composable
 private fun MenuCard(
     message: Message,
+    canDeleteOthers: Boolean,
     onReply: () -> Unit,
     onEdit: () -> Unit,
     onCopy: () -> Unit,
@@ -147,7 +151,7 @@ private fun MenuCard(
         if (message.canReply()) MenuItem(DesignR.drawable.ic_reply, R.string.reply, colors.text, onReply)
         if (message.canEdit()) MenuItem(DesignR.drawable.ic_pencil, R.string.edit, colors.text, onEdit)
         if (!message.text.isNullOrEmpty()) MenuItem(DesignR.drawable.ic_copy, R.string.copy, colors.text, onCopy)
-        if (message.canDelete()) {
+        if (message.canDelete(canDeleteOthers)) {
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), thickness = 1.dp, color = colors.line)
             MenuItem(DesignR.drawable.ic_trash, R.string.delete, colors.error, onDelete, bold = true)
         }

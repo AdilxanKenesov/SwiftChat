@@ -17,6 +17,8 @@ interface ChatsContract {
         /** Snackbar'dagi "Qayta urinish" — sync'ni qaytadan boshlash. */
         object OnRetrySync : Intent
         data class OnChatClick(val chatId: String) : Intent
+        /** Qidiruv ikonkasi, FAB va bo'sh holatdagi "Yangi chat" — hammasi qidiruvga olib boradi (spec 3.5). */
+        object OnSearchClick : Intent
     }
 
     sealed interface SideEffect {
@@ -48,9 +50,10 @@ interface ChatsContract {
         fun unreadChatsIn(tab: ChatTab): Int = chats.count { tab.accepts(it) && it.unreadCount > 0 }
     }
 
-    // Qidiruv va Mening profilim ekranlari qo'shilganda ular ham shu yerga yoziladi.
+    // "Mening profilim" ekrani profil bosqichida qo'shiladi.
     interface Directions {
         suspend fun navigateToChat(chatId: String)
+        suspend fun navigateToSearch()
     }
 }
 

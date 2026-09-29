@@ -46,6 +46,23 @@ internal class UserRepositoryImpl @Inject constructor(
             .onSuccess { userDao.upsert(it.toEntity()) }
             .map { it.toUser() }
 
+    override suspend fun search(query: String): AppResult<List<User>> =
+        safeApiCall { userApi.search(query) }
+            .map { response ->
+                val entities = response.users.map { it.toEntity() }
+                // Topilganlar keshga yoziladi: chat ochilganda ism darhol ko'rinsin, tarmoqqa qayta chiqilmasin.
+                userDao.upsertAll(entities)
+                val me = sessionStorage.current()?.userId
+                entities.filter { it.id != me }.map { it.toDomain() }
+            }
+
+    override fun observeKnownUsers(): Flow<List<User>> = sessionStorage.session
+        .map { it?.userId }
+        .distinctUntilChanged()
+        .flatMapLatest { me ->
+            if (me == null) flowOf(emptyList()) else userDao.observeAllExcept(me).map { users -> users.map { it.toDomain() } }
+        }
+
     override fun observeUserNames(): Flow<Map<String, String>> = userDao.observeNames()
         .map { names -> names.associate { it.id to it.displayName } }
         .distinctUntilChanged()
