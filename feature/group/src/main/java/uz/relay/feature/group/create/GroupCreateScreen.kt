@@ -1,5 +1,6 @@
 package uz.relay.feature.group.create
 
+import androidx.compose.ui.text.style.TextAlign
 import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.foundation.background
@@ -216,10 +217,12 @@ private fun PickStep(uiState: GroupCreateContract.UiState, onEventDispatcher: (G
     )
 
     if (uiState.candidates.isEmpty()) {
+        // Bo'sh holat — bitta qisqa qator, markazda (ortiqcha ko'rsatma matnisiz).
         Text(
             text = stringResource(R.string.no_people),
             color = colors.text2,
             fontSize = 15.sp,
+            textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(24.dp)

@@ -82,6 +82,9 @@ private fun EditProfileContent(
 ) {
     val colors = SwiftTheme.colors
     val usernameError = uiState.usernameTaken
+    // Qoida ("3–32 belgi…") faqat foydalanuvchi qoidaga mos KELMAYDIGAN username yozganda ko'rinadi —
+    // bo'sh maydonda va to'g'ri yozilganda ortiqcha matn ko'rsatilmaydi.
+    val rulesBroken = uiState.username.isNotEmpty() && !uiState.usernameValid
 
     Column(
         modifier = Modifier
@@ -139,14 +142,14 @@ private fun EditProfileContent(
                 onValueChange = { onEventDispatcher(EditProfileContract.Intent.OnUsernameChange(it)) },
                 label = stringResource(R.string.username),
                 modifier = Modifier.padding(top = 13.dp),
-                isError = usernameError,
+                isError = usernameError || rulesBroken,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii, autoCorrectEnabled = false, imeAction = ImeAction.Done),
                 leading = {
                     Text(text = "@", fontSize = 17.sp, color = colors.text2, modifier = Modifier.padding(end = 2.dp))
                 },
                 trailing = {
                     when {
-                        usernameError -> Icon(
+                        usernameError || rulesBroken -> Icon(
                             painter = painterResource(DesignR.drawable.ic_alert_circle),
                             contentDescription = null,
                             tint = colors.error,
@@ -163,13 +166,15 @@ private fun EditProfileContent(
                 }
             )
 
-            Text(
-                text = stringResource(if (usernameError) R.string.username_taken else R.string.username_rules),
-                color = if (usernameError) colors.error else colors.text2,
-                fontSize = 12.sp,
-                fontWeight = if (usernameError) FontWeight.SemiBold else FontWeight.Normal,
-                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 6.dp)
-            )
+            if (usernameError || rulesBroken) {
+                Text(
+                    text = stringResource(if (usernameError) R.string.username_taken else R.string.username_rules),
+                    color = colors.error,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 6.dp)
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))

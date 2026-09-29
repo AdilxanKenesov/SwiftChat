@@ -97,6 +97,9 @@ private fun ProfileSetupScreenContent(
     val colors = SwiftTheme.colors
     val typography = SwiftTheme.typography
     val usernameError = uiState.usernameTaken
+    // Qoida ("3–32 belgi…") faqat foydalanuvchi qoidaga mos KELMAYDIGAN username yozganda ko'rinadi —
+    // bo'sh maydonda va to'g'ri yozilganda ortiqcha matn ko'rsatilmaydi.
+    val rulesBroken = uiState.username.isNotEmpty() && !uiState.usernameValid
 
     Column(
         modifier = Modifier
@@ -144,7 +147,7 @@ private fun ProfileSetupScreenContent(
                 onValueChange = { onEventDispatcher(ProfileSetupContract.Intent.OnUsernameChange(it)) },
                 label = stringResource(R.string.username),
                 modifier = Modifier.padding(top = 13.dp),
-                isError = usernameError,
+                isError = usernameError || rulesBroken,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Ascii,
                     autoCorrectEnabled = false,
@@ -156,7 +159,7 @@ private fun ProfileSetupScreenContent(
                 // Band bo'lsa xato ikonkasi, qoidaga mos bo'lsa yashil belgi, aks holda hech narsa.
                 trailing = {
                     when {
-                        usernameError -> Icon(
+                        usernameError || rulesBroken -> Icon(
                             painter = painterResource(DesignR.drawable.ic_alert_circle),
                             contentDescription = null,
                             tint = colors.error,
@@ -173,13 +176,15 @@ private fun ProfileSetupScreenContent(
                 }
             )
 
-            Text(
-                text = stringResource(if (usernameError) R.string.username_taken else R.string.username_rules),
-                color = if (usernameError) colors.error else colors.text2,
-                fontSize = 12.sp,
-                fontWeight = if (usernameError) FontWeight.SemiBold else FontWeight.Normal,
-                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 6.dp)
-            )
+            if (usernameError || rulesBroken) {
+                Text(
+                    text = stringResource(if (usernameError) R.string.username_taken else R.string.username_rules),
+                    color = colors.error,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 6.dp)
+                )
+            }
 
             // Takliflar faqat username band bo'lganda paydo bo'ladi.
             if (uiState.suggestions.isNotEmpty()) {

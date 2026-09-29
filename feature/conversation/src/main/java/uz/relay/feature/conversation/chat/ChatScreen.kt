@@ -1,5 +1,7 @@
 package uz.relay.feature.conversation.chat
 
+import uz.relay.core.designsystem.R as DesignR
+import uz.relay.core.designsystem.component.SwiftDialog
 import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import android.content.ActivityNotFoundException
 import android.content.Context
@@ -29,11 +31,9 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -318,24 +318,19 @@ private fun ChatScreenContent(
         }
 
         deleteTarget?.let { message ->
-            AlertDialog(
-                onDismissRequest = { deleteTarget = null },
-                containerColor = colors.menu,
-                title = { Text(stringResource(R.string.delete_title), color = colors.text) },
-                text = { Text(stringResource(R.string.delete_text), color = colors.text2) },
-                confirmButton = {
-                    TextButton(onClick = {
-                        deleteTarget = null
-                        onEventDispatcher(ChatContract.Intent.OnDelete(message))
-                    }) {
-                        Text(stringResource(R.string.delete), color = colors.error, fontWeight = FontWeight.SemiBold)
-                    }
+            // Qisqa savol + bir qatorli izoh ("hamma uchun o'chiriladi" — qaytarib bo'lmasligini bildiradi).
+            SwiftDialog(
+                title = stringResource(R.string.delete_title),
+                text = stringResource(R.string.delete_text),
+                confirmText = stringResource(R.string.delete),
+                dismissText = stringResource(R.string.cancel),
+                icon = DesignR.drawable.ic_trash,
+                destructive = true,
+                onConfirm = {
+                    deleteTarget = null
+                    onEventDispatcher(ChatContract.Intent.OnDelete(message))
                 },
-                dismissButton = {
-                    TextButton(onClick = { deleteTarget = null }) {
-                        Text(stringResource(R.string.cancel), color = colors.primary)
-                    }
-                }
+                onDismiss = { deleteTarget = null }
             )
         }
     }

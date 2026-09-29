@@ -18,7 +18,7 @@
     <string name="next">Next</string>
     <string name="create_group">Create group</string>
     <string name="remove_selected">Remove</string>
-    <string name="no_people">Find people by username</string>
+    <string name="no_people">No one found</string>
     <string name="edit">Edit</string>
     <string name="members_online">%1$s · %2$d online</string>
     <string name="mute">Mute</string>
@@ -35,7 +35,6 @@
     <string name="remove_from_group">Remove from group</string>
     <string name="leave_group">Leave group</string>
     <string name="leave_title">Leave the group?</string>
-    <string name="leave_text">The group will disappear from your chat list.</string>
     <string name="leave_confirm">Leave</string>
     <string name="remove_title">Remove %1$s from the group?</string>
     <string name="remove_confirm">Remove</string>

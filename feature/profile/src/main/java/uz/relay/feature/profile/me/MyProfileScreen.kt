@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
@@ -28,7 +27,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -63,7 +61,10 @@ import uz.relay.feature.profile.components.ProfileCard
 import uz.relay.feature.profile.components.ProfileHeader
 import uz.relay.feature.profile.components.ProfileTopBar
 import uz.relay.feature.profile.components.SettingRow
-import uz.relay.feature.profile.components.SwiftSwitch
+import uz.relay.core.designsystem.component.SwiftSwitch
+import uz.relay.core.designsystem.component.SwiftDialog
+import uz.relay.feature.profile.components.DangerRow
+import uz.relay.feature.profile.components.SectionLabel
 import uz.relay.feature.profile.components.TileColors
 import uz.relay.feature.profile.util.formatPhone
 import uz.relay.feature.profile.util.messageRes
@@ -95,7 +96,7 @@ internal fun MyProfileScreen(viewModel: MyProfileViewModel = hiltViewModel()) {
 }
 
 /**
- * Profil UI'si: sarlavha, ism + ulanish holati, telefon/username kartasi, sozlamalar kartasi va pastda "Chiqish".
+ * Profil UI'si: sarlavha, ism + ulanish holati, "Hisob" (telefon/username), "Sozlamalar" va alohida kartada "Chiqish".
  * Til tanlash sheet'i va chiqish dialogi — vaqtinchalik ko'rinish holati, shuning uchun ViewModel'da emas.
  */
 @Composable
@@ -141,6 +142,7 @@ private fun MyProfileContent(
         ) {
             ProfileHeader(name = me?.displayName, colorSeed = me?.id.orEmpty(), status = status, statusColor = statusColor)
 
+            SectionLabel(text = stringResource(R.string.section_account))
             ProfileCard {
                 me?.phone?.let { phone ->
                     InfoRow(icon = DesignR.drawable.ic_phone, tileColor = TileColors.Phone, value = formatPhone(phone), caption = stringResource(R.string.phone))
@@ -150,7 +152,8 @@ private fun MyProfileContent(
                 }
             }
 
-            ProfileCard(modifier = Modifier.padding(top = 12.dp, bottom = 16.dp)) {
+            SectionLabel(text = stringResource(R.string.section_settings), modifier = Modifier.padding(top = 20.dp))
+            ProfileCard {
                 SettingRow(
                     icon = DesignR.drawable.ic_bell,
                     tileColor = TileColors.Notifications,
@@ -182,9 +185,17 @@ private fun MyProfileContent(
                     Text(text = stringResource(uiState.language.labelRes()), color = colors.text2, fontSize = 14.sp)
                 }
             }
-        }
 
-        LogoutButton(loading = uiState.loggingOut, onClick = { showLogoutDialog = true })
+            // "Chiqish" — sozlamalar ostidagi alohida kartada (ekran pastiga yopishtirilmagan), qizil plitka bilan.
+            ProfileCard(modifier = Modifier.padding(top = 20.dp, bottom = 24.dp)) {
+                DangerRow(
+                    icon = DesignR.drawable.ic_log_out,
+                    label = stringResource(R.string.logout),
+                    loading = uiState.loggingOut,
+                    onClick = { showLogoutDialog = true }
+                )
+            }
+        }
     }
 
     if (showLanguageSheet) {
@@ -198,25 +209,19 @@ private fun MyProfileContent(
         )
     }
 
+    // Faqat qisqa savol — ortiqcha izohsiz (foydalanuvchi talabi).
     if (showLogoutDialog) {
-        AlertDialog(
-            onDismissRequest = { showLogoutDialog = false },
-            containerColor = colors.menu,
-            title = { Text(stringResource(R.string.logout_title), color = colors.text) },
-            text = { Text(stringResource(R.string.logout_text), color = colors.text2) },
-            confirmButton = {
-                TextButton(onClick = {
-                    showLogoutDialog = false
-                    onEventDispatcher(MyProfileContract.Intent.OnLogout)
-                }) {
-                    Text(stringResource(R.string.logout), color = colors.error, fontWeight = FontWeight.SemiBold)
-                }
+        SwiftDialog(
+            title = stringResource(R.string.logout_title),
+            confirmText = stringResource(R.string.logout),
+            dismissText = stringResource(R.string.cancel),
+            icon = DesignR.drawable.ic_log_out,
+            destructive = true,
+            onConfirm = {
+                showLogoutDialog = false
+                onEventDispatcher(MyProfileContract.Intent.OnLogout)
             },
-            dismissButton = {
-                TextButton(onClick = { showLogoutDialog = false }) {
-                    Text(stringResource(R.string.cancel), color = colors.primary)
-                }
-            }
+            onDismiss = { showLogoutDialog = false }
         )
     }
 }
@@ -271,33 +276,6 @@ private fun LanguageSheet(selected: AppLanguage, onSelect: (AppLanguage) -> Unit
                 }
             }
         }
-    }
-}
-
-/** "Chiqish": karta ko'rinishidagi 56dp tugma, qizil matn + ikonka. Chiqish ketayotganda — progress. */
-@Composable
-private fun LogoutButton(loading: Boolean, onClick: () -> Unit) {
-    val colors = SwiftTheme.colors
-    val shape = RoundedCornerShape(20.dp)
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 16.dp, end = 16.dp, bottom = 20.dp)
-            .height(56.dp)
-            .shadow(elevation = if (colors.cardBorder == Color.Transparent) 2.dp else 0.dp, shape = shape)
-            .clip(shape)
-            .background(colors.card, shape)
-            .border(1.dp, colors.cardBorder, shape)
-            .clickable(enabled = !loading, onClick = onClick),
-        horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        if (loading) {
-            CircularProgressIndicator(color = colors.error, strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
-        } else {
-            Icon(painter = painterResource(DesignR.drawable.ic_log_out), contentDescription = null, tint = colors.error, modifier = Modifier.size(20.dp))
-        }
-        Text(text = stringResource(R.string.logout), color = colors.error, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
     }
 }
 

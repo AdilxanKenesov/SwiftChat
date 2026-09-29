@@ -16,10 +16,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -189,25 +188,49 @@ internal fun SettingRow(
     }
 }
 
+/** Kartalar ustidagi kichik bo'lim sarlavhasi ("Hisob", "Sozlamalar") — kartalarni ma'no bo'yicha ajratadi. */
+@Composable
+internal fun SectionLabel(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text = text,
+        color = SwiftTheme.colors.primary,
+        fontSize = 13.sp,
+        fontWeight = FontWeight.Bold,
+        modifier = modifier.padding(start = 32.dp, end = 32.dp, bottom = 8.dp)
+    )
+}
+
 /**
- * Switch ranglari dizayndagidek: yoniq — primary trek + onPrimary tugma, o'chiq — shaffof trek + outline.
- * Material3 Switch ustida faqat ranglar almashtirilgan — accessibility va animatsiya tayyor holda qoladi.
+ * Xavfli amal qatori (masalan, "Chiqish"): qizil ikonka plitkasi + qizil matn. Karta ichida, oddiy sozlama
+ * qatorlari bilan bir xil o'lchamda — ekran pastiga yopishtirilgan alohida tugma o'rniga (u yoqmadi).
+ * [loading] — amal ketmoqda: plitka o'rnida progress, qator bosilmaydi.
  */
 @Composable
-internal fun SwiftSwitch(checked: Boolean, onCheckedChange: ((Boolean) -> Unit)?) {
+internal fun DangerRow(@DrawableRes icon: Int, label: String, onClick: () -> Unit, loading: Boolean = false) {
     val colors = SwiftTheme.colors
-    Switch(
-        checked = checked,
-        onCheckedChange = onCheckedChange,
-        colors = SwitchDefaults.colors(
-            checkedTrackColor = colors.primary,
-            checkedThumbColor = colors.onPrimary,
-            checkedBorderColor = colors.primary,
-            uncheckedTrackColor = Color.Transparent,
-            uncheckedThumbColor = colors.outline,
-            uncheckedBorderColor = colors.outline
-        )
-    )
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp)
+            .clickable(enabled = !loading, onClick = onClick)
+            .padding(horizontal = 18.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .background(colors.errorContainer, RoundedCornerShape(11.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            if (loading) {
+                CircularProgressIndicator(color = colors.error, strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+            } else {
+                Icon(painter = painterResource(icon), contentDescription = null, tint = colors.error, modifier = Modifier.size(19.dp))
+            }
+        }
+        Text(text = label, color = colors.error, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+    }
 }
 
 /**

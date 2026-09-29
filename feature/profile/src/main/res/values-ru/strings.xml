@@ -10,9 +10,10 @@
     <string name="notifications">Уведомления</string>
     <string name="dark_mode">Тёмная тема</string>
     <string name="language">Язык</string>
+    <string name="section_account">Аккаунт</string>
+    <string name="section_settings">Настройки</string>
     <string name="logout">Выйти</string>
     <string name="logout_title">Выйти из аккаунта?</string>
-    <string name="logout_text">Чаты и сообщения на этом устройстве будут удалены. После входа они загрузятся с сервера.</string>
     <string name="cancel">Отмена</string>
     <string name="name">Имя</string>
     <string name="username_rules">3–32 символа · a–z, 0–9, _</string>

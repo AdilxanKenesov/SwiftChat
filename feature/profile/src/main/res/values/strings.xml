@@ -14,9 +14,10 @@
     <string name="lang_uz" translatable="false">Oʻzbekcha</string>
     <string name="lang_ru" translatable="false">Русский</string>
     <string name="lang_en" translatable="false">English</string>
+    <string name="section_account">Hisob</string>
+    <string name="section_settings">Sozlamalar</string>
     <string name="logout">Chiqish</string>
     <string name="logout_title">Hisobdan chiqasizmi?</string>
-    <string name="logout_text">Bu qurilmadagi chatlar va xabarlar oʻchiriladi. Qayta kirganingizda ular serverdan yuklanadi.</string>
     <string name="cancel">Bekor qilish</string>
 
     <!-- Profilni tahrirlash -->
