@@ -2,6 +2,7 @@ package uz.relay.feature.conversation.viewer
 
 import android.content.Context
 import android.net.Uri
+import androidx.annotation.MainThread
 import androidx.annotation.OptIn
 import androidx.lifecycle.ViewModel
 import androidx.media3.common.MediaItem
@@ -70,7 +71,10 @@ class MediaViewerViewModel @AssistedInject constructor(
     override fun onEventDispatcher(intent: MediaViewerContract.Intent) {
         when (intent) {
             MediaViewerContract.Intent.OnBack -> intent { directions.back() }
-            is MediaViewerContract.Intent.OnPageChange -> intent { preparePage(state.items.getOrNull(intent.index)) }
+            // `intent {}` EMAS: Orbit intent'lari fon thread'ida (Dispatchers.Default) bajariladi, ExoPlayer esa faqat
+            // yaratilgan (main) thread'dan chaqirilishi shart — aks holda IllegalStateException ("wrong thread").
+            // onEventDispatcher UI'dan, main thread'da chaqiriladi, shuning uchun pleyer shu yerda to'g'ridan-to'g'ri boshqariladi.
+            is MediaViewerContract.Intent.OnPageChange -> preparePage(container.stateFlow.value.items.getOrNull(intent.index))
             is MediaViewerContract.Intent.OnSave -> save(intent.item)
         }
     }
@@ -98,7 +102,11 @@ class MediaViewerViewModel @AssistedInject constructor(
         }
     }
 
-    /** Video sahifasi — pleyerga yuklanadi (avtomatik boshlanmaydi: spec'da markazda "play" tugmasi). */
+    /**
+     * Video sahifasi — pleyerga yuklanadi (avtomatik boshlanmaydi: spec'da markazda "play" tugmasi).
+     * Faqat main thread'dan chaqiriladi (ExoPlayer talabi).
+     */
+    @MainThread
     private fun preparePage(item: ViewerItem?) {
         if (item == null || item.media.kind != MediaKind.VIDEO) {
             player.pause()
