@@ -1,5 +1,11 @@
 package uz.relay.feature.profile.user
 
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import uz.relay.core.designsystem.component.SwiftDialog
+import uz.relay.feature.profile.components.DangerRow
+import uz.relay.feature.profile.components.SettingRow
 import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -57,6 +63,8 @@ internal fun UserProfileScreen(userId: String) {
         when (sideEffect) {
             is UserProfileContract.SideEffect.ShowError ->
                 snackbarHostState.showSnackbar(context.getString(sideEffect.error.messageRes()))
+            UserProfileContract.SideEffect.ContactAdded ->
+                snackbarHostState.showSnackbar(context.getString(R.string.contact_added))
         }
     }
 
@@ -69,7 +77,7 @@ internal fun UserProfileScreen(userId: String) {
     }
 }
 
-/** Avatar · ism · holat, keyin "Xabar" va "Ovozsiz qilish" kartalari, pastda username. */
+/** Avatar · ism · holat, "Xabar" va "Ovozsiz qilish" kartalari, username va kontaktga qo'shish/o'chirish. */
 @Composable
 private fun UserProfileContent(
     userId: String,
@@ -79,6 +87,7 @@ private fun UserProfileContent(
     val colors = SwiftTheme.colors
     val resources = LocalContext.current.resources
     val user = uiState.user
+    var confirmRemoveContact by rememberSaveable { mutableStateOf(false) }
     val status = user?.let { formatPresence(it.online, it.lastSeenAt, resources) }.orEmpty()
 
     Column(
@@ -124,6 +133,41 @@ private fun UserProfileContent(
                 InfoRow(icon = DesignR.drawable.ic_at_sign, tileColor = TileColors.Username, value = username, caption = stringResource(R.string.username))
             }
         }
+
+        // Kontaktlar (faqat shu qurilmada): qo'shish — oddiy qator, o'chirish — qizil qator + tasdiq dialogi.
+        if (user != null) {
+            ProfileCard(modifier = Modifier.padding(top = 12.dp, bottom = 16.dp)) {
+                if (uiState.isContact) {
+                    DangerRow(
+                        icon = DesignR.drawable.ic_user_minus,
+                        label = stringResource(R.string.remove_from_contacts),
+                        onClick = { confirmRemoveContact = true }
+                    )
+                } else {
+                    SettingRow(
+                        icon = DesignR.drawable.ic_user_plus,
+                        tileColor = TileColors.Username,
+                        label = stringResource(R.string.add_to_contacts),
+                        onClick = { onEventDispatcher(UserProfileContract.Intent.OnToggleContact) }
+                    ) {}
+                }
+            }
+        }
+    }
+
+    if (confirmRemoveContact) {
+        SwiftDialog(
+            title = stringResource(R.string.remove_contact_title, user?.displayName.orEmpty()),
+            confirmText = stringResource(R.string.remove),
+            dismissText = stringResource(R.string.cancel),
+            icon = DesignR.drawable.ic_user_minus,
+            destructive = true,
+            onConfirm = {
+                confirmRemoveContact = false
+                onEventDispatcher(UserProfileContract.Intent.OnToggleContact)
+            },
+            onDismiss = { confirmRemoveContact = false }
+        )
     }
 }
 

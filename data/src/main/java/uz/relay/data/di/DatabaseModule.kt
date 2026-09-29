@@ -50,4 +50,7 @@ object DatabaseModule {
 
     @Provides
     fun provideUploadDao(database: RelayDatabase) = database.uploadDao()
+
+    @Provides
+    fun provideContactDao(database: RelayDatabase) = database.contactDao()
 }

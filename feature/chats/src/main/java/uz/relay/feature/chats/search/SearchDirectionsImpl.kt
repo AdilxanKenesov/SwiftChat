@@ -3,7 +3,6 @@ package uz.relay.feature.chats.search
 import uz.relay.core.navigation.AppNavigationParam
 import uz.relay.core.navigation.AppNavigator
 import uz.relay.core.navigation.key.ChatKey
-import uz.relay.core.navigation.key.GroupCreateKey
 import javax.inject.Inject
 
 /**
@@ -20,5 +19,4 @@ internal class SearchDirectionsImpl @Inject constructor(
     override suspend fun navigateToChat(chatId: String) = navigator.navigate(AppNavigationParam.Replace(ChatKey(chatId)))
 
     /** Guruh yaratish ekrani ustiga qo'yiladi — orqaga bosilsa qidiruvga qaytiladi. */
-    override suspend fun navigateToGroupCreate() = navigator.navigate(AppNavigationParam.To(GroupCreateKey()))
 }

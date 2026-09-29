@@ -37,4 +37,9 @@
     <string name="error_forbidden">Bu amalga ruxsat yoʻq</string>
     <string name="error_not_found">Foydalanuvchi topilmadi</string>
     <string name="error_unknown">Nimadir xato ketdi. Qayta urining</string>
+    <string name="add_to_contacts">Kontaktlarga qoʻshish</string>
+    <string name="remove_from_contacts">Kontaktlardan oʻchirish</string>
+    <string name="remove_contact_title">%1$s kontaktlardan oʻchirilsinmi?</string>
+    <string name="remove">Oʻchirish</string>
+    <string name="contact_added">Kontaktlarga qoʻshildi</string>
 </resources>

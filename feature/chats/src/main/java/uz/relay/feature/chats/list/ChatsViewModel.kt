@@ -52,6 +52,7 @@ class ChatsViewModel @Inject constructor(
             ChatsContract.Intent.OnRetrySync -> sync()
             is ChatsContract.Intent.OnChatClick -> intent { directions.navigateToChat(intent.chatId) }
             ChatsContract.Intent.OnSearchClick -> intent { directions.navigateToSearch() }
+            ChatsContract.Intent.OnNewMessageClick -> intent { directions.navigateToNewMessage() }
             ChatsContract.Intent.OnMyProfileClick -> intent { directions.navigateToMyProfile() }
             is ChatsContract.Intent.OnMute -> mute { setChatMuted(intent.chatId, intent.duration) }
             is ChatsContract.Intent.OnUnmute -> mute { setChatMuted(intent.chatId, muted = false) }

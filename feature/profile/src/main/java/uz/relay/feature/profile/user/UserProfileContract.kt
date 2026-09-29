@@ -22,10 +22,13 @@ interface UserProfileContract {
         /** "Xabar" — shu odam bilan shaxsiy chat (bo'lmasa yaratiladi). */
         object OnMessage : Intent
         object OnToggleMute : Intent
+        /** Kontakt emas — qo'shadi; kontakt bo'lsa — tasdiq dialogidan keyin o'chiradi. */
+        object OnToggleContact : Intent
     }
 
     /** Bir martalik xatolar — Screen ularni Snackbar'ga aylantiradi. */
     sealed interface SideEffect {
+        object ContactAdded : SideEffect
         data class ShowError(val error: AppError) : SideEffect
     }
 
@@ -35,7 +38,9 @@ interface UserProfileContract {
         /** Shu odam bilan shaxsiy chat. Hali yozishilmagan bo'lsa `null`. */
         val chat: ChatSummary? = null,
         /** Biror amal bajarilmoqda (ikki marta bosishdan himoya). */
-        val isBusy: Boolean = false
+        val isBusy: Boolean = false,
+        /** Qurilmadagi kontaktlarimda bormi (kontaktlar lokal — ContactRepository). */
+        val isContact: Boolean = false
     ) {
         val muted: Boolean get() = chat?.muted == true
     }

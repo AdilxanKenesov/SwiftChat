@@ -4,6 +4,7 @@ import uz.relay.core.navigation.AppNavigationParam
 import uz.relay.core.navigation.AppNavigator
 import uz.relay.core.navigation.key.ChatKey
 import uz.relay.core.navigation.key.MyProfileKey
+import uz.relay.core.navigation.key.NewMessageKey
 import uz.relay.core.navigation.key.SearchKey
 import javax.inject.Inject
 
@@ -19,6 +20,8 @@ internal class ChatsDirectionsImpl @Inject constructor(
     override suspend fun navigateToChat(chatId: String) = navigator.navigate(AppNavigationParam.To(ChatKey(chatId)))
 
     override suspend fun navigateToSearch() = navigator.navigate(AppNavigationParam.To(SearchKey))
+
+    override suspend fun navigateToNewMessage() = navigator.navigate(AppNavigationParam.To(NewMessageKey))
 
     override suspend fun navigateToMyProfile() = navigator.navigate(AppNavigationParam.To(MyProfileKey))
 }

@@ -8,6 +8,8 @@ import org.orbitmvi.orbit.blockingIntent
 import org.orbitmvi.orbit.viewmodel.orbitContainer
 import uz.relay.core.common.result.AppResult
 import uz.relay.core.common.result.isRetryable
+import kotlinx.coroutines.flow.first
+import uz.relay.domain.usecase.chat.ObserveChatsUseCase
 import uz.relay.domain.usecase.chat.OpenDirectChatUseCase
 import uz.relay.domain.usecase.user.SearchUsersUseCase
 import javax.inject.Inject
@@ -22,6 +24,7 @@ import kotlin.time.Duration.Companion.milliseconds
 class SearchViewModel @Inject constructor(
     private val searchUsers: SearchUsersUseCase,
     private val openDirectChat: OpenDirectChatUseCase,
+    private val observeChats: ObserveChatsUseCase,
     private val directions: SearchContract.Directions
 ) : ViewModel(), SearchContract.ViewModel {
 
@@ -37,7 +40,7 @@ class SearchViewModel @Inject constructor(
             is SearchContract.Intent.OnQueryChange -> onQueryChange(intent.query)
             SearchContract.Intent.OnClear -> onQueryChange("")
             SearchContract.Intent.OnBack -> intent { directions.back() }
-            SearchContract.Intent.OnNewGroup -> intent { directions.navigateToGroupCreate() }
+            is SearchContract.Intent.OnChatClick -> intent { directions.navigateToChat(intent.chatId) }
             is SearchContract.Intent.OnUserClick -> openChat(intent.user.id)
         }
     }
@@ -54,9 +57,12 @@ class SearchViewModel @Inject constructor(
         searchJob = intent {
             val normalized = state.normalizedQuery
             if (normalized.isEmpty()) {
-                reduce { state.copy(results = emptyList(), searchedQuery = null, isSearching = false) }
+                reduce { state.copy(results = emptyList(), chatResults = emptyList(), searchedQuery = null, isSearching = false) }
                 return@intent
             }
+            // Chatlar lokal bazadan, nomi bo'yicha — tarmoqqa chiqmasdan, debounce'siz darhol ko'rinadi.
+            val chats = observeChats().first().filter { it.title?.contains(normalized, ignoreCase = true) == true }
+            reduce { state.copy(chatResults = chats) }
             // Debounce: shu vaqt ichida yangi harf kelsa, bu job bekor bo'ladi va so'rov ketmaydi.
             delay(DEBOUNCE_MS.milliseconds)
             reduce { state.copy(isSearching = true) }

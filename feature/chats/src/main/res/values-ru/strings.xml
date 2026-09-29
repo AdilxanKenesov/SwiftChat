@@ -32,7 +32,6 @@
     <string name="my_profile">Мой профиль</string>
     <string name="new_chat">Новый чат</string>
     <string name="no_chats">Чатов пока нет</string>
-    <string name="no_chats_sub">Найдите людей по имени пользователя</string>
     <string name="group">Группа</string>
     <string name="muted">Без звука</string>
     <string name="status_sending">Отправляется</string>
@@ -53,10 +52,21 @@
     <string name="clear">Очистить</string>
     <string name="new_group">Новая группа</string>
     <string name="users">Пользователи</string>
-    <string name="nobody_found">Никого не найдено</string>
-    <string name="no_results_for">Нет результатов по «%1$s»</string>
     <string name="retry">Повторить</string>
     <string name="no_internet">Нет подключения к интернету</string>
     <string name="error_rate_limited">Слишком много попыток. Повторите чуть позже</string>
     <string name="error_unknown">Что-то пошло не так. Повторите попытку</string>
+
+    <string name="new_message">Новое сообщение</string>
+    <string name="new_contact">Новый контакт</string>
+    <string name="contacts">Контакты</string>
+    <string name="no_contacts">Контактов пока нет</string>
+    <string name="chats_section">Чаты</string>
+    <string name="nothing_found">Ничего не найдено</string>
+    <string name="add">Добавить</string>
+    <string name="in_contacts">В контактах</string>
+    <string name="contact_added">%1$s добавлен(а) в контакты</string>
+    <string name="remove_contact_title">Удалить %1$s из контактов?</string>
+    <string name="remove">Удалить</string>
+    <string name="cancel">Отмена</string>
 </resources>

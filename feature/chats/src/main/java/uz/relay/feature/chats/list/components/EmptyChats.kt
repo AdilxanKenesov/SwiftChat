@@ -17,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import uz.relay.core.designsystem.R as DesignR
@@ -40,14 +39,6 @@ internal fun EmptyChats(onNewChatClick: () -> Unit, modifier: Modifier = Modifie
             fontSize = 21.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(top = 24.dp)
-        )
-        Text(
-            text = stringResource(R.string.no_chats_sub),
-            color = colors.text2,
-            fontSize = 15.sp,
-            lineHeight = 22.sp,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(top = 6.dp)
         )
         Button(
             onClick = onNewChatClick,

@@ -32,8 +32,13 @@ interface ChatsContract {
         object OnRetrySync : Intent
         /** Qatorga bosish — chat ekrani ochiladi. */
         data class OnChatClick(val chatId: String) : Intent
-        /** Qidiruv ikonkasi, FAB va bo'sh holatdagi "Yangi chat" — hammasi qidiruvga olib boradi (spec 3.5). */
+        /** App bar'dagi 🔍 — chatlar va foydalanuvchilar bo'yicha qidiruv. */
         object OnSearchClick : Intent
+        /**
+         * FAB (✎) va bo'sh holatdagi "Yangi chat" — "Yangi xabar" ekrani (yangi guruh, yangi kontakt, kontaktlar).
+         * Telegram'dagidek: qidiruv va yangi suhbat boshlash — ikki xil vazifa, ikki xil ekran.
+         */
+        object OnNewMessageClick : Intent
         /** App bar'dagi o'z avatarim — mening profilim va sozlamalar. */
         object OnMyProfileClick : Intent
         /** Long-press sheet'idan: chatni tanlangan muddatga ovozsiz qilish. */
@@ -84,6 +89,7 @@ interface ChatsContract {
     interface Directions {
         suspend fun navigateToChat(chatId: String)
         suspend fun navigateToSearch()
+        suspend fun navigateToNewMessage()
         suspend fun navigateToMyProfile()
     }
 }

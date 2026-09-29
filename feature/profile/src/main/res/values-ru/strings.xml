@@ -27,4 +27,9 @@
     <string name="error_forbidden">Нет прав на это действие</string>
     <string name="error_not_found">Пользователь не найден</string>
     <string name="error_unknown">Что-то пошло не так. Повторите попытку</string>
+    <string name="add_to_contacts">Добавить в контакты</string>
+    <string name="remove_from_contacts">Удалить из контактов</string>
+    <string name="remove_contact_title">Удалить %1$s из контактов?</string>
+    <string name="remove">Удалить</string>
+    <string name="contact_added">Добавлено в контакты</string>
 </resources>

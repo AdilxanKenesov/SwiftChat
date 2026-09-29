@@ -1,5 +1,9 @@
 package uz.relay.feature.chats.di
 
+import uz.relay.feature.chats.addcontact.AddContactContract
+import uz.relay.feature.chats.addcontact.AddContactDirectionsImpl
+import uz.relay.feature.chats.newmessage.NewMessageContract
+import uz.relay.feature.chats.newmessage.NewMessageDirectionsImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -22,4 +26,10 @@ internal interface ChatsDirectionsModule {
 
     @Binds
     fun bindSearchDirections(impl: SearchDirectionsImpl): SearchContract.Directions
+
+    @Binds
+    fun bindNewMessageDirections(impl: NewMessageDirectionsImpl): NewMessageContract.Directions
+
+    @Binds
+    fun bindAddContactDirections(impl: AddContactDirectionsImpl): AddContactContract.Directions
 }

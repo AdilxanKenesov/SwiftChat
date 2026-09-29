@@ -130,7 +130,7 @@ private fun ChatsScreenContent(
             when {
                 uiState.showSkeleton -> SkeletonList()
                 uiState.showEmpty -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    EmptyChats(onNewChatClick = { onEventDispatcher(ChatsContract.Intent.OnSearchClick) })
+                    EmptyChats(onNewChatClick = { onEventDispatcher(ChatsContract.Intent.OnNewMessageClick) })
                 }
                 else -> ChatsPager(
                     uiState = uiState,
@@ -145,7 +145,7 @@ private fun ChatsScreenContent(
             SwiftFab(
                 icon = DesignR.drawable.ic_pencil,
                 contentDescription = stringResource(R.string.new_chat),
-                onClick = { onEventDispatcher(ChatsContract.Intent.OnSearchClick) },
+                onClick = { onEventDispatcher(ChatsContract.Intent.OnNewMessageClick) },
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .navigationBarsPadding()

@@ -7,6 +7,7 @@ import dagger.hilt.components.SingletonComponent
 import uz.relay.data.repository_impl.AuthRepositoryImpl
 import uz.relay.data.repository_impl.ChatRepositoryImpl
 import uz.relay.data.repository_impl.ConnectionRepositoryImpl
+import uz.relay.data.repository_impl.ContactRepositoryImpl
 import uz.relay.data.repository_impl.GroupRepositoryImpl
 import uz.relay.data.repository_impl.MediaRepositoryImpl
 import uz.relay.data.repository_impl.MessageRepositoryImpl
@@ -16,6 +17,7 @@ import uz.relay.data.repository_impl.UserRepositoryImpl
 import uz.relay.domain.repository.AuthRepository
 import uz.relay.domain.repository.ChatRepository
 import uz.relay.domain.repository.ConnectionRepository
+import uz.relay.domain.repository.ContactRepository
 import uz.relay.domain.repository.GroupRepository
 import uz.relay.domain.repository.MediaRepository
 import uz.relay.domain.repository.MessageRepository
@@ -61,4 +63,7 @@ internal interface RepositoryModule {
 
     @Binds
     fun bindMediaRepository(impl: MediaRepositoryImpl): MediaRepository
+
+    @Binds
+    fun bindContactRepository(impl: ContactRepositoryImpl): ContactRepository
 }

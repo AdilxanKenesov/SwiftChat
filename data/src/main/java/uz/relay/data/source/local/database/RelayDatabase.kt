@@ -5,6 +5,7 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import uz.relay.data.source.local.database.dao.ChatDao
 import uz.relay.data.source.local.database.dao.ChatMemberDao
+import uz.relay.data.source.local.database.dao.ContactDao
 import uz.relay.data.source.local.database.dao.MemberCursorDao
 import uz.relay.data.source.local.database.dao.MessageDao
 import uz.relay.data.source.local.database.dao.SyncStateDao
@@ -12,6 +13,7 @@ import uz.relay.data.source.local.database.dao.UploadDao
 import uz.relay.data.source.local.database.dao.UserDao
 import uz.relay.data.source.local.database.entity.ChatEntity
 import uz.relay.data.source.local.database.entity.ChatMemberEntity
+import uz.relay.data.source.local.database.entity.ContactEntity
 import uz.relay.data.source.local.database.entity.MediaConverters
 import uz.relay.data.source.local.database.entity.MemberCursorEntity
 import uz.relay.data.source.local.database.entity.MessageEntity
@@ -38,9 +40,10 @@ import uz.relay.data.source.local.database.entity.UserEntity
         SyncStateEntity::class,
         MessageEntity::class,
         ChatMemberEntity::class,
-        UploadEntity::class
+        UploadEntity::class,
+        ContactEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 @TypeConverters(MediaConverters::class)
@@ -52,4 +55,5 @@ abstract class RelayDatabase : RoomDatabase() {
     abstract fun messageDao(): MessageDao
     abstract fun chatMemberDao(): ChatMemberDao
     abstract fun uploadDao(): UploadDao
+    abstract fun contactDao(): ContactDao
 }

@@ -47,3 +47,11 @@ data class UserProfileKey(val userId: String) : NavKey
 /** Rasm/video ko'ruvchi: shu chatdagi hamma rasm va videolar orasida suriladi, [clientMessageId] dan boshlanadi. */
 @Serializable
 data class MediaViewerKey(val chatId: String, val clientMessageId: String) : NavKey
+
+/** "Yangi xabar" (chatlar ekranidagi FAB): yangi guruh, yangi kontakt va kontaktlar ro'yxati — Telegram kabi. */
+@Serializable
+data object NewMessageKey : NavKey
+
+/** Username bo'yicha topib, qurilmadagi kontaktlarga qo'shish. */
+@Serializable
+data object AddContactKey : NavKey

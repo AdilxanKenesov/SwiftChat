@@ -56,10 +56,11 @@ import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
 import uz.relay.core.designsystem.R as DesignR
 import uz.relay.core.designsystem.component.Avatar
-import uz.relay.core.designsystem.component.BrandTile
 import uz.relay.core.designsystem.theme.FigtreeFontFamily
 import uz.relay.core.designsystem.theme.SwiftChatTheme
 import uz.relay.core.designsystem.theme.SwiftTheme
+import uz.relay.domain.model.ChatSummary
+import uz.relay.domain.model.ChatType
 import uz.relay.domain.model.User
 import uz.relay.feature.chats.R
 import uz.relay.feature.chats.util.messageRes
@@ -131,25 +132,15 @@ private fun SearchScreenContent(
                 .fillMaxSize()
                 .imePadding()
         ) {
-            item(key = "new-group") {
-                NewGroupRow(onClick = { onEventDispatcher(SearchContract.Intent.OnNewGroup) })
-                Spacer(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(8.dp)
-                        .background(colors.surface)
-                )
+            // Avval chatlar (lokal, darhol), keyin serverdagi foydalanuvchilar — Telegram'dagi global qidiruv tartibi.
+            if (uiState.chatResults.isNotEmpty()) {
+                item(key = "chats-label") { SectionLabel(text = stringResource(R.string.chats_section)) }
+                items(items = uiState.chatResults, key = { "chat-" + it.id }) { chat ->
+                    ChatResultRow(chat = chat, onClick = { onEventDispatcher(SearchContract.Intent.OnChatClick(chat.id)) })
+                }
             }
             if (uiState.results.isNotEmpty()) {
-                item(key = "label") {
-                    Text(
-                        text = stringResource(R.string.users),
-                        color = colors.primary,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 6.dp)
-                    )
-                }
+                item(key = "label") { SectionLabel(text = stringResource(R.string.users)) }
             }
             items(items = uiState.results, key = { it.id }) { user ->
                 UserRow(
@@ -164,7 +155,7 @@ private fun SearchScreenContent(
 
 /** 64dp: orqaga · qidiruv maydoni (avtomatik fokus) · tozalash. Pastda chiziq. */
 @Composable
-private fun SearchBar(query: String, onQueryChange: (String) -> Unit, onClear: () -> Unit, onBack: () -> Unit) {
+internal fun SearchBar(query: String, onQueryChange: (String) -> Unit, onClear: () -> Unit, onBack: () -> Unit) {
     val colors = SwiftTheme.colors
     val focusRequester = remember { FocusRequester() }
     // Ekran ochilishi bilan klaviatura chiqsin — foydalanuvchi darhol yoza boshlasin.
@@ -219,27 +210,9 @@ private fun SearchBar(query: String, onQueryChange: (String) -> Unit, onClear: (
     }
 }
 
-/** "Yangi guruh" qatori — guruh yaratish ekraniga olib boradi. */
-@Composable
-private fun NewGroupRow(onClick: () -> Unit) {
-    val colors = SwiftTheme.colors
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(68.dp)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        BrandTile(icon = DesignR.drawable.ic_users, size = 48.dp, cornerRadius = 16.dp, iconSize = 22.dp)
-        Text(text = stringResource(R.string.new_group), color = colors.text, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-    }
-}
-
 /** 68dp: avatar 48 (+ online nuqta) · ism (16/600) · "@" + qidirilgan qism (qalin, primary) + qolgani. */
 @Composable
-private fun UserRow(user: User, query: String, onClick: () -> Unit) {
+internal fun UserRow(user: User, query: String, onClick: () -> Unit, trailing: (@Composable () -> Unit)? = null) {
     val colors = SwiftTheme.colors
     val username = user.username.orEmpty()
     val matches = query.isNotEmpty() && username.startsWith(query, ignoreCase = true)
@@ -254,7 +227,7 @@ private fun UserRow(user: User, query: String, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Avatar(name = user.displayName, colorSeed = user.id, size = 48.dp, online = user.online)
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
                 text = user.displayName,
                 color = colors.text,
@@ -283,10 +256,11 @@ private fun UserRow(user: User, query: String, onClick: () -> Unit) {
                 )
             }
         }
+        trailing?.invoke()
     }
 }
 
-/** Natija yo'q: 96dp doira ichida ikonka + "Hech kim topilmadi" + «so'rov» boʻyicha natija yoʻq. */
+/** Natija yo'q: 96dp doira ichida ikonka + qisqa "Hech narsa topilmadi" (ortiqcha izohsiz). */
 @Composable
 private fun NothingFound(query: String) {
     val colors = SwiftTheme.colors
@@ -312,19 +286,52 @@ private fun NothingFound(query: String) {
             )
         }
         Text(
-            text = stringResource(R.string.nobody_found),
+            text = stringResource(R.string.nothing_found),
             color = colors.text,
             fontSize = 21.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(top = 24.dp)
         )
-        Text(
-            text = stringResource(R.string.no_results_for, query),
-            color = colors.text2,
-            fontSize = 15.sp,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(top = 6.dp)
+    }
+}
+
+/** Bo'lim sarlavhasi (13/700, primary) — "Chatlar", "Foydalanuvchilar", "Kontaktlar". */
+@Composable
+internal fun SectionLabel(text: String) {
+    Text(
+        text = text,
+        color = SwiftTheme.colors.primary,
+        fontSize = 13.sp,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 6.dp)
+    )
+}
+
+/** Qidiruvdagi chat qatori (68dp): avatar 48 · nom · guruh bo'lsa "Guruh". Bosilsa chat ochiladi. */
+@Composable
+private fun ChatResultRow(chat: ChatSummary, onClick: () -> Unit) {
+    val colors = SwiftTheme.colors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(68.dp)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Avatar(
+            name = chat.title,
+            colorSeed = chat.peerUserId ?: chat.id,
+            size = 48.dp,
+            online = chat.type == ChatType.DIRECT && chat.peerOnline
         )
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(text = chat.title.orEmpty(), color = colors.text, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (chat.type == ChatType.GROUP) {
+                Text(text = stringResource(R.string.group), color = colors.text2, fontSize = 14.sp, maxLines = 1)
+            }
+        }
     }
 }
 

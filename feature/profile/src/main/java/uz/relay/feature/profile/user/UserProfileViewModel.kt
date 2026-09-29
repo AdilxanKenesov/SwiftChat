@@ -11,6 +11,9 @@ import uz.relay.core.common.result.AppResult
 import uz.relay.domain.usecase.chat.ObserveDirectChatUseCase
 import uz.relay.domain.usecase.chat.OpenDirectChatUseCase
 import uz.relay.domain.usecase.chat.SetChatMutedUseCase
+import uz.relay.domain.usecase.contact.AddContactUseCase
+import uz.relay.domain.usecase.contact.ObserveContactIdsUseCase
+import uz.relay.domain.usecase.contact.RemoveContactUseCase
 import uz.relay.domain.usecase.user.ObserveUserUseCase
 import uz.relay.domain.usecase.user.RefreshUserUseCase
 
@@ -26,6 +29,9 @@ class UserProfileViewModel @AssistedInject constructor(
     private val observeDirectChat: ObserveDirectChatUseCase,
     private val openDirectChat: OpenDirectChatUseCase,
     private val setChatMuted: SetChatMutedUseCase,
+    private val observeContactIds: ObserveContactIdsUseCase,
+    private val addContact: AddContactUseCase,
+    private val removeContact: RemoveContactUseCase,
     private val directions: UserProfileContract.Directions
 ) : ViewModel(), UserProfileContract.ViewModel {
 
@@ -47,6 +53,7 @@ class UserProfileViewModel @AssistedInject constructor(
             UserProfileContract.Intent.OnBack -> intent { directions.back() }
             UserProfileContract.Intent.OnMessage -> openChat()
             UserProfileContract.Intent.OnToggleMute -> toggleMute()
+            UserProfileContract.Intent.OnToggleContact -> toggleContact()
         }
     }
 
@@ -56,8 +63,9 @@ class UserProfileViewModel @AssistedInject constructor(
      */
     private fun observeData() = intent {
         repeatOnSubscription {
-            combine(observeUser(userId), observeDirectChat(userId)) { user, chat -> user to chat }
-                .collect { (user, chat) -> reduce { state.copy(user = user, chat = chat) } }
+            combine(observeUser(userId), observeDirectChat(userId), observeContactIds()) { user, chat, contacts ->
+                Triple(user, chat, userId in contacts)
+            }.collect { (user, chat, isContact) -> reduce { state.copy(user = user, chat = chat, isContact = isContact) } }
         }
     }
 
@@ -100,5 +108,21 @@ class UserProfileViewModel @AssistedInject constructor(
         val result = setChatMuted(chatId, !muted)
         reduce { state.copy(isBusy = false) }
         if (result is AppResult.Error) postSideEffect(UserProfileContract.SideEffect.ShowError(result.error))
+    }
+
+    /** Kontaktlar faqat shu qurilmada. O'chirish tasdiqni UI so'raydi (dialog), bu yerga tasdiqlangan amal keladi. */
+    private fun toggleContact() = intent {
+        if (state.isBusy) return@intent
+        if (state.isContact) {
+            removeContact(userId)
+            return@intent
+        }
+        reduce { state.copy(isBusy = true) }
+        val result = addContact(userId)
+        reduce { state.copy(isBusy = false) }
+        when (result) {
+            is AppResult.Success -> postSideEffect(UserProfileContract.SideEffect.ContactAdded)
+            is AppResult.Error -> postSideEffect(UserProfileContract.SideEffect.ShowError(result.error))
+        }
     }
 }

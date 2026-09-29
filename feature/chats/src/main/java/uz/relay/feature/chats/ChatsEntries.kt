@@ -1,5 +1,9 @@
 package uz.relay.feature.chats
 
+import uz.relay.core.navigation.key.AddContactKey
+import uz.relay.core.navigation.key.NewMessageKey
+import uz.relay.feature.chats.addcontact.AddContactScreen
+import uz.relay.feature.chats.newmessage.NewMessageScreen
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import uz.relay.core.navigation.key.ChatsKey
@@ -15,4 +19,6 @@ import uz.relay.feature.chats.search.SearchScreen
 fun EntryProviderScope<NavKey>.chatsEntries() {
     entry<ChatsKey> { ChatsScreen() }
     entry<SearchKey> { SearchScreen() }
+    entry<NewMessageKey> { NewMessageScreen() }
+    entry<AddContactKey> { AddContactScreen() }
 }

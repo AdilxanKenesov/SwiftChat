@@ -27,4 +27,9 @@
     <string name="error_forbidden">You are not allowed to do this</string>
     <string name="error_not_found">User not found</string>
     <string name="error_unknown">Something went wrong. Please try again</string>
+    <string name="add_to_contacts">Add to contacts</string>
+    <string name="remove_from_contacts">Remove from contacts</string>
+    <string name="remove_contact_title">Remove %1$s from contacts?</string>
+    <string name="remove">Remove</string>
+    <string name="contact_added">Added to contacts</string>
 </resources>

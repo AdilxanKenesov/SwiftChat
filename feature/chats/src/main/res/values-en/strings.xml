@@ -32,7 +32,6 @@
     <string name="my_profile">My profile</string>
     <string name="new_chat">New chat</string>
     <string name="no_chats">No chats yet</string>
-    <string name="no_chats_sub">Find people by username</string>
     <string name="group">Group</string>
     <string name="muted">Muted</string>
     <string name="status_sending">Sending</string>
@@ -53,10 +52,21 @@
     <string name="clear">Clear</string>
     <string name="new_group">New group</string>
     <string name="users">Users</string>
-    <string name="nobody_found">Nobody found</string>
-    <string name="no_results_for">No results for “%1$s”</string>
     <string name="retry">Retry</string>
     <string name="no_internet">No internet connection</string>
     <string name="error_rate_limited">Too many attempts. Try again a bit later</string>
     <string name="error_unknown">Something went wrong. Please try again</string>
+
+    <string name="new_message">New message</string>
+    <string name="new_contact">New contact</string>
+    <string name="contacts">Contacts</string>
+    <string name="no_contacts">No contacts yet</string>
+    <string name="chats_section">Chats</string>
+    <string name="nothing_found">Nothing found</string>
+    <string name="add">Add</string>
+    <string name="in_contacts">In contacts</string>
+    <string name="contact_added">%1$s added to contacts</string>
+    <string name="remove_contact_title">Remove %1$s from contacts?</string>
+    <string name="remove">Remove</string>
+    <string name="cancel">Cancel</string>
 </resources>
