@@ -49,3 +49,16 @@ private fun DayOfWeek.shortNameRes(): Int = when (this) {
     DayOfWeek.SATURDAY -> R.string.day_sat
     DayOfWeek.SUNDAY -> R.string.day_sun
 }
+
+private val DAY_MONTH_TIME = DateTimeFormatter.ofPattern("dd.MM HH:mm")
+
+/** Ovozsiz qilish tugaydigan vaqt: bugun bo'lsa "18:30", aks holda "01.10 18:30". */
+fun formatMuteUntil(
+    epochMillis: Long,
+    now: Long = System.currentTimeMillis(),
+    zone: ZoneId = ZoneId.systemDefault()
+): String {
+    val dateTime = Instant.ofEpochMilli(epochMillis).atZone(zone)
+    val today = LocalDate.ofInstant(Instant.ofEpochMilli(now), zone)
+    return if (dateTime.toLocalDate() == today) TIME.format(dateTime) else DAY_MONTH_TIME.format(dateTime)
+}

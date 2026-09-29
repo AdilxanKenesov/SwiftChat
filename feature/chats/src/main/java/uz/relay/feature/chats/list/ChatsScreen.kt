@@ -18,6 +18,9 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -48,6 +51,7 @@ import uz.relay.feature.chats.list.components.ChatRow
 import uz.relay.feature.chats.list.components.ChatsTabs
 import uz.relay.feature.chats.list.components.ChatsTopBar
 import uz.relay.feature.chats.list.components.EmptyChats
+import uz.relay.feature.chats.list.components.MuteSheet
 import uz.relay.feature.chats.util.messageRes
 
 @Composable
@@ -68,6 +72,9 @@ internal fun ChatsScreen(viewModel: ChatsViewModel = hiltViewModel()) {
                     viewModel.onEventDispatcher(ChatsContract.Intent.OnRetrySync)
                 }
             }
+
+            is ChatsContract.SideEffect.ShowActionError ->
+                snackbarHostState.showSnackbar(context.getString(sideEffect.error.messageRes()))
         }
     }
 
@@ -83,13 +90,14 @@ internal fun ChatsScreen(viewModel: ChatsViewModel = hiltViewModel()) {
     }
 }
 
-// "Mening profilim" ekrani profil bosqichida qo'shiladi; hozircha avatar tugmasi faqat chiziladi.
 @Composable
 private fun ChatsScreenContent(
     uiState: ChatsContract.UiState,
     onEventDispatcher: (ChatsContract.Intent) -> Unit
 ) {
     val colors = SwiftTheme.colors
+    // Sheet faqat id'ni eslaydi: chat qatori bazadan yangilansa (masalan, mute holati), sheet ham yangisini ko'rsatadi.
+    var muteSheetChatId by rememberSaveable { mutableStateOf<String?>(null) }
 
     Box(
         modifier = Modifier
@@ -117,7 +125,11 @@ private fun ChatsScreenContent(
                 uiState.showEmpty -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     EmptyChats(onNewChatClick = { onEventDispatcher(ChatsContract.Intent.OnSearchClick) })
                 }
-                else -> ChatsPager(uiState = uiState, onEventDispatcher = onEventDispatcher)
+                else -> ChatsPager(
+                    uiState = uiState,
+                    onEventDispatcher = onEventDispatcher,
+                    onChatLongClick = { muteSheetChatId = it }
+                )
             }
         }
 
@@ -134,13 +146,30 @@ private fun ChatsScreenContent(
             )
         }
     }
+
+    // Chat o'chib ketsa (masalan, guruhdan chiqarildim) — sheet o'zi yopiladi.
+    uiState.chats.firstOrNull { it.id == muteSheetChatId }?.let { chat ->
+        MuteSheet(
+            chat = chat,
+            onDismiss = { muteSheetChatId = null },
+            onMute = { duration ->
+                muteSheetChatId = null
+                onEventDispatcher(ChatsContract.Intent.OnMute(chat.id, duration))
+            },
+            onUnmute = {
+                muteSheetChatId = null
+                onEventDispatcher(ChatsContract.Intent.OnUnmute(chat.id))
+            }
+        )
+    }
 }
 
 /** Tablar va ular ostidagi sahifalar: tabni bosish ham, chapga-o'ngga surish ham ishlaydi. */
 @Composable
 private fun ChatsPager(
     uiState: ChatsContract.UiState,
-    onEventDispatcher: (ChatsContract.Intent) -> Unit
+    onEventDispatcher: (ChatsContract.Intent) -> Unit,
+    onChatLongClick: (chatId: String) -> Unit
 ) {
     val tabs = ChatTab.entries
     val pagerState = rememberPagerState(pageCount = { tabs.size })
@@ -168,7 +197,8 @@ private fun ChatsPager(
                     chat = chat,
                     userNames = uiState.userNames,
                     typingUserIds = uiState.typing[chat.id].orEmpty(),
-                    onClick = { onEventDispatcher(ChatsContract.Intent.OnChatClick(chat.id)) }
+                    onClick = { onEventDispatcher(ChatsContract.Intent.OnChatClick(chat.id)) },
+                    onLongClick = { onChatLongClick(chat.id) }
                 )
             }
         }

@@ -5,6 +5,7 @@ import uz.relay.core.common.result.AppError
 import uz.relay.domain.model.ChatSummary
 import uz.relay.domain.model.ChatType
 import uz.relay.domain.model.ConnectionStatus
+import uz.relay.domain.model.MuteDuration
 import uz.relay.domain.model.User
 
 interface ChatsContract {
@@ -21,11 +22,16 @@ interface ChatsContract {
         object OnSearchClick : Intent
         /** App bar'dagi o'z avatarim — mening profilim va sozlamalar. */
         object OnMyProfileClick : Intent
+        /** Long-press sheet'idan: chatni tanlangan muddatga ovozsiz qilish. */
+        data class OnMute(val chatId: String, val duration: MuteDuration) : Intent
+        data class OnUnmute(val chatId: String) : Intent
     }
 
     sealed interface SideEffect {
         /** Faqat vaqtinchalik (retryable) xatolar ko'rsatiladi — ular uchun "Qayta urinish" ma'noli. */
         data class ShowError(val error: AppError) : SideEffect
+        /** Bitta amal (masalan, ovozsiz qilish) bajarilmadi — "Qayta urinish" (sync) bu yerda ma'nosiz. */
+        data class ShowActionError(val error: AppError) : SideEffect
     }
 
     data class UiState(

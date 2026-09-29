@@ -84,9 +84,16 @@ fun ChatListItem.toDomain(myUserId: String, json: Json): ChatSummary {
         },
         lastActivityAt = chat.lastActivityAt,
         unreadCount = chat.unreadCount,
-        muted = chat.muted
+        muted = chat.isMutedAt(System.currentTimeMillis()),
+        mutedUntil = chat.mutedUntil.takeIf { chat.muted }
     )
 }
+
+/**
+ * Muddati o'tgan mute — ovozsiz emas. Vaqt har emissiyada qayta hisoblanadi: ro'yxat Flow'i har qanday
+ * o'zgarishda (yangi xabar, presence, kursor) qayta keladi, shuning uchun belgi o'z-o'zidan yo'qoladi.
+ */
+private fun ChatEntity.isMutedAt(now: Long): Boolean = muted && (mutedUntil == null || mutedUntil > now)
 
 /** SYSTEM xabar `body`si JSON satr. Buzuq bo'lsa `null` — ro'yxat baribir chiziladi. */
 fun parseSystemEvent(body: String?, json: Json): SystemEvent? {

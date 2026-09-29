@@ -11,6 +11,7 @@ import uz.relay.domain.usecase.chat.ObserveConnectionStatusUseCase
 import uz.relay.domain.usecase.chat.ObserveTypingUseCase
 import uz.relay.domain.usecase.chat.ObserveSyncStatusUseCase
 import uz.relay.domain.usecase.chat.RefreshChatsUseCase
+import uz.relay.domain.usecase.chat.SetChatMutedUseCase
 import uz.relay.domain.usecase.user.ObserveMeUseCase
 import uz.relay.domain.usecase.user.ObserveUserNamesUseCase
 import uz.relay.domain.usecase.user.RefreshMeUseCase
@@ -26,6 +27,7 @@ class ChatsViewModel @Inject constructor(
     private val observeTyping: ObserveTypingUseCase,
     private val refreshChats: RefreshChatsUseCase,
     private val refreshMe: RefreshMeUseCase,
+    private val setChatMuted: SetChatMutedUseCase,
     private val directions: ChatsContract.Directions
 ) : ViewModel(), ChatsContract.ViewModel {
 
@@ -42,6 +44,8 @@ class ChatsViewModel @Inject constructor(
             is ChatsContract.Intent.OnChatClick -> intent { directions.navigateToChat(intent.chatId) }
             ChatsContract.Intent.OnSearchClick -> intent { directions.navigateToSearch() }
             ChatsContract.Intent.OnMyProfileClick -> intent { directions.navigateToMyProfile() }
+            is ChatsContract.Intent.OnMute -> mute { setChatMuted(intent.chatId, intent.duration) }
+            is ChatsContract.Intent.OnUnmute -> mute { setChatMuted(intent.chatId, muted = false) }
         }
     }
 
@@ -84,6 +88,12 @@ class ChatsViewModel @Inject constructor(
             is AppResult.Error ->
                 if (result.error.isRetryable) postSideEffect(ChatsContract.SideEffect.ShowError(result.error))
         }
+    }
+
+    /** Natija (belgi, badge rangi) ro'yxatga bazadan keladi — server javobi darhol yoziladi. Bu yerda faqat xato. */
+    private fun mute(block: suspend () -> AppResult<Unit>) = intent {
+        val result = block()
+        if (result is AppResult.Error) postSideEffect(ChatsContract.SideEffect.ShowActionError(result.error))
     }
 
     /** O'z profilim (app bar avatari uchun). Xato jimgina o'tkaziladi — avatar keyingi safar yuklanadi. */

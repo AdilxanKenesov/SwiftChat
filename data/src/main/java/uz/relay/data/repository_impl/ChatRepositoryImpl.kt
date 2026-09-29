@@ -87,7 +87,7 @@ internal class ChatRepositoryImpl @Inject constructor(
             }
 
     /** Server yangilangan chat qatorini qaytaradi — uni darhol yozamiz, ro'yxatdagi belgi shu zahoti o'zgarsin. */
-    override suspend fun setMuted(chatId: String, muted: Boolean): AppResult<Unit> =
-        safeApiCall { chatApi.updateSettings(chatId, ChatSettingsRequest(muted = muted)) }
+    override suspend fun setMuted(chatId: String, muted: Boolean, mutedUntil: Long?): AppResult<Unit> =
+        safeApiCall { chatApi.updateSettings(chatId, ChatSettingsRequest(muted = muted, mutedUntil = mutedUntil.takeIf { muted })) }
             .map { chatDao.upsert(it.toEntity()) }
 }

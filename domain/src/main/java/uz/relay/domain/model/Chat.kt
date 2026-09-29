@@ -37,8 +37,13 @@ data class ChatSummary(
     /** Ro'yxat shu vaqt bo'yicha tartiblanadi (eng yangisi tepada). */
     val lastActivityAt: Long,
     val unreadCount: Int,
-    /** Faqat MENING sozlamam: chatni o'zim uchun ovozsiz qilganmanmi. */
-    val muted: Boolean
+    /**
+     * Faqat MENING sozlamam: chat HOZIR ovozsizmi. Muddati o'tgan mute bu yerda allaqachon `false` —
+     * server `muted = true` ni muddat tugagandan keyin ham qaytarishi mumkin, UI esa buni bilishi shart emas.
+     */
+    val muted: Boolean,
+    /** Ovozsiz qachongacha (epoch ms). `null` — muddatsiz yoki ovozsiz emas. */
+    val mutedUntil: Long? = null
 )
 
 data class LastMessage(

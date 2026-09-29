@@ -49,6 +49,16 @@
     <string name="status_delivered">Yetkazildi</string>
     <string name="status_read">Oʻqildi</string>
 
+    <!-- Ovozsiz qilish (long-press) -->
+    <string name="mute_long">Ovozsiz qilish</string>
+    <string name="mute_1h">1 soatga</string>
+    <string name="mute_8h">8 soatga</string>
+    <string name="mute_1d">1 kunga</string>
+    <string name="mute_forever">Butunlay</string>
+    <string name="unmute">Ovozni yoqish</string>
+    <string name="muted_until">%1$s gacha ovozsiz</string>
+    <string name="muted_forever">Ovozsiz</string>
+
     <!-- Qidiruv -->
     <string name="back">Orqaga</string>
     <string name="search_hint">Username boʻyicha qidirish</string>

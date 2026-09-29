@@ -31,5 +31,6 @@ interface ChatRepository {
     suspend fun openDirect(peerUserId: String): AppResult<String>
 
     /** Faqat o'zim uchun ovozsiz qilish — boshqa a'zolar buni ko'rmaydi, push'lar ham to'xtaydi. */
-    suspend fun setMuted(chatId: String, muted: Boolean): AppResult<Unit>
+    /** [mutedUntil] `null` — muddatsiz (yoki [muted] `false` bo'lsa ahamiyatsiz). */
+    suspend fun setMuted(chatId: String, muted: Boolean, mutedUntil: Long? = null): AppResult<Unit>
 }
