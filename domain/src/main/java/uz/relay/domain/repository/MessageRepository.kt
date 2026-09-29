@@ -33,4 +33,7 @@ interface MessageRepository {
 
     /** Chatni oxirigacha o'qildi deb belgilaydi: lokal belgi darhol, serverga `read` kvitansiyasi. */
     suspend fun markRead(chatId: String): AppResult<Unit>
+
+    /** Chat ichida lokal qidiruv — faqat qurilmadagi (yuklangan) xabarlar ichidan. */
+    suspend fun search(chatId: String, query: String): List<Message>
 }

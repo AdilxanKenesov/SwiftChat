@@ -6,6 +6,8 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ViewModelComponent
 import uz.relay.feature.conversation.chat.ChatContract
 import uz.relay.feature.conversation.chat.ChatDirectionsImpl
+import uz.relay.feature.conversation.search.ChatSearchContract
+import uz.relay.feature.conversation.search.ChatSearchDirectionsImpl
 
 /** Directions faqat ViewModel'larga kerak va holatsiz — shuning uchun ViewModel doirasida. */
 @Module
@@ -14,4 +16,7 @@ internal interface ConversationDirectionsModule {
 
     @Binds
     fun bindChatDirections(impl: ChatDirectionsImpl): ChatContract.Directions
+
+    @Binds
+    fun bindChatSearchDirections(impl: ChatSearchDirectionsImpl): ChatSearchContract.Directions
 }

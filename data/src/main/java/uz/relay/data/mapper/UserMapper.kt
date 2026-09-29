@@ -41,5 +41,7 @@ fun UserEntity.toDomain() = User(
     displayName = displayName,
     avatarMediaId = avatarMediaId,
     avatarVersion = avatarVersion,
-    phone = phone
+    phone = phone,
+    online = online,
+    lastSeenAt = lastSeenAt
 )

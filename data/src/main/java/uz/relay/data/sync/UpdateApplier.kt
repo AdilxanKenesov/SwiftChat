@@ -5,6 +5,7 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import uz.relay.core.common.result.AppResult
 import uz.relay.core.common.result.isRetryable
+import uz.relay.data.mapper.parseSystemEvent
 import uz.relay.data.mapper.systemEventUserIds
 import uz.relay.data.mapper.toEmbedded
 import uz.relay.data.mapper.toEntity
@@ -23,10 +24,12 @@ import uz.relay.data.source.local.SessionStorage
 import uz.relay.data.source.local.cache.UserCache
 import uz.relay.data.source.local.database.RelayDatabase
 import uz.relay.data.source.local.database.dao.ChatDao
+import uz.relay.data.source.local.database.dao.ChatMemberDao
 import uz.relay.data.source.local.database.dao.MemberCursorDao
 import uz.relay.data.source.local.database.dao.MessageDao
 import uz.relay.data.source.local.database.dao.SyncStateDao
 import uz.relay.data.source.local.database.dao.UserDao
+import uz.relay.data.source.local.database.entity.ChatMemberEntity
 import uz.relay.data.source.local.database.entity.LastMessageEmbedded
 import uz.relay.data.source.local.database.entity.SendStatus
 import uz.relay.data.source.network.api.ChatApi
@@ -70,6 +73,7 @@ class UpdateApplier @Inject constructor(
     private val messageDao: MessageDao,
     private val userDao: UserDao,
     private val memberCursorDao: MemberCursorDao,
+    private val memberDao: ChatMemberDao,
     private val syncStateDao: SyncStateDao,
     private val chatApi: ChatApi,
     private val userCache: UserCache,
@@ -166,12 +170,28 @@ class UpdateApplier @Inject constructor(
             }
 
             is Decoded.Member -> with(update.payload) {
-                // Meni chiqarishdi yoki o'zim chiqdim: server bu chat haqida boshqa update yubormaydi,
-                // shuning uchun lokal nusxani ham o'chiramiz. A'zolar ro'yxati guruh bosqichida qo'shiladi.
-                if (userId == myUserId && removed) {
-                    chatDao.delete(chatId)
-                    messageDao.deleteByChat(chatId)
-                    memberCursorDao.deleteByChat(chatId)
+                when {
+                    // Meni chiqarishdi yoki o'zim chiqdim: server bu chat haqida boshqa update yubormaydi,
+                    // shuning uchun lokal nusxani ham o'chiramiz.
+                    userId == myUserId && removed -> {
+                        chatDao.delete(chatId)
+                        messageDao.deleteByChat(chatId)
+                        memberCursorDao.deleteByChat(chatId)
+                        memberDao.deleteByChat(chatId)
+                    }
+                    removed -> memberDao.delete(chatId, userId)
+                    // Qo'shildi yoki roli o'zgardi. `role` kelmasa — mavjud rolni saqlaymiz.
+                    else -> {
+                        val existing = memberDao.get(chatId, userId)
+                        memberDao.upsert(
+                            ChatMemberEntity(
+                                chatId = chatId,
+                                userId = userId,
+                                role = role ?: existing?.role ?: ROLE_MEMBER,
+                                joinedAt = existing?.joinedAt ?: System.currentTimeMillis()
+                            )
+                        )
+                    }
                 }
             }
 
@@ -191,6 +211,7 @@ class UpdateApplier @Inject constructor(
             // O'z xabarimning "echo"si ack'dan oldin kelsa ham to'g'ri: PENDING qator shu yerda SENT bo'ladi.
             messageDao.upsertAll(listOf(message.toEntity()))
         }
+        if (message.type == "SYSTEM") applyMembershipEvent(message)
 
         val chat = chatDao.getChat(message.chatId) ?: return
         // topSeq'dan eski yoki teng xabar — dublikat yoki snapshot uni allaqachon hisobga olgan.
@@ -205,6 +226,25 @@ class UpdateApplier @Inject constructor(
                 unreadCount = if (isIncomingUnread) chat.unreadCount + 1 else chat.unreadCount
             )
         )
+    }
+
+    /**
+     * SYSTEM xabardan a'zolar ro'yxatini to'ldirish (oddiy a'zo uchun asosiy manba — a'zolarni o'qiydigan GET yo'q).
+     * Faqat tartibli update oqimidan qo'llanadi: shuning uchun eski "qo'shildi" yangi "chiqdi"ni bosib ketmaydi.
+     */
+    private suspend fun applyMembershipEvent(message: MessageResponse) {
+        val event = parseSystemEvent(message.body, json) ?: return
+        fun member(userId: String, role: String) =
+            ChatMemberEntity(chatId = message.chatId, userId = userId, role = role, joinedAt = message.createdAt)
+
+        when (event.event) {
+            "group_created" -> {
+                memberDao.upsert(member(event.actorId, ROLE_OWNER))
+                memberDao.insertIfAbsent(event.targetUserIds.map { member(it, ROLE_MEMBER) })
+            }
+            "members_added" -> memberDao.insertIfAbsent(event.targetUserIds.map { member(it, ROLE_MEMBER) })
+            "member_removed", "member_left" -> event.targetUserIds.forEach { memberDao.delete(message.chatId, it) }
+        }
     }
 
     /** Ro'yxatdagi "oxirgi xabar" aynan shu xabar bo'lsa — preview'ni ham yangilaymiz. */
@@ -244,3 +284,6 @@ class UpdateApplier @Inject constructor(
         else -> emptyList()
     }
 }
+
+private const val ROLE_OWNER = "OWNER"
+private const val ROLE_MEMBER = "MEMBER"

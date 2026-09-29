@@ -83,7 +83,7 @@ internal fun ChatsScreen(viewModel: ChatsViewModel = hiltViewModel()) {
     }
 }
 
-// Qidiruv va profil ekranlari keyingi bosqichlarda qo'shiladi; hozircha ularning tugmalari faqat chiziladi.
+// "Mening profilim" ekrani profil bosqichida qo'shiladi; hozircha avatar tugmasi faqat chiziladi.
 @Composable
 private fun ChatsScreenContent(
     uiState: ChatsContract.UiState,
@@ -104,7 +104,7 @@ private fun ChatsScreenContent(
             ChatsTopBar(
                 me = uiState.me,
                 connectionStatus = uiState.connectionStatus,
-                onSearchClick = {},
+                onSearchClick = { onEventDispatcher(ChatsContract.Intent.OnSearchClick) },
                 onMyProfileClick = {}
             )
             if (uiState.connectionStatus == ConnectionStatus.OFFLINE) {
@@ -115,7 +115,7 @@ private fun ChatsScreenContent(
             when {
                 uiState.showSkeleton -> SkeletonList()
                 uiState.showEmpty -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    EmptyChats(onNewChatClick = {})
+                    EmptyChats(onNewChatClick = { onEventDispatcher(ChatsContract.Intent.OnSearchClick) })
                 }
                 else -> ChatsPager(uiState = uiState, onEventDispatcher = onEventDispatcher)
             }
@@ -126,7 +126,7 @@ private fun ChatsScreenContent(
             SwiftFab(
                 icon = DesignR.drawable.ic_pencil,
                 contentDescription = stringResource(R.string.new_chat),
-                onClick = {},
+                onClick = { onEventDispatcher(ChatsContract.Intent.OnSearchClick) },
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .navigationBarsPadding()

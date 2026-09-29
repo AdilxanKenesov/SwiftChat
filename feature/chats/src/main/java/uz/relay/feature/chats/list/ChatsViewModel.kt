@@ -40,6 +40,7 @@ class ChatsViewModel @Inject constructor(
         when (intent) {
             ChatsContract.Intent.OnRetrySync -> sync()
             is ChatsContract.Intent.OnChatClick -> intent { directions.navigateToChat(intent.chatId) }
+            ChatsContract.Intent.OnSearchClick -> intent { directions.navigateToSearch() }
         }
     }
 

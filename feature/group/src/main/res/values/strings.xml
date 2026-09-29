@@ -1,0 +1,48 @@
+<resources>
+    <string name="back">Orqaga</string>
+
+    <!-- Guruh yaratish -->
+    <string name="new_group">Yangi guruh</string>
+    <string name="add_members">Aʼzo qoʻshish</string>
+    <string name="selected_n">%1$d ta tanlandi</string>
+    <string name="search_hint">Username boʻyicha qidirish</string>
+    <string name="name_and_photo">Nom va rasm</string>
+    <string name="group_name">Guruh nomi</string>
+    <string name="members_n">%1$d aʼzo</string>
+    <string name="next">Keyingi</string>
+    <string name="create_group">Guruhni yaratish</string>
+    <string name="remove_selected">Olib tashlash</string>
+    <string name="no_people">Username boʻyicha odam toping</string>
+
+    <!-- Guruh maʼlumoti -->
+    <string name="edit">Tahrirlash</string>
+    <string name="members_online">%1$d aʼzo · %2$d online</string>
+    <string name="mute">Ovozsiz</string>
+    <string name="search">Qidirish</string>
+    <string name="add">Qoʻshish</string>
+    <string name="members">Aʼzolar</string>
+    <string name="you_suffix">%1$s (siz)</string>
+    <string name="owner">Egasi</string>
+    <string name="admin">Admin</string>
+    <string name="member">Aʼzo</string>
+    <string name="make_admin">Admin qilish</string>
+    <string name="make_member">Aʼzo qilish</string>
+    <string name="write_message">Xabar yozish</string>
+    <string name="remove_from_group">Guruhdan chiqarish</string>
+    <string name="leave_group">Guruhdan chiqish</string>
+    <string name="leave_title">Guruhdan chiqasizmi?</string>
+    <string name="leave_text">Guruh chatlar roʻyxatingizdan oʻchadi.</string>
+    <string name="leave_confirm">Chiqish</string>
+    <string name="remove_title">%1$s guruhdan chiqarilsinmi?</string>
+    <string name="remove_confirm">Chiqarish</string>
+    <string name="rename_title">Guruh nomi</string>
+    <string name="save">Saqlash</string>
+    <string name="cancel">Bekor qilish</string>
+    <string name="unknown_user">Nomaʼlum</string>
+
+    <!-- Xatolar -->
+    <string name="no_internet">Internet aloqasi yoʻq</string>
+    <string name="error_rate_limited">Juda koʻp urinish. Birozdan soʻng qayta urining</string>
+    <string name="error_forbidden">Bu amalga ruxsat yoʻq</string>
+    <string name="error_unknown">Nimadir xato ketdi. Qayta urining</string>
+</resources>

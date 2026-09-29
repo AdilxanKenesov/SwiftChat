@@ -24,6 +24,24 @@ interface MessageDao {
     )
     fun observeMessages(chatId: String): Flow<List<MessageEntity>>
 
+    /**
+     * Chat ichida lokal qidiruv (API'da xabar qidiruvi yo'q). Faqat qurilmadagi (yuklangan) xabarlar ichidan,
+     * o'chirilganlarsiz; eng yangisi birinchi. LIKE katta-kichik harfni lotin harflari uchun farqlamaydi.
+     */
+    @Query(
+        """
+        SELECT * FROM messages
+        WHERE chatId = :chatId AND deletedAt IS NULL AND type != 'SYSTEM' AND body LIKE '%' || :query || '%'
+        ORDER BY serverSeq DESC
+        LIMIT 100
+        """
+    )
+    suspend fun search(chatId: String, query: String): List<MessageEntity>
+
+    /** Chatdagi SYSTEM xabarlar, eskisidan yangisiga — a'zolar ro'yxatini tarixdan tiklash uchun. */
+    @Query("SELECT * FROM messages WHERE chatId = :chatId AND type = 'SYSTEM' ORDER BY serverSeq ASC")
+    suspend fun systemMessages(chatId: String): List<MessageEntity>
+
     @Query("SELECT * FROM messages WHERE clientMessageId = :clientMessageId")
     suspend fun get(clientMessageId: String): MessageEntity?
 

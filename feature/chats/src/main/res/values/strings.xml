@@ -49,6 +49,15 @@
     <string name="status_delivered">Yetkazildi</string>
     <string name="status_read">Oʻqildi</string>
 
+    <!-- Qidiruv -->
+    <string name="back">Orqaga</string>
+    <string name="search_hint">Username boʻyicha qidirish</string>
+    <string name="clear">Tozalash</string>
+    <string name="new_group">Yangi guruh</string>
+    <string name="users">Foydalanuvchilar</string>
+    <string name="nobody_found">Hech kim topilmadi</string>
+    <string name="no_results_for">«%1$s» boʻyicha natija yoʻq</string>
+
     <!-- Xatolar -->
     <string name="retry">Qayta urinish</string>
     <string name="no_internet">Internet aloqasi yoʻq</string>

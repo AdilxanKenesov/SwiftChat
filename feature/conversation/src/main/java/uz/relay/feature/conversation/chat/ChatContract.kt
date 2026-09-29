@@ -4,6 +4,8 @@ import org.orbitmvi.orbit.OrbitContainerHost
 import uz.relay.core.common.result.AppError
 import uz.relay.domain.model.ChatSummary
 import uz.relay.domain.model.ChatType
+import uz.relay.domain.model.GroupPermissions
+import uz.relay.domain.model.MemberRole
 import uz.relay.domain.model.Message
 import uz.relay.domain.model.MessageType
 
@@ -27,6 +29,8 @@ interface ChatContract {
         object OnLoadOlder : Intent
         /** Ro'yxat pastida turibmiz — ko'rinib turgan xabarlar o'qildi. */
         object OnBottomVisible : Intent
+        /** Sarlavha yoki "ko'proq" bosildi — guruhda guruh ma'lumoti ochiladi. */
+        object OnOpenInfo : Intent
     }
 
     sealed interface SideEffect {
@@ -44,10 +48,15 @@ interface ChatContract {
         val composerText: String = "",
         val composerMode: ComposerMode = ComposerMode.None,
         val hasMore: Boolean = true,
-        val isLoadingOlder: Boolean = false
+        val isLoadingOlder: Boolean = false,
+        /** Guruh a'zolari soni (sarlavhadagi "12 aʼzo"). DIRECT chatda 0. */
+        val memberCount: Int = 0,
+        /** Guruhdagi rolim — boshqalarning xabarini o'chirish huquqi shunga bog'liq. */
+        val myRole: MemberRole? = null
     ) {
         val isGroup: Boolean get() = chat?.type == ChatType.GROUP
         val canSend: Boolean get() = composerText.isNotBlank()
+        val canDeleteOthers: Boolean get() = isGroup && GroupPermissions.canDeleteOthersMessages(myRole)
     }
 
     /** Yozish panelining rejimi: oddiy, javob berish yoki tahrirlash. */
@@ -59,6 +68,7 @@ interface ChatContract {
 
     interface Directions {
         suspend fun back()
+        suspend fun navigateToGroupInfo(chatId: String)
     }
 }
 
@@ -70,10 +80,11 @@ fun Message.canEdit(now: Long = System.currentTimeMillis()): Boolean =
     isMine && !isDeleted && serverId != null && type == MessageType.TEXT && now - createdAt < EDIT_WINDOW_MS
 
 /**
- * "Oʻchirish" menyuda ko'rinadimi. Server qoidasi: yuboruvchi har doim, guruhda OWNER/ADMIN ham.
- * Guruhdagi rolim a'zolar ro'yxati bilan (guruh bosqichida) bilinadi — hozircha faqat o'zimnikini.
+ * "Oʻchirish" menyuda ko'rinadimi. Server qoidasi: yuboruvchi har doim, guruhda OWNER/ADMIN ham
+ * ([canDeleteOthers] — guruhdagi rolimdan hisoblanadi).
  */
-fun Message.canDelete(): Boolean = isMine && !isDeleted && serverId != null
+fun Message.canDelete(canDeleteOthers: Boolean): Boolean =
+    !isDeleted && serverId != null && (isMine || canDeleteOthers)
 
 /** Javob berish va nusxalash: o'chirilmagan, serverga yetgan har qanday oddiy xabar. */
 fun Message.canReply(): Boolean = !isDeleted && serverId != null && type != MessageType.SYSTEM

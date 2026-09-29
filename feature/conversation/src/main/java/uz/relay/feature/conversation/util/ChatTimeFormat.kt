@@ -6,10 +6,8 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.time.temporal.ChronoUnit
 
 private val TIME = DateTimeFormatter.ofPattern("HH:mm")
-private val FULL_DATE = DateTimeFormatter.ofPattern("dd.MM.yyyy")
 
 /** Bubble ichidagi vaqt: "10:08". */
 fun formatMessageTime(epochMillis: Long, zone: ZoneId = ZoneId.systemDefault()): String =
@@ -35,29 +33,6 @@ fun formatDateSeparator(
         date.year == today.year -> resources.getString(R.string.day_month, date.dayOfMonth, month)
         else -> resources.getString(R.string.day_month_year, date.dayOfMonth, month, date.year)
     }
-}
-
-/**
- * "oxirgi marta …" uchun nisbiy vaqt: "hozirgina", "5 daqiqa oldin", "3 soat oldin", "kecha 21:14",
- * undan eskisi — to'liq sana.
- */
-fun formatLastSeen(
-    lastSeenAt: Long,
-    resources: Resources,
-    now: Long = System.currentTimeMillis(),
-    zone: ZoneId = ZoneId.systemDefault()
-): String {
-    val minutes = (now - lastSeenAt) / 60_000
-    val seen = Instant.ofEpochMilli(lastSeenAt).atZone(zone)
-    val daysAgo = ChronoUnit.DAYS.between(seen.toLocalDate(), LocalDate.ofInstant(Instant.ofEpochMilli(now), zone))
-    val relative = when {
-        minutes < 1 -> resources.getString(R.string.just_now)
-        minutes < 60 -> resources.getString(R.string.minutes_ago, minutes.toInt())
-        daysAgo == 0L -> resources.getString(R.string.hours_ago, (minutes / 60).toInt())
-        daysAgo == 1L -> resources.getString(R.string.yesterday_at, TIME.format(seen))
-        else -> FULL_DATE.format(seen)
-    }
-    return resources.getString(R.string.last_seen, relative)
 }
 
 private fun monthRes(month: Int): Int = when (month) {
