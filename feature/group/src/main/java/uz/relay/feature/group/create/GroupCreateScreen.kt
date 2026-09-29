@@ -1,5 +1,6 @@
 package uz.relay.feature.group.create
 
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -115,7 +116,7 @@ private fun GroupCreateContent(
         Column(modifier = Modifier.fillMaxSize()) {
             TopBar(
                 title = stringResource(if (uiState.isAddMode) R.string.add_members else R.string.new_group),
-                subtitle = if (isPick) stringResource(R.string.selected_n, uiState.selected.size) else stringResource(R.string.name_and_photo),
+                subtitle = if (isPick) pluralStringResource(R.plurals.selected_n, uiState.selected.size, uiState.selected.size) else stringResource(R.string.name_and_photo),
                 onBack = { onEventDispatcher(GroupCreateContract.Intent.OnBack) }
             )
             if (isPick) PickStep(uiState, onEventDispatcher) else NameStep(uiState, onEventDispatcher)
@@ -268,7 +269,7 @@ private fun NameStep(uiState: GroupCreateContract.UiState, onEventDispatcher: (G
             .background(colors.surface)
     )
     Text(
-        text = stringResource(R.string.members_n, uiState.selected.size),
+        text = pluralStringResource(R.plurals.members_n, uiState.selected.size, uiState.selected.size),
         color = colors.primary,
         fontSize = 13.sp,
         fontWeight = FontWeight.Bold,

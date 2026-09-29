@@ -1,5 +1,6 @@
 package uz.relay.feature.group.info
 
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -313,7 +314,7 @@ private fun Header(chat: ChatSummary?, memberCount: Int, onlineCount: Int) {
             modifier = Modifier.padding(horizontal = 24.dp)
         )
         if (memberCount > 0) {
-            Text(text = stringResource(R.string.members_online, memberCount, onlineCount), color = colors.text2, fontSize = 14.sp)
+            Text(text = stringResource(R.string.members_online, pluralStringResource(R.plurals.members_n, memberCount, memberCount), onlineCount), color = colors.text2, fontSize = 14.sp)
         }
     }
 }

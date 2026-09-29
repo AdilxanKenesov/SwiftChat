@@ -85,7 +85,10 @@
     <string name="error_media_prepare">Faylni oʻqib boʻlmadi</string>
 
     <!-- Guruh -->
-    <string name="members_n">%1$d aʼzo</string>
+    <plurals name="members_n">
+        <item quantity="one">%1$d aʼzo</item>
+        <item quantity="other">%1$d aʼzo</item>
+    </plurals>
 
     <!-- Chat ichida qidiruv -->
     <string name="search_in_chat_hint">Xabarlardan qidirish</string>

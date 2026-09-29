@@ -17,7 +17,10 @@
     <string name="otp_title">Kodni kiriting</string>
     <string name="otp_sent">Telegramʼga yuborildi · %1$s</string>
     <string name="resend_in">Qayta yuborish %1$s</string>
-    <string name="otp_wrong">Notoʻgʻri kod · %1$d ta urinish qoldi</string>
+    <plurals name="otp_wrong">
+        <item quantity="one">Notoʻgʻri kod · %1$d ta urinish qoldi</item>
+        <item quantity="other">Notoʻgʻri kod · %1$d ta urinish qoldi</item>
+    </plurals>
     <string name="otp_expired">Kod muddati tugadi</string>
     <string name="otp_locked">Kod bloklandi</string>
     <string name="otp_locked_sub">5 marta xato kiritildi</string>

@@ -1,5 +1,6 @@
 package uz.relay.feature.conversation.chat.components
 
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -60,7 +61,7 @@ fun ChatTopBar(
     val (subtitle, highlighted) = when {
         typingText != null -> typingText to true
         chat == null -> null to false
-        isGroup -> (if (memberCount > 0) stringResource(R.string.members_n, memberCount) else null) to false
+        isGroup -> (if (memberCount > 0) pluralStringResource(R.plurals.members_n, memberCount, memberCount) else null) to false
         else -> formatPresence(chat.peerOnline, chat.peerLastSeenAt, resources) to chat.peerOnline
     }
 

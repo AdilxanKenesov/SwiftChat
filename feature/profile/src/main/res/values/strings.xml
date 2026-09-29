@@ -10,7 +10,10 @@
     <string name="notifications">Bildirishnomalar</string>
     <string name="dark_mode">Tungi rejim</string>
     <string name="language">Til</string>
-    <string name="language_uzbek">Oʻzbekcha</string>
+    <!-- Til nomlari har doim o'z tilida yoziladi (tanlovda foydalanuvchi o'z tilini taniydi) — tarjima qilinmaydi. -->
+    <string name="lang_uz" translatable="false">Oʻzbekcha</string>
+    <string name="lang_ru" translatable="false">Русский</string>
+    <string name="lang_en" translatable="false">English</string>
     <string name="logout">Chiqish</string>
     <string name="logout_title">Hisobdan chiqasizmi?</string>
     <string name="logout_text">Bu qurilmadagi chatlar va xabarlar oʻchiriladi. Qayta kirganingizda ular serverdan yuklanadi.</string>

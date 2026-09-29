@@ -28,9 +28,9 @@ class AppSettingsStorage @Inject constructor(
         context.preferencesDataStoreFile(DATASTORE_NAME)
     }
 
-    /** Noma'lum qiymat (masalan, keyingi versiyadan qolgan) tizim temasi deb o'qiladi — ilova yiqilmaydi. */
+    /** Tanlanmagan yoki noma'lum qiymat (masalan, eski "SYSTEM") — kunduzgi rejim; ilova yiqilmaydi. */
     val themeMode: Flow<ThemeMode> = dataStore.data
-        .map { prefs -> prefs[KEY_THEME_MODE]?.let { name -> ThemeMode.entries.firstOrNull { it.name == name } } ?: ThemeMode.SYSTEM }
+        .map { prefs -> prefs[KEY_THEME_MODE]?.let { name -> ThemeMode.entries.firstOrNull { it.name == name } } ?: ThemeMode.LIGHT }
         .distinctUntilChanged()
 
     val notificationsEnabled: Flow<Boolean> = dataStore.data

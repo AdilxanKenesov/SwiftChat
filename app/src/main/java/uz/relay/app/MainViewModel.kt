@@ -33,10 +33,11 @@ class MainViewModel @Inject constructor(
 
     /**
      * Butun ilova temasi shu yerdan olinadi: profilda "Tungi rejim" bosilishi bilan hamma ekran darhol
-     * almashadi. Eagerly — DataStore splash ko'rinib turgan paytdayoq o'qiladi, tema "sakramaydi".
+     * almashadi. `null` — DataStore hali o'qilmagan: shu payt splash ushlab turiladi, aks holda tungi rejimdagi
+     * foydalanuvchi bir lahza yorug' ekranni ko'rardi.
      */
-    val themeMode: StateFlow<ThemeMode> = observeThemeMode()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, ThemeMode.SYSTEM)
+    val themeMode: StateFlow<ThemeMode?> = observeThemeMode()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     init {
         viewModelScope.launch {

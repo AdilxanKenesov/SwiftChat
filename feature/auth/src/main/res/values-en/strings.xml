@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Inglizcha tarjima. Kalitlar values/strings.xml (o'zbekcha, asosiy) bilan bir xil. -->
+<resources>
+    <string name="phone_title">Your phone number</string>
+    <string name="phone_subtitle">We will send the code via Telegram</string>
+    <string name="phone_label">Phone number</string>
+    <string name="get_code">Get code</string>
+    <string name="tg_link_title">Connect Telegram</string>
+    <string name="tg_step1">Open the bot</string>
+    <string name="tg_step2">Tap Start</string>
+    <string name="tg_step3">Share your number</string>
+    <string name="open_bot">Open bot</string>
+    <string name="resend_code">Resend code</string>
+    <string name="otp_title">Enter the code</string>
+    <string name="otp_sent">Sent to Telegram · %1$s</string>
+    <string name="resend_in">Resend in %1$s</string>
+    <plurals name="otp_wrong">
+        <item quantity="one">Wrong code · %1$d attempt left</item>
+        <item quantity="other">Wrong code · %1$d attempts left</item>
+    </plurals>
+    <string name="otp_expired">The code has expired</string>
+    <string name="otp_locked">Code blocked</string>
+    <string name="otp_locked_sub">Entered incorrectly 5 times</string>
+    <string name="new_code">Get a new code</string>
+    <string name="back">Back</string>
+    <string name="profile_title">Your profile</string>
+    <string name="name">Name</string>
+    <string name="username">Username</string>
+    <string name="username_rules">3–32 characters · a–z, 0–9, _</string>
+    <string name="username_taken">This username is taken</string>
+    <string name="continue_button">Continue</string>
+    <string name="pick_photo">Choose photo</string>
+    <string name="no_internet">No internet connection</string>
+    <string name="error_rate_limited">Too many attempts. Try again a bit later</string>
+    <string name="error_otp_unavailable">Could not send the code. Try again a bit later</string>
+    <string name="error_unknown">Something went wrong. Please try again</string>
+</resources>

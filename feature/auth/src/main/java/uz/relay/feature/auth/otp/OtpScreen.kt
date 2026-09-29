@@ -1,5 +1,6 @@
 package uz.relay.feature.auth.otp
 
+import androidx.compose.ui.res.pluralStringResource
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -171,7 +172,7 @@ private fun OtpScreenContent(
             when (status) {
                 is OtpContract.Status.Wrong -> StatusRow(
                     icon = DesignR.drawable.ic_alert_circle,
-                    text = stringResource(R.string.otp_wrong, status.attemptsLeft)
+                    text = pluralStringResource(R.plurals.otp_wrong, status.attemptsLeft, status.attemptsLeft)
                 )
 
                 OtpContract.Status.Expired -> StatusRow(

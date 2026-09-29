@@ -3,7 +3,6 @@ package uz.relay.feature.profile.me
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +18,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -50,6 +53,7 @@ import org.orbitmvi.orbit.compose.collectSideEffect
 import uz.relay.core.designsystem.R as DesignR
 import uz.relay.core.designsystem.theme.SwiftChatTheme
 import uz.relay.core.designsystem.theme.SwiftTheme
+import uz.relay.domain.model.AppLanguage
 import uz.relay.domain.model.ConnectionStatus
 import uz.relay.domain.model.ThemeMode
 import uz.relay.domain.model.User
@@ -96,14 +100,10 @@ private fun MyProfileContent(
 ) {
     val colors = SwiftTheme.colors
     val me = uiState.me
-    // Switch ILOVA temasini ko'rsatadi: tanlov qilinmagan bo'lsa (SYSTEM) — tizimnikini.
-    val darkChecked = when (uiState.themeMode) {
-        ThemeMode.SYSTEM -> isSystemInDarkTheme()
-        ThemeMode.LIGHT -> false
-        ThemeMode.DARK -> true
-    }
+    val darkChecked = uiState.themeMode == ThemeMode.DARK
     // Dialog faqat ko'rinishga tegishli; burilishda yo'qolmasin.
     var showLogoutDialog by rememberSaveable { mutableStateOf(false) }
+    var showLanguageSheet by rememberSaveable { mutableStateOf(false) }
 
     val (status, statusColor) = when (uiState.connectionStatus) {
         ConnectionStatus.CONNECTED, ConnectionStatus.UPDATING -> stringResource(R.string.online) to colors.primary
@@ -168,14 +168,29 @@ private fun MyProfileContent(
                         onCheckedChange = { onEventDispatcher(MyProfileContract.Intent.OnDarkModeChange(it)) }
                     )
                 }
-                // Hozircha yagona til — faqat ma'lumot uchun, bosilmaydi.
-                SettingRow(icon = DesignR.drawable.ic_globe, tileColor = TileColors.Language, label = stringResource(R.string.language)) {
-                    Text(text = stringResource(R.string.language_uzbek), color = colors.text2, fontSize = 14.sp)
+                SettingRow(
+                    icon = DesignR.drawable.ic_globe,
+                    tileColor = TileColors.Language,
+                    label = stringResource(R.string.language),
+                    onClick = { showLanguageSheet = true }
+                ) {
+                    Text(text = stringResource(uiState.language.labelRes()), color = colors.text2, fontSize = 14.sp)
                 }
             }
         }
 
         LogoutButton(loading = uiState.loggingOut, onClick = { showLogoutDialog = true })
+    }
+
+    if (showLanguageSheet) {
+        LanguageSheet(
+            selected = uiState.language,
+            onSelect = { language ->
+                showLanguageSheet = false
+                if (language != uiState.language) onEventDispatcher(MyProfileContract.Intent.OnLanguageChange(language))
+            },
+            onDismiss = { showLanguageSheet = false }
+        )
     }
 
     if (showLogoutDialog) {
@@ -198,6 +213,59 @@ private fun MyProfileContent(
                 }
             }
         )
+    }
+}
+
+/** Til nomi o'z tilida ("Русский" — ruscha interfeysda ham, o'zbekchada ham). */
+private fun AppLanguage.labelRes(): Int = when (this) {
+    AppLanguage.UZ -> R.string.lang_uz
+    AppLanguage.RU -> R.string.lang_ru
+    AppLanguage.EN -> R.string.lang_en
+}
+
+/** Uchta til, tanlangani yonida ✓ (primary). */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LanguageSheet(selected: AppLanguage, onSelect: (AppLanguage) -> Unit, onDismiss: () -> Unit) {
+    val colors = SwiftTheme.colors
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        containerColor = colors.bg,
+        scrimColor = colors.scrim,
+        dragHandle = { BottomSheetDefaults.DragHandle(color = colors.outline, width = 32.dp, height = 4.dp) }
+    ) {
+        Column(modifier = Modifier.navigationBarsPadding().padding(bottom = 16.dp)) {
+            Text(
+                text = stringResource(R.string.language),
+                color = colors.text,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 8.dp)
+            )
+            AppLanguage.entries.forEach { language ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .clickable { onSelect(language) }
+                        .padding(horizontal = 24.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(language.labelRes()),
+                        color = colors.text,
+                        fontSize = 16.sp,
+                        fontWeight = if (language == selected) FontWeight.SemiBold else FontWeight.Medium,
+                        modifier = Modifier.weight(1f)
+                    )
+                    if (language == selected) {
+                        Icon(painter = painterResource(DesignR.drawable.ic_check), contentDescription = null, tint = colors.primary, modifier = Modifier.size(22.dp))
+                    }
+                }
+            }
+        }
     }
 }
 

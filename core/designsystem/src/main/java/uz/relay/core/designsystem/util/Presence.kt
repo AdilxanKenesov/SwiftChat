@@ -30,8 +30,8 @@ fun formatPresence(
     val daysAgo = ChronoUnit.DAYS.between(seen.toLocalDate(), LocalDate.ofInstant(Instant.ofEpochMilli(now), zone))
     val relative = when {
         minutes < 1 -> resources.getString(R.string.presence_just_now)
-        minutes < 60 -> resources.getString(R.string.presence_minutes_ago, minutes.toInt())
-        daysAgo == 0L -> resources.getString(R.string.presence_hours_ago, (minutes / 60).toInt())
+        minutes < 60 -> resources.getQuantityString(R.plurals.presence_minutes_ago, minutes.toInt(), minutes.toInt())
+        daysAgo == 0L -> resources.getQuantityString(R.plurals.presence_hours_ago, (minutes / 60).toInt(), (minutes / 60).toInt())
         daysAgo == 1L -> resources.getString(R.string.presence_yesterday_at, TIME.format(seen))
         else -> FULL_DATE.format(seen)
     }
