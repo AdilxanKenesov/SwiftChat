@@ -26,13 +26,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import org.orbitmvi.orbit.compose.collectAsState
 import uz.relay.core.designsystem.component.SwiftLogoTile
 import uz.relay.core.designsystem.component.SwiftWordmark
 import uz.relay.core.designsystem.theme.SwiftChatTheme
 import uz.relay.core.designsystem.theme.SwiftTheme
 
 @Composable
-fun SplashScreen(viewModel: SplashViewModel = hiltViewModel()) {
+internal fun SplashScreen(viewModel: SplashViewModel = hiltViewModel()) {
+    // Subscribing starts the container, whose onCreate picks the first screen.
+    viewModel.collectAsState()
     SplashScreenContent()
 }
 

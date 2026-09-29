@@ -1,16 +1,7 @@
 package uz.relay.core.navigation
 
-import androidx.navigation3.runtime.NavKey
-
+/** ViewModel side: asks for a navigation without knowing the UI. */
 interface AppNavigator {
 
-    fun navigateTo(route: NavKey)
-
-    fun replaceTo(route: NavKey)
-
-    fun replaceAll(route: NavKey)
-
-    fun back()
-
-    fun backTo(predicate: (NavKey) -> Boolean)
+    suspend fun navigate(param: AppNavigationParam)
 }

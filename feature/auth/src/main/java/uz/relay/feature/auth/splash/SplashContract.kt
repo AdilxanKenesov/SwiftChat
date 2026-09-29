@@ -10,6 +10,9 @@ interface SplashContract {
 
     object UiState
 
-    // navigateToPhone / navigateToChats are added with the auth flow (token check).
-    interface Directions
+    interface Directions {
+        suspend fun navigateToPhone()
+        suspend fun navigateToProfileSetup()
+        suspend fun navigateToChats()
+    }
 }
