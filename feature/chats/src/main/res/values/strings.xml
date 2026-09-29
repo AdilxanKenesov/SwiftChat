@@ -1,0 +1,52 @@
+<resources>
+    <!-- Tablar -->
+    <string name="tab_all">Hammasi</string>
+    <string name="tab_direct">Shaxsiy</string>
+    <string name="tab_groups">Guruhlar</string>
+
+    <!-- Oxirgi xabar preview'i -->
+    <string name="deleted">Xabar oʻchirildi</string>
+    <!-- Qo'shtirnoq: aks holda Android oxiridagi bo'shliqni o'chirib yuboradi ("Siz:Salom"). -->
+    <string name="you_prefix">"Siz: "</string>
+    <string name="photo">Rasm</string>
+    <string name="video">Video</string>
+    <string name="file">Fayl</string>
+
+    <!-- SYSTEM xabarlar -->
+    <string name="sys_group_created">%1$s guruhni yaratdi</string>
+    <string name="sys_members_added">%1$s %2$sni qoʻshdi</string>
+    <string name="sys_member_joined">%1$s guruhga qoʻshildi</string>
+    <string name="sys_member_removed">%1$s %2$sni chiqardi</string>
+    <string name="sys_member_left">%1$s guruhdan chiqdi</string>
+    <string name="sys_you">Siz</string>
+    <string name="sys_someone">Kimdir</string>
+
+    <!-- Vaqt -->
+    <string name="yesterday">Kecha</string>
+    <string name="day_mon">Du</string>
+    <string name="day_tue">Se</string>
+    <string name="day_wed">Ch</string>
+    <string name="day_thu">Pa</string>
+    <string name="day_fri">Ju</string>
+    <string name="day_sat">Sh</string>
+    <string name="day_sun">Ya</string>
+
+    <!-- Sarlavha va holatlar -->
+    <string name="updating">Yangilanmoqda…</string>
+    <string name="search">Qidirish</string>
+    <string name="my_profile">Mening profilim</string>
+    <string name="new_chat">Yangi chat</string>
+    <string name="no_chats">Hali chatlar yoʻq</string>
+    <string name="no_chats_sub">Username orqali odam toping</string>
+    <string name="group">Guruh</string>
+    <string name="muted">Ovozsiz</string>
+    <string name="status_sent">Yuborildi</string>
+    <string name="status_delivered">Yetkazildi</string>
+    <string name="status_read">Oʻqildi</string>
+
+    <!-- Xatolar -->
+    <string name="retry">Qayta urinish</string>
+    <string name="no_internet">Internet aloqasi yoʻq</string>
+    <string name="error_rate_limited">Juda koʻp urinish. Birozdan soʻng qayta urining</string>
+    <string name="error_unknown">Nimadir xato ketdi. Qayta urining</string>
+</resources>

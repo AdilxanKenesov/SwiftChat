@@ -5,8 +5,10 @@ import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import uz.relay.data.repository_impl.AuthRepositoryImpl
+import uz.relay.data.repository_impl.ChatRepositoryImpl
 import uz.relay.data.repository_impl.UserRepositoryImpl
 import uz.relay.domain.repository.AuthRepository
+import uz.relay.domain.repository.ChatRepository
 import uz.relay.domain.repository.UserRepository
 
 @Module
@@ -15,6 +17,9 @@ internal interface RepositoryModule {
 
     @Binds
     fun bindAuthRepository(impl: AuthRepositoryImpl): AuthRepository
+
+    @Binds
+    fun bindChatRepository(impl: ChatRepositoryImpl): ChatRepository
 
     @Binds
     fun bindUserRepository(impl: UserRepositoryImpl): UserRepository
