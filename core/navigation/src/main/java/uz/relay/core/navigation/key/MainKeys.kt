@@ -5,3 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data object ChatsKey : NavKey
+
+/** Suhbat ekrani. Hamma ma'lumot bazadan `chatId` bo'yicha o'qiladi — kalitda faqat id. */
+@Serializable
+data class ChatKey(val chatId: String) : NavKey

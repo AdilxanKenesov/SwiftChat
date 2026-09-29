@@ -32,6 +32,8 @@ dependencies {
     implementation(project(":core:navigation"))
 
     implementation(libs.androidx.core.ktx)
+    // BackHandler: xabar menyusini tizimning "orqaga" tugmasi bilan yopish uchun.
+    implementation(libs.androidx.activity.compose)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

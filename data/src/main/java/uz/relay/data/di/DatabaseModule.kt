@@ -34,4 +34,7 @@ object DatabaseModule {
 
     @Provides
     fun provideSyncStateDao(database: RelayDatabase) = database.syncStateDao()
+
+    @Provides
+    fun provideMessageDao(database: RelayDatabase) = database.messageDao()
 }

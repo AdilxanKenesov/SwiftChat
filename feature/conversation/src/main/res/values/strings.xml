@@ -1,0 +1,76 @@
+<resources>
+    <!-- Sarlavha -->
+    <string name="back">Orqaga</string>
+    <string name="more">Koʻproq</string>
+    <string name="online">online</string>
+    <string name="last_seen">oxirgi marta %1$s</string>
+    <string name="just_now">hozirgina</string>
+    <string name="minutes_ago">%1$d daqiqa oldin</string>
+    <string name="hours_ago">%1$d soat oldin</string>
+    <string name="yesterday_at">kecha %1$s</string>
+    <string name="typing">yozmoqda…</string>
+    <string name="typing_named">%1$s yozmoqda…</string>
+
+    <!-- Sana ajratgichlari -->
+    <string name="today">Bugun</string>
+    <string name="yesterday">Kecha</string>
+    <string name="month_1">yanvar</string>
+    <string name="month_2">fevral</string>
+    <string name="month_3">mart</string>
+    <string name="month_4">aprel</string>
+    <string name="month_5">may</string>
+    <string name="month_6">iyun</string>
+    <string name="month_7">iyul</string>
+    <string name="month_8">avgust</string>
+    <string name="month_9">sentabr</string>
+    <string name="month_10">oktabr</string>
+    <string name="month_11">noyabr</string>
+    <string name="month_12">dekabr</string>
+    <string name="day_month">%1$d-%2$s</string>
+    <string name="day_month_year">%1$d-%2$s, %3$d</string>
+
+    <!-- Xabarlar -->
+    <string name="edited">tahrirlangan</string>
+    <string name="deleted">Xabar oʻchirildi</string>
+    <string name="photo">Rasm</string>
+    <string name="video">Video</string>
+    <string name="file">Fayl</string>
+    <string name="status_sending">Yuborilmoqda</string>
+    <string name="status_sent">Yuborildi</string>
+    <string name="status_delivered">Yetkazildi</string>
+    <string name="status_read">Oʻqildi</string>
+    <string name="status_failed">Yuborilmadi</string>
+    <string name="resend">Qayta yuborish</string>
+
+    <!-- SYSTEM xabarlar -->
+    <string name="sys_group_created">%1$s guruhni yaratdi</string>
+    <string name="sys_members_added">%1$s %2$sni qoʻshdi</string>
+    <string name="sys_member_joined">%1$s guruhga qoʻshildi</string>
+    <string name="sys_member_removed">%1$s %2$sni chiqardi</string>
+    <string name="sys_member_left">%1$s guruhdan chiqdi</string>
+    <string name="sys_you">Siz</string>
+    <string name="sys_someone">Kimdir</string>
+
+    <!-- Menyu -->
+    <string name="reply">Javob berish</string>
+    <string name="edit">Tahrirlash</string>
+    <string name="copy">Nusxalash</string>
+    <string name="delete">Oʻchirish</string>
+    <string name="copied">Nusxalandi</string>
+    <string name="delete_title">Xabarni oʻchirasizmi?</string>
+    <string name="delete_text">Xabar hamma uchun oʻchiriladi.</string>
+    <string name="cancel">Bekor qilish</string>
+
+    <!-- Yozish paneli -->
+    <string name="message_hint">Xabar</string>
+    <string name="attach">Biriktirish</string>
+    <string name="send">Yuborish</string>
+    <string name="save">Saqlash</string>
+
+    <!-- Xatolar -->
+    <string name="no_internet">Internet aloqasi yoʻq</string>
+    <string name="error_rate_limited">Juda koʻp urinish. Birozdan soʻng qayta urining</string>
+    <string name="error_edit_window">Tahrirlash muddati tugagan (48 soat)</string>
+    <string name="error_forbidden">Bu amalga ruxsat yoʻq</string>
+    <string name="error_unknown">Nimadir xato ketdi. Qayta urining</string>
+</resources>

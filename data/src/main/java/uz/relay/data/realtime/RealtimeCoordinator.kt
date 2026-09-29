@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
 import uz.relay.core.common.dispatcher.ApplicationScope
 import uz.relay.data.connection.NetworkMonitor
+import uz.relay.data.outbox.OutboxScheduler
 import uz.relay.data.source.local.database.dao.UserDao
 import uz.relay.data.source.network.realtime.RealtimeClient
 import uz.relay.data.source.network.realtime.ServerFrame
@@ -31,9 +32,9 @@ import javax.inject.Singleton
  *
  * - Socket faqat login qilingan VA ilova old planda bo'lganda ochiq. Fonda yopiladi: server socket'i yo'q
  *   qurilmaga push yuboradi (Guide, 8-bo'lim), socket'ni ochiq ushlab batareyani yeyish shart emas.
- * - `auth_ok` → catch-up: socket ochilguncha o'tkazib yuborilgan hodisalar REST'dan olinadi.
+ * - `auth_ok` → catch-up (socket ochilguncha o'tkazib yuborilgan hodisalar) + outbox'ni yuborish.
  * - `update` → SyncEngine (teshik tekshiruvi bilan), `presence` → profil keshi, `typing` → TypingTracker.
- * - `ack` / `nack` suhbat bosqichida outbox bilan birga ishlatiladi.
+ * - `ack` / `nack` ni OutboxSender o'zi kutadi.
  */
 @Singleton
 class RealtimeCoordinator @Inject constructor(
@@ -43,6 +44,7 @@ class RealtimeCoordinator @Inject constructor(
     private val userDao: UserDao,
     private val networkMonitor: NetworkMonitor,
     private val typingTracker: TypingTracker,
+    private val outboxScheduler: OutboxScheduler,
     @ApplicationScope private val scope: CoroutineScope
 ) {
     private var started = false
@@ -85,10 +87,13 @@ class RealtimeCoordinator @Inject constructor(
 
     private suspend fun handle(frame: ServerFrame) {
         when (frame) {
-            is ServerFrame.AuthOk ->
+            is ServerFrame.AuthOk -> {
+                // Socket ochildi — kutib qolgan xabarlar endi tezroq yo'l (socket) bilan ketadi.
+                outboxScheduler.schedule()
                 // Server `updateSeq` ni socket ro'yxatga olingandan KEYIN o'qiydi: undan kattalari jonli keladi,
                 // unga qadar bo'lganlari REST'da. Biz orqada bo'lsak — catch-up (ustma-ust tushish zararsiz).
                 if (frame.updateSeq > (syncEngine.cursor() ?: -1)) syncEngine.catchUp()
+            }
 
             is ServerFrame.Update -> syncEngine.onLiveUpdate(frame.toUpdateResponse())
             is ServerFrame.Presence -> userDao.updatePresence(frame.userId, frame.online, frame.lastSeenAt)

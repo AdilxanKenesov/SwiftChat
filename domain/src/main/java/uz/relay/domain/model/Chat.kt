@@ -10,13 +10,14 @@ enum class ChatType { DIRECT, GROUP, UNKNOWN }
 enum class MessageType { TEXT, IMAGE, VIDEO, FILE, SYSTEM, UNKNOWN }
 
 /**
- * O'zim yuborgan xabarning holati (ro'yxatdagi ✓ belgilari uchun):
- * - [SENT] — server qabul qildi (✓);
+ * O'zim yuborgan xabarning holati (✓ belgilari uchun), spec 3.8:
+ * - [SENDING] — outbox'da, server hali qabul qilmagan (soat belgisi);
+ * - [SENT] — server qabul qildi, ack keldi (✓);
  * - [DELIVERED] — suhbatdoshning qurilmasiga yetib bordi (✓✓ kulrang);
- * - [READ] — suhbatdosh o'qidi (✓✓ rangli).
- * "Yuborilmoqda" va "xato" holatlari outbox bilan birga (suhbat bosqichida) qo'shiladi.
+ * - [READ] — suhbatdosh o'qidi (✓✓ rangli);
+ * - [FAILED] — server qayta urinib bo'lmaydigan xato bilan rad etdi (qizil belgi + "qayta yuborish").
  */
-enum class MessageStatus { SENT, DELIVERED, READ }
+enum class MessageStatus { SENDING, SENT, DELIVERED, READ, FAILED }
 
 /** Chatlar ro'yxatidagi bitta qator uchun kerak bo'ladigan hamma narsa. */
 data class ChatSummary(
@@ -30,6 +31,8 @@ data class ChatSummary(
     /** Faqat DIRECT chat uchun: suhbatdoshning id'si (avatar rangi va "online" belgisi uchun). */
     val peerUserId: String?,
     val peerOnline: Boolean,
+    /** Suhbatdosh oxirgi marta qachon online bo'lgan (online paytda yoki noma'lum bo'lsa `null`). */
+    val peerLastSeenAt: Long?,
     val lastMessage: LastMessage?,
     /** Ro'yxat shu vaqt bo'yicha tartiblanadi (eng yangisi tepada). */
     val lastActivityAt: Long,

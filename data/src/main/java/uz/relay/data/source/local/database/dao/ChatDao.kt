@@ -14,6 +14,7 @@ data class ChatListItem(
     // LEFT JOIN: profil hali keshda bo'lmasa, bu ustunlar NULL keladi.
     val peerDisplayName: String?,
     val peerOnline: Boolean?,
+    val peerLastSeenAt: Long?,
     /** Mendan boshqa a'zolarning eng katta o'qish/yetkazilish kursori — oxirgi xabarim uchun ✓✓. */
     val peerReadUpToSeq: Long?,
     val peerDeliveredUpToSeq: Long?
@@ -31,7 +32,7 @@ interface ChatDao {
      */
     @Query(
         """
-        SELECT c.*, u.displayName AS peerDisplayName, u.online AS peerOnline,
+        SELECT c.*, u.displayName AS peerDisplayName, u.online AS peerOnline, u.lastSeenAt AS peerLastSeenAt,
                mc.maxRead AS peerReadUpToSeq, mc.maxDelivered AS peerDeliveredUpToSeq
         FROM chats c
         LEFT JOIN users u ON u.id = c.peerUserId
@@ -43,6 +44,22 @@ interface ChatDao {
         """
     )
     fun observeChatList(myUserId: String): Flow<List<ChatListItem>>
+
+    /** Bitta chat — ro'yxatdagi so'rovning o'zi, faqat bitta qator uchun (suhbat sarlavhasi). */
+    @Query(
+        """
+        SELECT c.*, u.displayName AS peerDisplayName, u.online AS peerOnline, u.lastSeenAt AS peerLastSeenAt,
+               mc.maxRead AS peerReadUpToSeq, mc.maxDelivered AS peerDeliveredUpToSeq
+        FROM chats c
+        LEFT JOIN users u ON u.id = c.peerUserId
+        LEFT JOIN (
+            SELECT chatId, MAX(readUpToSeq) AS maxRead, MAX(deliveredUpToSeq) AS maxDelivered
+            FROM member_cursors WHERE userId != :myUserId GROUP BY chatId
+        ) mc ON mc.chatId = c.id
+        WHERE c.id = :chatId
+        """
+    )
+    fun observeChat(chatId: String, myUserId: String): Flow<ChatListItem?>
 
     @Query("SELECT * FROM chats WHERE id = :chatId")
     suspend fun getChat(chatId: String): ChatEntity?

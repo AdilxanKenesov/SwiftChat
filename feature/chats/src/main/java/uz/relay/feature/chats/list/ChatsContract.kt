@@ -16,6 +16,7 @@ interface ChatsContract {
     sealed interface Intent {
         /** Snackbar'dagi "Qayta urinish" — sync'ni qaytadan boshlash. */
         object OnRetrySync : Intent
+        data class OnChatClick(val chatId: String) : Intent
     }
 
     sealed interface SideEffect {
@@ -47,7 +48,10 @@ interface ChatsContract {
         fun unreadChatsIn(tab: ChatTab): Int = chats.count { tab.accepts(it) && it.unreadCount > 0 }
     }
 
-    // Directions (Qidiruv, Suhbat, Mening profilim) o'sha ekranlar qo'shilganda shu yerga yoziladi.
+    // Qidiruv va Mening profilim ekranlari qo'shilganda ular ham shu yerga yoziladi.
+    interface Directions {
+        suspend fun navigateToChat(chatId: String)
+    }
 }
 
 /** Telegram'dagi papkalar kabi tablar: chat turi bo'yicha filtr. */

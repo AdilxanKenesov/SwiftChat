@@ -13,6 +13,7 @@ import uz.relay.core.navigation.AppNavigationParam
 import uz.relay.core.navigation.key.SplashKey
 import uz.relay.feature.auth.authEntries
 import uz.relay.feature.chats.chatsEntries
+import uz.relay.feature.conversation.conversationEntries
 
 /** The single back stack: every Directions command lands here through [AppNavigationHandler]. */
 @Composable
@@ -36,6 +37,7 @@ fun AppNavHost(navigationHandler: AppNavigationHandler) {
         entryProvider = entryProvider {
             authEntries()
             chatsEntries()
+            conversationEntries()
         }
     )
 }
