@@ -5,7 +5,10 @@ import uz.relay.core.common.result.AppError
 import uz.relay.core.common.result.ErrorCodes
 import uz.relay.feature.profile.R
 
-/** ViewModel [AppError] ni saqlaydi, matnga UI aylantiradi — ViewModel Android resurslariga bog'lanmaydi. */
+/**
+ * ViewModel [AppError] ni saqlaydi, matnga UI aylantiradi — ViewModel Android resurslariga bog'lanmaydi.
+ * Server xato kodi ustun, HTTP status zaxira. USERNAME_TAKEN bu yerda yo'q — u Snackbar emas, maydon ostida ko'rsatiladi.
+ */
 @StringRes
 fun AppError.messageRes(): Int = when (this) {
     AppError.Network -> R.string.no_internet

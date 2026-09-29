@@ -31,6 +31,14 @@ import java.io.FileInputStream
 import java.io.IOException
 import javax.inject.Inject
 
+/**
+ * [MediaRepository] implementatsiyasi: xabardagi faylni yuklab olish (progress bilan) va galereyaga saqlash.
+ *
+ * Retrofit emas, to'g'ridan-to'g'ri OkHttp ishlatiladi: katta faylni xotiraga to'liq olmasdan oqim bilan
+ * diskka yozish va har bo'lakda progress chiqarish kerak. `@MediaClient` — token qo'shadigan, lekin body
+ * logging'siz klient (BODY logger katta faylni xotiraga to'liq o'qib olardi).
+ * Suhbat ekrani (fayl ochish), media ko'ruvchi (saqlash) ishlatadi.
+ */
 internal class MediaRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     @MediaClient private val client: OkHttpClient,
@@ -116,6 +124,7 @@ internal class MediaRepositoryImpl @Inject constructor(
         }
     }
 
+    /** Faylni MediaStore'ga ko'chiradi; xato bo'lsa yarim yozilgan yozuv o'chiriladi — galereyada "singan" rasm qolmasin. */
     private fun insertIntoGallery(file: File, media: MessageMedia, fileName: String) {
         val isVideo = media.kind == MediaKind.VIDEO
         val collection = if (isVideo) MediaStore.Video.Media.EXTERNAL_CONTENT_URI else MediaStore.Images.Media.EXTERNAL_CONTENT_URI

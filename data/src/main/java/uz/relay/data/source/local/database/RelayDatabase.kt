@@ -22,6 +22,10 @@ import uz.relay.data.source.local.database.entity.UserEntity
 /**
  * Ilovaning lokal bazasi — offline-first'ning markazi: UI faqat shu yerdan o'qiydi.
  *
+ * Nega Room: SQLite ustida compile-time tekshiriladigan so'rovlar, Flow qaytaruvchi reaktiv so'rovlar
+ * (jadval o'zgarsa UI o'zi yangilanadi) va @Transaction — sync'da update va kursorni atomar yozish uchun.
+ * Tarmoq (REST/WebSocket) faqat shu bazaga yozadi, ekranlar esa bazani kuzatadi.
+ *
  * `exportSchema = false`: ishlab chiqish bosqichida sxema tez-tez o'zgaradi va migratsiya yozilmaydi
  * (DatabaseModule'dagi destructive migration'ga qarang). Reliz oldidan sxema eksport qilinib,
  * haqiqiy migratsiyalar yoziladi.

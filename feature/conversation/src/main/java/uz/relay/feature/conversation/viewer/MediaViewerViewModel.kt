@@ -28,8 +28,14 @@ import uz.relay.domain.usecase.user.ObserveUserNamesUseCase
 import java.io.File
 
 /**
+ * Media ko'ruvchi ViewModel'i: chatdagi rasm/videolarni kuzatadi, video pleyerni boshqaradi va galereyaga saqlaydi.
+ *
  * Pleyer ViewModel'da yashaydi: ekran burilganda video to'xtab, boshidan boshlanmaydi. Bitta pleyer
  * hamma sahifalar uchun — faqat ko'rinib turgan video yuklanadi (xotira va trafik tejaladi).
+ * Pleyer `onCleared`da bo'shatiladi — ekran back stack'dan chiqqanda dekoder va tarmoq resurslari qaytariladi.
+ *
+ * Ikki runtime argument (`chatId`, `clientMessageId`) AssistedInject orqali Nav3 kalitidan keladi; bir xil
+ * tipdagi ikki `@Assisted` parametrni Dagger ajrata olishi uchun ularga nom beriladi.
  */
 @OptIn(UnstableApi::class)
 @HiltViewModel(assistedFactory = MediaViewerViewModel.Factory::class)
@@ -46,6 +52,7 @@ class MediaViewerViewModel @AssistedInject constructor(
     private val directions: MediaViewerContract.Directions
 ) : ViewModel(), MediaViewerContract.ViewModel {
 
+    /** MediaViewerScreen shu factory orqali ViewModel'ni kalitdagi qiymatlar bilan yaratadi. */
     @AssistedFactory
     interface Factory {
         fun create(@Assisted("chatId") chatId: String, @Assisted("clientMessageId") clientMessageId: String): MediaViewerViewModel
@@ -75,6 +82,7 @@ class MediaViewerViewModel @AssistedInject constructor(
         }
     }
 
+    /** Chat xabarlaridan faqat o'chirilmagan rasm/videolarni ajratib, ko'ruvchi sahifalariga aylantiradi. */
     private fun observeData() = intent {
         repeatOnSubscription {
             combine(observeMessages(chatId), observeUserNames(), observeMe()) { messages, names, me ->
@@ -114,6 +122,7 @@ class MediaViewerViewModel @AssistedInject constructor(
         player.playWhenReady = false
     }
 
+    /** Media'ni galereyaga (MediaStore) saqlaydi; fayl nomi yaratilgan vaqt va MIME kengaytmasidan tuziladi. */
     private fun save(item: ViewerItem) = intent {
         if (state.isSaving) return@intent
         reduce { state.copy(isSaving = true) }

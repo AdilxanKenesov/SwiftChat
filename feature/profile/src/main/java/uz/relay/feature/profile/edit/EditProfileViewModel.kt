@@ -14,6 +14,10 @@ import uz.relay.domain.usecase.user.ObserveMeUseCase
 import uz.relay.domain.usecase.user.UpdateProfileUseCase
 import javax.inject.Inject
 
+/**
+ * Profilni tahrirlash ViewModel'i. Joriy profilni keshdan bir marta o'qiydi, kiritishni filtrlaydi va
+ * UpdateProfileUseCase orqali saqlaydi. Navigatsiya Directions orqali — ViewModel navigatorni bilmaydi.
+ */
 @HiltViewModel
 class EditProfileViewModel @Inject constructor(
     private val observeMe: ObserveMeUseCase,
@@ -26,6 +30,7 @@ class EditProfileViewModel @Inject constructor(
             loadInitial()
         }
 
+    /** Screen'dan keladigan barcha Intent'lar uchun yagona kirish nuqtasi. */
     override fun onEventDispatcher(intent: EditProfileContract.Intent) {
         when (intent) {
             EditProfileContract.Intent.OnBack -> intent { directions.back() }
@@ -70,6 +75,7 @@ class EditProfileViewModel @Inject constructor(
         }
     }
 
+    /** Saqlash: 409 USERNAME_TAKEN maydon xatosiga aylanadi, boshqa xatolar Snackbar'ga ketadi. */
     private fun save() = intent {
         if (!state.saveEnabled || state.saving) return@intent
         reduce { state.copy(saving = true) }

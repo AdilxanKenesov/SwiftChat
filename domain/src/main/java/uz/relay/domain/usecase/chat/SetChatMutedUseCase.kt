@@ -5,6 +5,11 @@ import uz.relay.domain.model.MuteDuration
 import uz.relay.domain.repository.ChatRepository
 import javax.inject.Inject
 
+/**
+ * Chatni faqat o'zim uchun ovozsiz qilish yoki ovozini yoqish.
+ *
+ * Delegatsiyadan tashqari mantiq bor: [MuteDuration] ni serverga kerakli mutlaq vaqtga (epoch ms) aylantiradi.
+ */
 class SetChatMutedUseCase @Inject constructor(
     private val repository: ChatRepository
 ) {

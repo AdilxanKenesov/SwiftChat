@@ -28,6 +28,7 @@ data class ChatResponse(
     val mutedUntil: Long? = null
 )
 
+/** Chatlar ro'yxatidagi "oxirgi xabar" ko'rinishi (to'liq xabar emas — media va h.k. yo'q). */
 @Serializable
 data class MessagePreviewResponse(
     val serverId: Long,
@@ -40,6 +41,7 @@ data class MessagePreviewResponse(
     val deletedAt: Long? = null
 )
 
+/** Chatlar ro'yxatining bitta sahifasi (cursor asosida sahifalash). */
 @Serializable
 data class ChatListPageResponse(
     val chats: List<ChatResponse>,

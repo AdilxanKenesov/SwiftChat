@@ -11,7 +11,12 @@ import uz.relay.feature.profile.me.MyProfileDirectionsImpl
 import uz.relay.feature.profile.user.UserProfileContract
 import uz.relay.feature.profile.user.UserProfileDirectionsImpl
 
-/** Directions faqat ViewModel'larga kerak va holatsiz — shuning uchun ViewModel doirasida. */
+/**
+ * Directions faqat ViewModel'larga kerak va holatsiz — shuning uchun ViewModel doirasida.
+ *
+ * @Binds interfeys → implementatsiya bog'lanishi uchun qo'shimcha factory kod yaratmaydi; implementatsiyalar
+ * `internal`, tashqaridan faqat Contract interfeysi ko'rinadi.
+ */
 @Module
 @InstallIn(ViewModelComponent::class)
 internal interface ProfileDirectionsModule {

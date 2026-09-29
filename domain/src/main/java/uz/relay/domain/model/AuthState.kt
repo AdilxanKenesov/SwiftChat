@@ -1,9 +1,13 @@
 package uz.relay.domain.model
 
+/**
+ * Avtorizatsiya holati — MainViewModel shunga qarab ilovani qaysi ekrandan boshlashni tanlaydi
+ * (telefon kiritish, profilni to'ldirish yoki chatlar ro'yxati).
+ */
 enum class AuthState {
     LOGGED_OUT,
 
-    /** Logged in, but a new user has not filled in the profile (name, username) yet. */
+    /** Tizimga kirgan, lekin yangi foydalanuvchi profilini (ism, username) hali to'ldirmagan. */
     NEEDS_PROFILE,
     LOGGED_IN
 }

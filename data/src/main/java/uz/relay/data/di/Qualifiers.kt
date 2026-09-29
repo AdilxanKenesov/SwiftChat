@@ -2,12 +2,17 @@ package uz.relay.data.di
 
 import javax.inject.Qualifier
 
-/** Retrofit/OkHttp without a token (OTP, refresh). */
+/*
+ * Hilt qualifier'lari: bir xil turdagi (OkHttpClient/Retrofit) bir nechta nusxani farqlash uchun.
+ * Har biri o'z maqsadiga ega — pastdagi KDoc'larga qarang.
+ */
+
+/** Tokensiz Retrofit/OkHttp (OTP, refresh). Refresh so'rovi token kutib aylanib qolmasligi uchun alohida. */
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class PublicClient
 
-/** Retrofit/OkHttp that adds the token and refreshes it on 401. */
+/** Token qo'shadigan va 401 kelganda uni yangilaydigan Retrofit/OkHttp — oddiy API chaqiruvlari uchun. */
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class AuthorizedClient

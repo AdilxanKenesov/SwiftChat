@@ -3,6 +3,7 @@ package uz.relay.domain.model
 /** Guruhdagi rol. Serverdan String bo'lib keladi — noma'lum (kelajakdagi) qiymat [UNKNOWN]. */
 enum class MemberRole { OWNER, ADMIN, MEMBER, UNKNOWN }
 
+/** Guruhning bitta a'zosi — a'zolar ro'yxati va ruxsatlarni hisoblash uchun. */
 data class ChatMember(
     val userId: String,
     /** Profil hali keshda bo'lmasa `null`. */

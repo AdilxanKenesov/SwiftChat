@@ -28,10 +28,14 @@ import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** Jonli frame bilan nima qilish kerak (Guide, 4-bo'lim "Gap detection"). */
+/**
+ * Jonli (WebSocket) frame bilan nima qilish kerakligi haqidagi qaror (Guide, 4-bo'lim "Gap detection").
+ * Alohida enum sifatida ajratilgan — qaror mantig'i sof funksiya bo'lib, uni unit-test qilish oson.
+ */
 enum class LiveUpdateAction { IGNORE, APPLY, CATCH_UP }
 
 /**
+ * Jonli update'ning `updateSeq`ini lokal kursor bilan solishtirib, qaror chiqaradi:
  * - `seq <= cursor` → allaqachon qo'llangan (dublikat yoki kechikkan frame) — e'tiborsiz qoldiramiz.
  * - `seq == cursor + 1` → navbatdagisi — qo'llaymiz.
  * - `seq > cursor + 1` → orada nimadir tushib qolgan (yo'qolgan yoki tartibsiz frame): bu frame'ni
@@ -46,8 +50,19 @@ fun classifyLiveUpdate(cursor: Long, updateSeq: Long): LiveUpdateAction = when {
 /**
  * Server bilan sinxronlash markazi: bootstrap, catch-up va WebSocket'ning jonli update'lari.
  *
+ * Vazifasi: lokal Room bazasini serverdagi holat bilan bir xil ushlab turish. Relay'da har bir o'zgarish
+ * (yangi xabar, tahrir, o'qildi, a'zo qo'shildi...) global tartib raqami — `updateSeq` oladi. Biz oxirgi
+ * qo'llangan raqamni kursor sifatida saqlaymiz ([SyncStateDao]) va faqat undan keyingilarini so'raymiz.
+ * Shuning uchun ilova oflayn qolib qaytsa ham, hech bir hodisa tushib qolmaydi va ikki marta qo'llanmaydi.
+ *
+ * Uch kirish nuqtasi:
+ *  - [catchUp] — ilova ochilganda, socket qayta ulanganda, push kelganda (RealtimeCoordinator chaqiradi);
+ *  - [onLiveUpdate] — socket'dan kelgan har bir `update` frame (tartib/teshik tekshiruvi bilan);
+ *  - bootstrap ([fullResyncLocked]) — kursor yo'q yoki juda eskirgan bo'lsa, to'liq snapshot.
+ *
  * Hammasi bitta Mutex ostida: kursor bilan ishlaydigan ikki jarayon hech qachon parallel ketmaydi.
  * Aks holda ikkalasi bir xil kursordan boshlab, bir-birining natijasini buzishi mumkin edi.
+ * Update'larni bazaga yozishning o'zi [UpdateApplier]da — bu klass faqat "qachon va nimani" hal qiladi.
  */
 @Singleton
 class SyncEngine @Inject constructor(
@@ -97,6 +112,7 @@ class SyncEngine @Inject constructor(
         }
     }
 
+    /** [block] davomida [isSyncing]ni `true` qilib turadi; xato bo'lsa ham `finally`da qaytaradi. */
     private suspend fun <T> syncing(block: suspend () -> T): T {
         _isSyncing.value = true
         try {
@@ -106,6 +122,10 @@ class SyncEngine @Inject constructor(
         }
     }
 
+    /**
+     * Kursordan keyingi update'larni sahifalab olib qo'llaydi. Mutex allaqachon olingan deb hisoblanadi
+     * (nomdagi `Locked` shuni bildiradi). Server `tooLong` desa — to'liq qayta bootstrap.
+     */
     private suspend fun catchUpLocked(): AppResult<Unit> {
         if (syncStateDao.getCursor() == null) return fullResyncLocked()
 
@@ -168,6 +188,7 @@ class SyncEngine @Inject constructor(
         }
     }
 
+    /** Chatlar ro'yxatining barcha sahifalarini `nextCursor` tugaguncha yig'adi (snapshot uchun). */
     private suspend fun fetchAllChats(): List<ChatResponse> {
         val result = mutableListOf<ChatResponse>()
         var cursor: String? = null

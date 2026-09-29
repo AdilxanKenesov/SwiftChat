@@ -41,6 +41,11 @@ import uz.relay.core.designsystem.theme.Brand
 import uz.relay.core.designsystem.theme.SwiftTheme
 import uz.relay.feature.profile.R
 
+/*
+ * Profil ekranlari (o'zimniki va boshqa foydalanuvchiniki) uchun umumiy UI bo'laklari. Ular faqat shu feature'da
+ * kerak, shuning uchun core:designsystem'ga chiqarilmagan — `internal` va dizayn spec'idagi o'lchamlar bilan.
+ */
+
 /**
  * Sozlama ikonkasi plitkalari ranglari (spec: "Settings icon tile"). Ikkala temada bir xil — oq ikonka
  * har qanday fonda ko'rinadi, rang esa qatorni ko'z bilan tez topishga yordam beradi.
@@ -184,7 +189,10 @@ internal fun SettingRow(
     }
 }
 
-/** Switch ranglari dizayndagidek: yoniq — primary trek + onPrimary tugma, o'chiq — shaffof trek + outline. */
+/**
+ * Switch ranglari dizayndagidek: yoniq — primary trek + onPrimary tugma, o'chiq — shaffof trek + outline.
+ * Material3 Switch ustida faqat ranglar almashtirilgan — accessibility va animatsiya tayyor holda qoladi.
+ */
 @Composable
 internal fun SwiftSwitch(checked: Boolean, onCheckedChange: ((Boolean) -> Unit)?) {
     val colors = SwiftTheme.colors

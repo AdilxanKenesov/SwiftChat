@@ -7,6 +7,11 @@ import uz.relay.core.navigation.key.MyProfileKey
 import uz.relay.core.navigation.key.SearchKey
 import javax.inject.Inject
 
+/**
+ * [ChatsContract.Directions] ning haqiqiy amalga oshirilishi: [AppNavigator] (Navigation 3 event-bus)
+ * orqali kalitni back stack'ga qo'shadi. ViewModel navigatsiya tafsilotlaridan ajratilgan — shu sababli
+ * alohida klass va Hilt orqali bog'lanadi (ChatsDirectionsModule).
+ */
 internal class ChatsDirectionsImpl @Inject constructor(
     private val navigator: AppNavigator
 ) : ChatsContract.Directions {

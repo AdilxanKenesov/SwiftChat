@@ -23,6 +23,13 @@ import uz.relay.domain.repository.SettingsRepository
 import uz.relay.domain.repository.TypingRepository
 import uz.relay.domain.repository.UserRepository
 
+/**
+ * Domain qatlamidagi repository interfeyslarini data qatlamidagi implementatsiyalarga bog'laydi.
+ *
+ * Nega @Binds: implementatsiyalar @Inject konstruktorli, shuning uchun qo'shimcha kod generatsiyasiz
+ * faqat "interfeys -> klass" bog'lanishi kerak. Feature modullar faqat domain interfeyslarini ko'radi,
+ * data qatlami esa `internal` bo'lib yashirin qoladi (Clean Architecture chegarasi).
+ */
 @Module
 @InstallIn(SingletonComponent::class)
 internal interface RepositoryModule {

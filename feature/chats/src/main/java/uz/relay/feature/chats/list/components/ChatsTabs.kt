@@ -49,6 +49,7 @@ internal fun ChatsTabs(
         ) {
             ChatTab.entries.forEach { tab ->
                 val isSelected = tab == selected
+                // BoxWithConstraints — indikator kengligini tab kengligidan (maxWidth) hisoblash uchun.
                 BoxWithConstraints(
                     modifier = Modifier
                         .weight(1f)
@@ -91,6 +92,7 @@ internal fun ChatsTabs(
     }
 }
 
+/** Tab sarlavhasi — lokalizatsiya uchun string resurs. */
 private fun ChatTab.titleRes(): Int = when (this) {
     ChatTab.ALL -> R.string.tab_all
     ChatTab.DIRECT -> R.string.tab_direct

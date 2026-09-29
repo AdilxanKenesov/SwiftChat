@@ -24,11 +24,19 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Access/refresh tokens and deviceId, encrypted with a Tink AEAD key kept in the Android Keystore.
+ * Sessiya ombori: access/refresh token, userId va deviceId ni shifrlangan holda saqlaydi.
  *
- * [session] and [profileSetupPending] are Flows, so the auth state (and the jump back to login when
- * the session ends) follows the storage by itself. The decrypted session is also cached in memory
- * so OkHttp threads read it without touching disk on every request.
+ * Nega DataStore + Tink: token — hisobga to'liq kirish kaliti, uni ochiq matnda diskda saqlash
+ * xavfli (root'langan qurilma, backup). Tink AEAD (AES-256-GCM) kaliti Android Keystore'dagi
+ * master key bilan o'ralgan — kalit qurilmadan tashqariga chiqmaydi. EncryptedSharedPreferences
+ * deprecated bo'lgani uchun DataStore + Tink tanlangan.
+ *
+ * [session] va [profileSetupPending] — Flow: auth holati (sessiya tugaganda login ekraniga qaytish ham)
+ * omborga o'zi ergashadi, qo'lda signal yuborish shart emas. Deshifrlangan sessiya xotirada ham
+ * keshlanadi — OkHttp oqimlari ([TokenInterceptor], [TokenRefresher]) har so'rovda diskka
+ * tegmasdan o'qiydi.
+ *
+ * Kim ishlatadi: AuthRepositoryImpl (login/logout), network interceptor'lar, RealtimeClient (WS token).
  */
 @Singleton
 class SessionStorage @Inject constructor(
@@ -56,13 +64,14 @@ class SessionStorage @Inject constructor(
         .distinctUntilChanged()
 
     /**
-     * A new user has not filled in the profile yet. Kept on disk so the app returns to the
-     * profile screen if it is closed there.
+     * Yangi foydalanuvchi hali profilini to'ldirmagan. Diskda saqlanadi — ilova profil ekranida
+     * yopilib qolsa, qayta ochilganda yana o'sha ekranga qaytadi.
      */
     val profileSetupPending: Flow<Boolean> = dataStore.data
         .map { it[KEY_PROFILE_SETUP_PENDING] ?: false }
         .distinctUntilChanged()
 
+    // Birinchi yuklash va kesh yangilanishi uchun umumiy qulf (bir nechta OkHttp oqimi bir vaqtda chaqiradi).
     private val lock = Any()
 
     @Volatile
@@ -71,7 +80,10 @@ class SessionStorage @Inject constructor(
     @Volatile
     private var cached: Session? = null
 
-    /** Blocking read for OkHttp threads; loads from disk once. */
+    /**
+     * OkHttp oqimlari uchun bloklovchi o'qish; diskdan faqat bir marta yuklaydi (double-checked locking).
+     * `runBlocking` bu yerda maqbul: interceptor'lar baribir fon oqimida va sinxron ishlaydi.
+     */
     fun current(): Session? {
         if (!loaded) synchronized(lock) {
             if (!loaded) {
@@ -82,7 +94,7 @@ class SessionStorage @Inject constructor(
         return cached
     }
 
-    /** Session and the profile flag are written in ONE edit, so the UI never sees a half state. */
+    /** Sessiya va profil bayrog'i BITTA edit'da yoziladi — UI hech qachon yarim holatni ko'rmaydi. */
     suspend fun save(session: Session, profileSetupPending: Boolean) {
         val encrypted = encrypt(session)
         dataStore.edit {
@@ -92,7 +104,7 @@ class SessionStorage @Inject constructor(
         cache(session)
     }
 
-    /** After a refresh rotation: userId/deviceId stay, only the token pair changes. */
+    /** Refresh rotatsiyasidan keyin: userId/deviceId o'zgarmaydi, faqat token juftligi yangilanadi. */
     suspend fun updateTokens(accessToken: String, refreshToken: String) {
         val session = current()?.copy(accessToken = accessToken, refreshToken = refreshToken) ?: return
         val encrypted = encrypt(session)
@@ -100,10 +112,12 @@ class SessionStorage @Inject constructor(
         cache(session)
     }
 
+    /** Profil to'ldirilgach `false` qilinadi — navigatsiya asosiy ekranga o'tadi. */
     suspend fun setProfileSetupPending(pending: Boolean) {
         dataStore.edit { it[KEY_PROFILE_SETUP_PENDING] = pending }
     }
 
+    /** Logout: hamma narsa o'chiriladi, [session] `null` chiqaradi va UI login'ga qaytadi. */
     suspend fun clear() {
         dataStore.edit { it.clear() }
         cache(null)
@@ -114,12 +128,13 @@ class SessionStorage @Inject constructor(
         loaded = true
     }
 
+    /** JSON → AEAD shifrlash → Base64 (Preferences faqat String saqlaydi). */
     private fun encrypt(session: Session): String {
         val plain = json.encodeToString(Session.serializer(), session).toByteArray()
         return Base64.encodeToString(aead.encrypt(plain, ASSOCIATED_DATA), Base64.NO_WRAP)
     }
 
-    /** A value that no longer decrypts (e.g. the Keystore key was wiped) reads as logged out. */
+    /** Endi deshifrlanmaydigan qiymat (masalan, Keystore kaliti o'chib ketgan) — tizimdan chiqilgan deb o'qiladi. */
     private fun Preferences.decryptSession(): Session? {
         val encrypted = this[KEY_SESSION] ?: return null
         return runCatching {
@@ -132,7 +147,9 @@ class SessionStorage @Inject constructor(
         const val DATASTORE_NAME = "session"
         const val KEYSET_NAME = "relay_session_keyset"
         const val KEYSET_PREFS = "relay_session_keyset_prefs"
+        // Keystore'dagi master key — Tink keyset'ini shifrlaydi.
         const val MASTER_KEY_URI = "android-keystore://relay_session_master_key"
+        // AEAD associated data: shifrlangan matn boshqa kontekstga ko'chirilsa deshifrlanmaydi.
         val ASSOCIATED_DATA = "relay_session".toByteArray()
         val KEY_SESSION = stringPreferencesKey("session")
         val KEY_PROFILE_SETUP_PENDING = booleanPreferencesKey("profile_setup_pending")

@@ -13,20 +13,28 @@ import uz.relay.data.realtime.RealtimeCoordinator
 import javax.inject.Inject
 
 /**
- * Hilt'ning ildiz komponenti shu yerda yaratiladi (SingletonComponent).
+ * Ilovaning Application klassi — hamma narsa shu yerdan boshlanadi.
+ *
+ * `@HiltAndroidApp`: Hilt'ning ildiz komponenti (SingletonComponent) shu yerda yaratiladi; ilovadagi
+ * barcha @Singleton obyektlar (repository'lar, Retrofit, Room, navigator) shu komponentda yashaydi.
  *
  * `Configuration.Provider`: WorkManager worker'larni Hilt factory orqali yaratishi uchun (OutboxWorker
  * konstruktoriga OutboxSender inject qilinadi). Buning uchun manifest'da avtomatik initializer o'chirilgan.
+ *
+ * `SingletonImageLoader.Factory`: Coil'ga bitta umumiy ImageLoader beriladi (pastda [newImageLoader]).
  */
 @HiltAndroidApp
 class App : Application(), Configuration.Provider, SingletonImageLoader.Factory {
 
+    /** Worker'larga Hilt orqali bog'liqliklarni beradigan factory. */
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
 
+    /** WebSocket ulanishini ilova holatiga (login, old/orqa plan) qarab boshqaradi. */
     @Inject
     lateinit var realtimeCoordinator: RealtimeCoordinator
 
+    /** Yuborilmagan xabarlar navbatini (outbox) WorkManager'ga qo'yadi. */
     @Inject
     lateinit var outboxScheduler: OutboxScheduler
 
@@ -40,6 +48,7 @@ class App : Application(), Configuration.Provider, SingletonImageLoader.Factory 
      */
     override fun newImageLoader(context: PlatformContext): ImageLoader = imageLoader.get()
 
+    // WorkManager birinchi ishlatilganda shu konfiguratsiyani oladi (on-demand initialization).
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder().setWorkerFactory(workerFactory).build()
 

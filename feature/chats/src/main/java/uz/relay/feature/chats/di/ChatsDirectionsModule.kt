@@ -9,7 +9,10 @@ import uz.relay.feature.chats.list.ChatsDirectionsImpl
 import uz.relay.feature.chats.search.SearchContract
 import uz.relay.feature.chats.search.SearchDirectionsImpl
 
-/** Directions faqat ViewModel'larga kerak va holatsiz — shuning uchun ViewModel doirasida. */
+/**
+ * Directions interfeyslarini ularning Impl'lariga bog'laydi (@Binds — qo'shimcha kod generatsiyasiz eng arzon usul).
+ * Directions faqat ViewModel'larga kerak va holatsiz — shuning uchun ViewModelComponent doirasida.
+ */
 @Module
 @InstallIn(ViewModelComponent::class)
 internal interface ChatsDirectionsModule {

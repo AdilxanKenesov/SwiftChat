@@ -2,6 +2,9 @@ package uz.relay.data.model.response
 
 import kotlinx.serialization.Serializable
 
+/* Bo'laklab (resumable) yuklash protokolining javob DTO'lari — [uz.relay.data.media.MediaUploader] ishlatadi. */
+
+/** Upload sessiyasi ochildi: [uploadId] bo'laklarni yuborish uchun, [mediaId] xabarga biriktirish uchun. */
 @Serializable
 data class StartUploadResponse(
     val uploadId: String,

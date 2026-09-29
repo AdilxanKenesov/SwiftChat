@@ -15,6 +15,7 @@ data class SendMessageRequest(
     val replyTo: String? = null
 )
 
+/** Xabar matnini tahrirlash (faqat TEXT/caption). */
 @Serializable
 data class EditMessageRequest(
     val body: String

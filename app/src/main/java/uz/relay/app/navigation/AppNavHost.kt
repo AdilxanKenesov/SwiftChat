@@ -17,10 +17,14 @@ import uz.relay.feature.conversation.conversationEntries
 import uz.relay.feature.group.groupEntries
 import uz.relay.feature.profile.profileEntries
 
-/** The single back stack: every Directions command lands here through [AppNavigationHandler]. */
+/**
+ * Ilovaning yagona back stack'i (Navigation 3): har bir Directions buyrug'i [AppNavigationHandler] orqali
+ * shu yerga keladi va stekka qo'llanadi. Ekranlar har bir feature'ning `...Entries()` funksiyasida
+ * ro'yxatdan o'tadi — app moduli faqat ularni yig'adi.
+ */
 @Composable
 fun AppNavHost(navigationHandler: AppNavigationHandler) {
-    // @Serializable keys: the stack survives process death.
+    // Kalitlar @Serializable: stek jarayon o'ldirilganda (process death) ham saqlanib, qayta tiklanadi.
     val backStack = rememberNavBackStack(SplashKey)
 
     LaunchedEffect(navigationHandler) {
@@ -31,9 +35,9 @@ fun AppNavHost(navigationHandler: AppNavigationHandler) {
         backStack = backStack,
         onBack = { backStack.pop() },
         entryDecorators = listOf(
-            // rememberSaveable state per screen.
+            // Har bir ekran uchun alohida rememberSaveable holati.
             rememberSaveableStateHolderNavEntryDecorator(),
-            // A ViewModelStore per screen: leaving the stack clears its ViewModel.
+            // Har bir ekran uchun alohida ViewModelStore: ekran stekdan chiqsa, uning ViewModel'i ham tozalanadi.
             rememberViewModelStoreNavEntryDecorator()
         ),
         entryProvider = entryProvider {
@@ -46,11 +50,12 @@ fun AppNavHost(navigationHandler: AppNavigationHandler) {
     )
 }
 
-/** The last screen is never removed: an empty stack crashes NavDisplay. */
+/** Oxirgi ekran hech qachon olib tashlanmaydi: bo'sh stek NavDisplay'ni yiqitadi. */
 private fun MutableList<NavKey>.pop() {
     if (size > 1) removeAt(lastIndex)
 }
 
+/** [AppNavigationParam] buyrug'ini stekka qo'llaydi (sof funksiya — alohida test qilish oson). */
 internal fun MutableList<NavKey>.apply(param: AppNavigationParam) {
     when (param) {
         is AppNavigationParam.To -> if (!(param.singleTop && lastOrNull() == param.key)) add(param.key)
@@ -61,7 +66,7 @@ internal fun MutableList<NavKey>.apply(param: AppNavigationParam) {
 
         AppNavigationParam.Back -> pop()
         is AppNavigationParam.BackTo -> {
-            // Not in the stack: do nothing rather than closing every screen.
+            // Stekda yo'q: hamma ekranni yopib yuborgandan ko'ra, hech narsa qilmaymiz.
             val index = lastIndexOf(param.key)
             if (index >= 0) {
                 val keep = if (param.inclusive) index else index + 1
@@ -75,6 +80,7 @@ internal fun MutableList<NavKey>.apply(param: AppNavigationParam) {
         }
 
         is AppNavigationParam.ResetTo -> {
+            // Allaqachon faqat shu ekran bo'lsa — qayta yaratmaymiz (holat saqlanadi).
             if (size == 1 && first() == param.key) return
             clear()
             add(param.key)

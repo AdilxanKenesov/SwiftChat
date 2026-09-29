@@ -22,7 +22,10 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.max
 
-/** Yuborishga tayyor fayl: nusxa, hash va serverga e'lon qilinadigan meta. */
+/**
+ * Yuborishga tayyor fayl: nusxa, hash va serverga e'lon qilinadigan meta.
+ * MessageRepositoryImpl undan UploadEntity va PENDING xabar qatorini yaratadi.
+ */
 data class PreparedMedia(
     val localPath: String,
     val posterPath: String?,
@@ -48,6 +51,10 @@ class MediaTooLargeException : IOException("Media is larger than the server limi
  *
  * Nega nusxa: galereya/fayl tanlovchi bergan `content://` ruxsati vaqtinchalik — ilova qayta ochilganda
  * yoki WorkManager fonda ishlaganda u allaqachon yaroqsiz bo'lishi mumkin.
+ *
+ * Nega thumbnail klientda: server o'zi preview yasamaydi (protokol) — kichik (≤ 8 KB) JPEG'ni biz
+ * yuboramiz, qabul qiluvchi uni asl fayl yuklanguncha xira preview sifatida ko'radi.
+ * Chaqiruvchi: MessageRepositoryImpl (media xabar yuborilayotganda, outbox'ga qo'yishdan oldin).
  */
 @Singleton
 class MediaPreparer @Inject constructor(
@@ -56,10 +63,16 @@ class MediaPreparer @Inject constructor(
     private val dispatchers: AppDispatchers
 ) {
 
+    /**
+     * [uri] dagi faylni outbox papkasiga `clientMessageId` nomi bilan nusxalaydi va meta'sini yig'adi.
+     * [asFile] = true — rasm/video bo'lsa ham hujjat sifatida (siqilmagan, preview'siz) yuboriladi.
+     * @throws MediaTooLargeException fayl server chegarasidan katta.
+     */
     suspend fun prepare(uri: String, asFile: Boolean, clientMessageId: String): PreparedMedia = withContext(dispatchers.io) {
         val source = Uri.parse(uri)
         val resolver = context.contentResolver
         val displayName = queryDisplayName(source) ?: "file"
+        // MIME: avval provider'dan, bo'lmasa kengaytmadan, oxirida umumiy binary tur.
         val mimeType = resolver.getType(source)
             ?: MimeTypeMap.getSingleton().getMimeTypeFromExtension(displayName.substringAfterLast('.', "").lowercase())
             ?: "application/octet-stream"
@@ -69,6 +82,7 @@ class MediaPreparer @Inject constructor(
         val sha256 = try {
             copyWithHash(source, target)
         } catch (e: Exception) {
+            // Yarim yozilgan nusxa diskda qolib ketmasin.
             target.delete()
             throw e
         }
@@ -107,6 +121,7 @@ class MediaPreparer @Inject constructor(
         }.getOrDefault(base)
     }
 
+    /** Faylni nusxalaydi va shu o'qishning o'zida SHA-256 ni hisoblaydi; hex satr qaytaradi. */
     private fun copyWithHash(source: Uri, target: File): String {
         val digest = MessageDigest.getInstance("SHA-256")
         val input = context.contentResolver.openInputStream(source) ?: throw IOException("Cannot open $source")
@@ -121,6 +136,7 @@ class MediaPreparer @Inject constructor(
      * bubble esa uni tik (to'g'ri nisbatda) ko'rsatishi kerak.
      */
     private fun withImageMeta(base: PreparedMedia, file: File): PreparedMedia {
+        // inJustDecodeBounds — pikselni xotiraga yuklamasdan faqat o'lchamni o'qish (katta suratda OOM bo'lmasin).
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeFile(file.path, bounds)
         if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return base
@@ -129,6 +145,7 @@ class MediaPreparer @Inject constructor(
         }.getOrDefault(false)
         val (width, height) = if (rotated) bounds.outHeight to bounds.outWidth else bounds.outWidth to bounds.outHeight
 
+        // Thumbnail uchun kichraytirib decode qilamiz — to'liq o'lchamli bitmap kerak emas.
         val sample = BitmapFactory.Options().apply { inSampleSize = sampleSizeFor(max(bounds.outWidth, bounds.outHeight), THUMB_SIDE) }
         val thumb = BitmapFactory.decodeFile(file.path, sample)?.let { encodeThumb(it) }
         return base.copy(width = width, height = height, thumbBase64 = thumb)
@@ -154,6 +171,7 @@ class MediaPreparer @Inject constructor(
         }
     }
 
+    /** Video poster'ini lokal JPEG qilib saqlaydi — yuboruvchining o'zi bubble'da darhol ko'rishi uchun. */
     private fun savePoster(frame: Bitmap, clientMessageId: String): String {
         val scaled = frame.scaledToFit(POSTER_SIDE)
         val file = File(mediaFiles.outboxDir, "$clientMessageId.poster.jpg")
@@ -171,6 +189,7 @@ class MediaPreparer @Inject constructor(
         return null
     }
 
+    /** Nisbatni saqlagan holda uzun tomonini [maxSide] gacha kichraytiradi (kattalashtirmaydi). */
     private fun Bitmap.scaledToFit(maxSide: Int): Bitmap {
         val longest = max(width, height)
         if (longest <= maxSide) return this
@@ -178,12 +197,14 @@ class MediaPreparer @Inject constructor(
         return Bitmap.createScaledBitmap(this, (width * ratio).toInt().coerceAtLeast(1), (height * ratio).toInt().coerceAtLeast(1), true)
     }
 
+    /** BitmapFactory uchun 2 ning darajasi bo'lgan eng katta inSampleSize (natija [target] dan kichik bo'lmasin). */
     private fun sampleSizeFor(longestSide: Int, target: Int): Int {
         var sample = 1
         while (longestSide / (sample * 2) >= target) sample *= 2
         return sample
     }
 
+    /** Faylning foydalanuvchiga ko'rinadigan nomi; provider bermasa — URI'ning oxirgi qismi. */
     private fun queryDisplayName(uri: Uri): String? = runCatching {
         context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
             if (cursor.moveToFirst()) cursor.getString(0) else null
@@ -193,10 +214,12 @@ class MediaPreparer @Inject constructor(
     private companion object {
         /** Server cheklovi (`/v1/server/info` → maxMediaSizeBytes). */
         const val MAX_MEDIA_BYTES = 100L * 1024 * 1024
+        /** Server `thumbBase64` uchun qabul qiladigan maksimal hajm (dekodlangan baytlarda). */
         const val MAX_THUMB_BYTES = 8 * 1024
         const val THUMB_SIDE = 96
         const val POSTER_SIDE = 720
         const val BUFFER_SIZE = 64 * 1024
+        /** EXIF'da eni va bo'yi almashadigan (90/270 gradus) yo'nalishlar. */
         val ROTATED_ORIENTATIONS = setOf(
             ExifInterface.ORIENTATION_ROTATE_90,
             ExifInterface.ORIENTATION_ROTATE_270,

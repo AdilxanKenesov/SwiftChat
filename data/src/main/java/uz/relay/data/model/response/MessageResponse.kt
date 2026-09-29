@@ -3,8 +3,9 @@ package uz.relay.data.model.response
 import kotlinx.serialization.Serializable
 
 /**
- * To'liq xabar (`message_new` update'ining payload'i). Hozircha undan faqat chatlar ro'yxatidagi
- * "oxirgi xabar" yangilanadi; xabarlar jadvali suhbat bosqichida qo'shiladi.
+ * To'liq xabar: `message_new` update'ining payload'i va xabarlar sahifasi (`GET .../messages`) elementi.
+ * Mapper orqali Room'dagi xabar jadvaliga yoziladi; `clientMessageId` bo'yicha upsert qilingani uchun
+ * o'zimiz yuborgan xabarning echo'si dublikat hosil qilmaydi.
  */
 @Serializable
 data class MessageResponse(

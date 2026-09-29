@@ -6,6 +6,10 @@ import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 import uz.relay.data.source.local.database.entity.SyncStateEntity
 
+/**
+ * Bitta qatorli `sync_state` jadvali uchun DAO — update oqimining `updateSeq` kursori.
+ * SyncEngine kursorni o'qiydi va update qo'llangan tranzaksiya ichida yangilaydi.
+ */
 @Dao
 interface SyncStateDao {
 
@@ -14,6 +18,7 @@ interface SyncStateDao {
     suspend fun getCursor(): Long?
 
     @Query("SELECT updateSeq FROM sync_state WHERE id = ${SyncStateEntity.SINGLE_ROW_ID}")
+    /** Kursor Flow'i — UI bootstrap tugaganini (null'dan qiymatga o'tish) kuzatadi. */
     fun observeCursor(): Flow<Long?>
 
     @Upsert

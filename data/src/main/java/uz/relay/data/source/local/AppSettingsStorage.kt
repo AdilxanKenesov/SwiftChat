@@ -18,6 +18,9 @@ import javax.inject.Singleton
  * Qurilma sozlamalari (tema, bildirishnomalar). [SessionStorage] dan alohida fayl, chunki:
  * - bu yerda maxfiy narsa yo'q — shifrlash shart emas;
  * - sessiya logout'da to'liq tozalanadi, sozlamalar esa saqlanib qolishi kerak.
+ *
+ * Nega DataStore (SharedPreferences emas): asinxron, Flow beradi — tema o'zgarsa UI o'zi qayta chiziladi.
+ * SettingsRepositoryImpl orqali ishlatiladi.
  */
 @Singleton
 class AppSettingsStorage @Inject constructor(
@@ -33,6 +36,7 @@ class AppSettingsStorage @Inject constructor(
         .map { prefs -> prefs[KEY_THEME_MODE]?.let { name -> ThemeMode.entries.firstOrNull { it.name == name } } ?: ThemeMode.LIGHT }
         .distinctUntilChanged()
 
+    /** Standart holatda bildirishnomalar yoqilgan. */
     val notificationsEnabled: Flow<Boolean> = dataStore.data
         .map { it[KEY_NOTIFICATIONS_ENABLED] ?: true }
         .distinctUntilChanged()

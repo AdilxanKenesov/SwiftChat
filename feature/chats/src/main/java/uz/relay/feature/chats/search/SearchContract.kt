@@ -4,12 +4,21 @@ import org.orbitmvi.orbit.OrbitContainerHost
 import uz.relay.core.common.result.AppError
 import uz.relay.domain.model.User
 
+/**
+ * Foydalanuvchi qidiruvi ekrani shartnomasi (Orbit MVI: Intent / UiState / SideEffect / Directions bir joyda).
+ * Chatlar ro'yxatidagi qidiruv ikonkasi, FAB yoki "Yangi chat" tugmasidan ochiladi. Bu yerdan odam bilan
+ * DIRECT chat ochiladi yoki "Yangi guruh" yaratish ekraniga o'tiladi.
+ */
 interface SearchContract {
 
+    /** Orbit container egasi: UI holatni kuzatadi va Intent'larni [onEventDispatcher] orqali yuboradi. */
     interface ViewModel : OrbitContainerHost<UiState, UiState, SideEffect> {
         fun onEventDispatcher(intent: Intent)
     }
 
+    /**
+     * Foydalanuvchi harakatlari: matn o'zgarishi, tozalash, orqaga, yangi guruh va natijadagi odamga bosish.
+     */
     sealed interface Intent {
         data class OnQueryChange(val query: String) : Intent
         object OnClear : Intent
@@ -18,10 +27,12 @@ interface SearchContract {
         data class OnUserClick(val user: User) : Intent
     }
 
+    /** Bir martalik xato xabari (snackbar). */
     sealed interface SideEffect {
         data class ShowError(val error: AppError) : SideEffect
     }
 
+    /** Qidiruv ekranining o'zgarmas holati. */
     data class UiState(
         val query: String = "",
         val results: List<User> = emptyList(),
@@ -34,10 +45,15 @@ interface SearchContract {
         /** So'rovdagi username qismi ("@ali" → "ali") — natijada qalin qilib ko'rsatiladi. */
         val normalizedQuery: String get() = query.trim().removePrefix("@")
 
+        /**
+         * "Hech kim topilmadi" faqat joriy so'rov bo'yicha qidiruv haqiqatan tugagan bo'lsa — debounce kutilayotganda
+         * yoki eski so'rov natijasi turganda noto'g'ri bo'sh holat ko'rinmasin.
+         */
         val showNothingFound: Boolean
             get() = results.isEmpty() && normalizedQuery.isNotEmpty() && searchedQuery == normalizedQuery && !isSearching
     }
 
+    /** Navigatsiya abstraksiyasi — ViewModel NavKey'larni bilmaydi, amalga oshirish [SearchDirectionsImpl]da. */
     interface Directions {
         suspend fun back()
         suspend fun navigateToChat(chatId: String)

@@ -3,6 +3,7 @@ package uz.relay.data.model.response
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 
+/** `GET /v1/updates/state` — serverdagi joriy updateSeq (bootstrap'dan keyingi boshlang'ich kursor). */
 @Serializable
 data class UpdatesStateResponse(
     val updateSeq: Long
@@ -34,6 +35,7 @@ data class UpdatesPageResponse(
     val tooLong: Boolean = false
 )
 
+/** Update `kind` qiymatlari. String konstantalar, chunki noma'lum kind'lar ham parse'dan o'tishi kerak. */
 object UpdateKinds {
     const val MESSAGE_NEW = "message_new"
     const val MESSAGE_EDIT = "message_edit"
@@ -46,6 +48,7 @@ object UpdateKinds {
 
 // ---- `kind` ga qarab payload shakllari (message_new → MessageResponse) ----
 
+/** `message_edit`: xabar matni o'zgardi; [editVersion] eski update yangisini bosib ketmasligi uchun. */
 @Serializable
 data class MessageEditPayload(
     val serverId: Long,
@@ -55,6 +58,7 @@ data class MessageEditPayload(
     val editedAt: Long
 )
 
+/** `message_delete`: xabar o'chirildi — lokalda tombstone ([deletedAt]) qo'yiladi, qator o'chirilmaydi. */
 @Serializable
 data class MessageDeletePayload(
     val serverId: Long,
@@ -70,6 +74,7 @@ data class CursorPayload(
     val upToSeq: Long
 )
 
+/** `member`: guruh a'zoligi o'zgardi ([removed] = true bo'lsa a'zo chiqarilgan). */
 @Serializable
 data class MemberPayload(
     val chatId: String,

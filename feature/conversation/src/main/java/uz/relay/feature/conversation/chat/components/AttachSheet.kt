@@ -51,6 +51,10 @@ import java.io.File
  *  - Kamera — tizim kamera ilovasi suratni biz bergan FileProvider fayliga yozadi (CAMERA ruxsati kerak emas,
  *    chunki suratni kamera ilovasining o'zi oladi).
  *  - Fayl — istalgan hujjat; rasm tanlansa ham siqilmagan FILE sifatida ketadi.
+ *
+ * ChatScreen'dagi biriktirish (qisqich) tugmasidan ochiladi. Tanlangan manba [Attachment] (URI qatori) sifatida
+ * ChatViewModel'ga beriladi — nusxalash, thumbnail va yuklash data qatlamida. Ruxsatsiz Activity Result
+ * shartnomalari tanlangani uchun READ_MEDIA_IMAGES yoki storage ruxsatini so'rash oqimi umuman kerak emas.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -109,6 +113,7 @@ internal fun AttachSheet(
     }
 }
 
+/** Sheet'dagi bitta variant: rangli yumaloq kvadrat ichida ikonka va ostida yorliq. */
 @Composable
 private fun AttachOption(icon: Int, label: String, tint: Color, onClick: () -> Unit) {
     Column(

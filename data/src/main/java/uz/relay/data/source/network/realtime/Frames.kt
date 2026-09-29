@@ -52,6 +52,7 @@ sealed interface ClientFrame {
     @SerialName("received")
     data class Received(val chatId: String, val upToSeq: Long) : ClientFrame
 
+    /** "Men yozyapman" — MessageRepositoryImpl yuboradi; faqat socket orqali (REST muqobili yo'q). */
     @Serializable
     @SerialName("typing")
     data class Typing(val chatId: String) : ClientFrame
@@ -69,6 +70,7 @@ sealed interface ServerFrame {
     @SerialName("auth_ok")
     data class AuthOk(val userId: String, val updateSeq: Long) : ServerFrame
 
+    /** `send` qabul qilindi: server id/seq/vaqt — outbox xabarni SENT deb belgilaydi. */
     @Serializable
     @SerialName("ack")
     data class Ack(
@@ -78,6 +80,7 @@ sealed interface ServerFrame {
         val serverCreatedAt: Long
     ) : ServerFrame
 
+    /** `send` rad etildi. `retryable = true` bo'lsa keyinroq qayta urinish mumkin, aks holda xabar FAILED. */
     @Serializable
     @SerialName("nack")
     data class Nack(
@@ -122,4 +125,5 @@ internal fun Json.decodeServerFrame(text: String): ServerFrame? = try {
     null
 }
 
+/** Klient frame'ini JSON matnga aylantiradi (`type` maydoni avtomatik qo'shiladi). */
 internal fun Json.encodeClientFrame(frame: ClientFrame): String = encodeToString(ClientFrame.serializer(), frame)

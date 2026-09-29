@@ -48,6 +48,10 @@ import uz.relay.core.designsystem.theme.SwiftTheme
 import uz.relay.feature.profile.R
 import uz.relay.feature.profile.util.messageRes
 
+/**
+ * Profilni tahrirlash ekrani (Nav3 entry: EditProfileKey). Runtime argument yo'q, shuning uchun ViewModel oddiy
+ * `hiltViewModel()` bilan olinadi. SideEffect'lar Snackbar'ga aylanadi; chizish [EditProfileContent]da.
+ */
 @Composable
 internal fun EditProfileScreen(viewModel: EditProfileViewModel = hiltViewModel()) {
     val uiState by viewModel.collectAsState()
@@ -185,6 +189,7 @@ private fun EditProfileContent(
 }
 
 // ---------------- Preview'lar ----------------
+// O'zgartirilgan forma (yorug'/qorong'i) va "username band" xatosi.
 
 private val PreviewState = EditProfileContract.UiState(
     loaded = true,

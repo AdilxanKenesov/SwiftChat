@@ -3,6 +3,9 @@ package uz.relay.core.navigation.key
 import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 
+// Ilovaning asosiy qismi ekranlari kalitlari (login'dan keyin).
+
+/** Chatlar ro'yxati — asosiy ekran. */
 @Serializable
 data object ChatsKey : NavKey
 
@@ -21,6 +24,7 @@ data object SearchKey : NavKey
 @Serializable
 data class GroupCreateKey(val addToChatId: String? = null) : NavKey
 
+/** Guruh ma'lumoti: a'zolar, nom, ovozsiz qilish, chiqish. */
 @Serializable
 data class GroupInfoKey(val chatId: String) : NavKey
 

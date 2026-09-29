@@ -39,6 +39,8 @@ import uz.relay.feature.chats.util.formatMuteUntil
  * a'zo sheet'i bilan bir xil: sarlavha (avatar + nom + holat) va 56dp qatorlar.
  *  - Ovozsiz emas → muddatlar: 1 soat, 8 soat, 1 kun, butunlay.
  *  - Ovozsiz → bitta "Ovozni yoqish" (muddatni almashtirish uchun avval yoqib, keyin qayta tanlanadi).
+ *
+ * ModalBottomSheet — ro'yxat ustida qisqa tanlov uchun qulay: tashqariga bosish yoki pastga surish bilan yopiladi.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,6 +60,7 @@ internal fun MuteSheet(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
+        // Sheet qisqa — yarim ochiq holat keraksiz, darhol to'liq ochiladi.
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
         containerColor = colors.bg,
@@ -100,6 +103,7 @@ internal fun MuteSheet(
     }
 }
 
+/** Ovozsiz qilish muddatlari va ularning yorliqlari (sheet'dagi tartibda). */
 private val MuteOptions = listOf(
     MuteDuration.HOUR to R.string.mute_1h,
     MuteDuration.EIGHT_HOURS to R.string.mute_8h,
@@ -107,6 +111,7 @@ private val MuteOptions = listOf(
     MuteDuration.FOREVER to R.string.mute_forever
 )
 
+/** Sheet'dagi bitta 56dp qator: ikonka + yorliq. */
 @Composable
 private fun SheetItem(icon: Int, label: String, color: Color, onClick: () -> Unit) {
     Row(

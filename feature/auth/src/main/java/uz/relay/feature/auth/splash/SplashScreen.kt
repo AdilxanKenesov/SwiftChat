@@ -32,13 +32,20 @@ import uz.relay.core.designsystem.component.SwiftWordmark
 import uz.relay.core.designsystem.theme.SwiftChatTheme
 import uz.relay.core.designsystem.theme.SwiftTheme
 
+/**
+ * Ilova ochilganda birinchi ko'rinadigan ekran: logo va yuklanish indikatori.
+ *
+ * O'zi hech narsa ko'rsatmaydi va Intent qabul qilmaydi - ViewModel saqlangan sessiyani o'qib,
+ * Phone, ProfileSetup yoki Chats ekraniga `ResetTo` bilan o'tkazadi.
+ */
 @Composable
 internal fun SplashScreen(viewModel: SplashViewModel = hiltViewModel()) {
-    // Subscribing starts the container, whose onCreate picks the first screen.
+    // Obuna bo'lish container'ni ishga tushiradi, uning onCreate bloki birinchi ekranni tanlaydi.
     viewModel.collectAsState()
     SplashScreenContent()
 }
 
+/** Stateless splash ko'rinishi; Preview'da ViewModel'siz ko'rsatish uchun ajratilgan. */
 @Composable
 private fun SplashScreenContent() {
     val colors = SwiftTheme.colors
@@ -51,7 +58,7 @@ private fun SplashScreenContent() {
         Column(
             modifier = Modifier
                 .align(Alignment.Center)
-                // 80dp of bottom space lifts the centered block 40dp above center.
+                // Pastdagi 80dp bo'shliq markazdagi blokni markazdan 40dp yuqoriga ko'taradi (offset ishlatmasdan).
                 .padding(bottom = 80.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(22.dp)
@@ -69,6 +76,10 @@ private fun SplashScreenContent() {
     }
 }
 
+/**
+ * Pastdagi kichik "borib-keluvchi" progress chizig'i. Canvas'da chizilgan, chunki dizayndagi bu indikator
+ * standart Material progress'ga o'xshamaydi va har kadrda faqat draw bosqichi qayta ishlaydi (layout emas).
+ */
 @Composable
 private fun SplashProgress(modifier: Modifier = Modifier) {
     val colors = SwiftTheme.colors
@@ -94,6 +105,7 @@ private fun SplashProgress(modifier: Modifier = Modifier) {
     }
 }
 
+// Preview'lar: yorug' va qorong'i tema.
 @Preview(name = "Light", showSystemUi = true)
 @Composable
 private fun SplashLightPreview() {

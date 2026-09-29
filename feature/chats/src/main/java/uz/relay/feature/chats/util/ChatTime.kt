@@ -9,6 +9,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
+// Formatter'lar thread-safe va qimmat — bir marta yaratilib qayta ishlatiladi.
 private val TIME = DateTimeFormatter.ofPattern("HH:mm")
 private val DAY_MONTH = DateTimeFormatter.ofPattern("dd.MM")
 
@@ -40,6 +41,7 @@ fun formatChatTime(
     }
 }
 
+/** Hafta kunining qisqa nomi — tilga qarab string resursdan olinadi. */
 private fun DayOfWeek.shortNameRes(): Int = when (this) {
     DayOfWeek.MONDAY -> R.string.day_mon
     DayOfWeek.TUESDAY -> R.string.day_tue

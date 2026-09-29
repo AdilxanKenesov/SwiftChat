@@ -24,6 +24,8 @@ import javax.inject.Singleton
  *
  * NET_CAPABILITY_INTERNET (VALIDATED emas): VALIDATED Google serveriga tekshiruv so'roviga bog'liq —
  * u bloklangan tarmoqlarda internet bo'lsa ham ilova doim "offline" ko'rinib qolardi.
+ *
+ * Ishlatuvchilar: ConnectionRepositoryImpl (banner holati) va RealtimeCoordinator (tezkor qayta ulanish).
  */
 @Singleton
 class NetworkMonitor @Inject constructor(
@@ -32,6 +34,10 @@ class NetworkMonitor @Inject constructor(
 ) {
     private val connectivityManager = context.getSystemService(ConnectivityManager::class.java)
 
+    /**
+     * Joriy "online" holati. callbackFlow — Android callback API'sini Flow'ga aylantirish uchun; Eagerly
+     * stateIn — callback ilova yashagan davomida bitta marta ro'yxatdan o'tadi va qiymat doim tayyor turadi.
+     */
     val isOnline: StateFlow<Boolean> = callbackFlow {
         val callback = object : ConnectivityManager.NetworkCallback() {
             override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) {
@@ -42,6 +48,7 @@ class NetworkMonitor @Inject constructor(
                 trySend(false)
             }
         }
+        // Callback faqat o'zgarishda chaqiriladi — boshlang'ich qiymatni o'zimiz yuboramiz.
         trySend(currentlyOnline())
         connectivityManager.registerDefaultNetworkCallback(callback)
         awaitClose { connectivityManager.unregisterNetworkCallback(callback) }
@@ -49,6 +56,7 @@ class NetworkMonitor @Inject constructor(
         .distinctUntilChanged()
         .stateIn(scope, SharingStarted.Eagerly, currentlyOnline())
 
+    /** Faol tarmoqning hozirgi holatini sinxron o'qiydi (Flow'ning boshlang'ich qiymati uchun). */
     private fun currentlyOnline(): Boolean {
         val capabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork) ?: return false
         return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)

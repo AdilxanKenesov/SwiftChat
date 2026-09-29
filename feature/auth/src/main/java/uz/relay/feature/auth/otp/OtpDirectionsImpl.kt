@@ -6,6 +6,12 @@ import uz.relay.core.navigation.key.ChatsKey
 import uz.relay.core.navigation.key.ProfileSetupKey
 import javax.inject.Inject
 
+/**
+ * [OtpContract.Directions] ning amalga oshirilishi.
+ *
+ * Muvaffaqiyatli kirishdan keyin `ResetTo` ishlatiladi - auth ekranlari back stack'dan tozalanadi,
+ * foydalanuvchi "orqaga" bosib OTP ekraniga qaytib qolmaydi.
+ */
 internal class OtpDirectionsImpl @Inject constructor(
     private val navigator: AppNavigator
 ) : OtpContract.Directions {

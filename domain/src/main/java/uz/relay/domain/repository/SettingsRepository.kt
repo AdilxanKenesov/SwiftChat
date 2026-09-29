@@ -7,9 +7,12 @@ import uz.relay.domain.model.ThemeMode
 /**
  * Qurilma sozlamalari. Hisobga emas, qurilmaga tegishli — shuning uchun logout'da o'chirilmaydi
  * (boshqa hisobga kirilganda ham tanlangan tema saqlanib qoladi).
+ *
+ * Interface domain'da, amalga oshirish `data` modulida (DataStore) — feature'lar saqlash usulini bilmaydi.
  */
 interface SettingsRepository {
 
+    /** Tanlangan tema (tanlanmagan bo'lsa — [ThemeMode.LIGHT]). */
     val themeMode: Flow<ThemeMode>
 
     suspend fun setThemeMode(mode: ThemeMode)

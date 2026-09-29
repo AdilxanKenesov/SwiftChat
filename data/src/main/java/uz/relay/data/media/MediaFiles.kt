@@ -8,6 +8,10 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
+ * Media fayllar papkalarini bitta joyda boshqaradi — yo'llar ilova bo'ylab tarqalib ketmasligi va
+ * logout'da hammasini ishonchli tozalash mumkin bo'lishi uchun. [MediaPreparer], MediaRepositoryImpl
+ * va AuthRepositoryImpl (logout) ishlatadi.
+ *
  * Media fayllari qayerda turadi:
  *  - [outboxDir] — yuborilayotgan fayllarning nusxasi (filesDir: tizim uni o'zi o'chirmaydi, yuklash
  *    ilova qayta ochilganda davom etishi kerak);
@@ -19,8 +23,10 @@ class MediaFiles @Inject constructor(
     @ApplicationContext private val context: Context,
     private val imageLoader: ImageLoader
 ) {
+    // Getter har safar `mkdirs()` qiladi: papka clearAll()dan keyin ham qayta yaratiladi.
     val outboxDir: File get() = File(context.filesDir, "media_outbox").apply { mkdirs() }
 
+    /** Bitta media uchun alohida papka — yuklab olingan fayl asl nomi bilan saqlanadi, nomlar to'qnashmaydi. */
     fun downloadsDir(mediaId: String): File = File(context.cacheDir, "media/$mediaId").apply { mkdirs() }
 
     /**

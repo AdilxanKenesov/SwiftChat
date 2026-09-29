@@ -10,9 +10,18 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 
+/**
+ * Joriy tema ranglari va shriftlari CompositionLocal orqali daraxt bo'ylab uzatiladi — har bir composable'ga
+ * parametr sifatida berish shart emas. `static...` — tema kam o'zgaradi, o'zgarganda butun daraxt qayta
+ * chiziladi; bu har bir o'qishni kuzatishdan arzonroq.
+ */
 val LocalSwiftColors = staticCompositionLocalOf { LightSwift }
 val LocalSwiftTypography = staticCompositionLocalOf { DefaultSwiftTypography }
 
+/**
+ * Ranglar va shriftlarga qisqa kirish: `SwiftTheme.colors.primary`, `SwiftTheme.typography.title`.
+ * MaterialTheme'ga o'xshash API, lekin ilovaning o'z tokenlari bilan.
+ */
 object SwiftTheme {
     val colors: SwiftColors
         @Composable @ReadOnlyComposable get() = LocalSwiftColors.current
@@ -21,6 +30,14 @@ object SwiftTheme {
         @Composable @ReadOnlyComposable get() = LocalSwiftTypography.current
 }
 
+/**
+ * Ilovaning ildiz temasi: o'z tokenlarimizni ([LocalSwiftColors], [LocalSwiftTypography]) va ularga moslangan
+ * MaterialTheme'ni birga beradi. MaterialTheme ham kerak, chunki Material komponentlar (TextField, Dialog,
+ * Button...) o'z ranglarini colorScheme'dan oladi — ular ham dizayn ranglarida ko'rinsin.
+ *
+ * [darkTheme] MainActivity'dan ilova sozlamasiga qarab beriladi (tizim temasiga emas); standart qiymat
+ * faqat preview'lar uchun.
+ */
 @Composable
 fun SwiftChatTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -40,6 +57,7 @@ fun SwiftChatTheme(
     }
 }
 
+/** Bizning tokenlarni Material colorScheme'ga moslaydi; qolgan ranglar standart light/dark sxemadan olinadi. */
 private fun SwiftColors.toColorScheme(darkTheme: Boolean): ColorScheme {
     val base = if (darkTheme) darkColorScheme() else lightColorScheme()
     return base.copy(

@@ -20,6 +20,14 @@ import javax.inject.Singleton
 /**
  * Faylni serverga bo'laklab yuklaydi va to'xtagan joyidan davom ettiradi (Guide: resumable upload).
  *
+ * Nega bo'laklab: mobil internet tez-tez uziladi, 100 MB li videoni bitta so'rovda yuborsak, har uzilishda
+ * hammasi noldan boshlanardi. Bo'laklar bilan faqat oxirgi tasdiqlanmagan qism qayta yuboriladi.
+ * Sessiya holati (uploadId, mediaId, chunkSize, tasdiqlangan baytlar) [UploadDao]da saqlanadi — shuning
+ * uchun yuklash process o'lgandan keyin ham davom etadi.
+ *
+ * Chaqiruvchi: [uz.relay.data.outbox.OutboxSender] — media xabarni yuborishdan oldin (WorkManager ichida).
+ * Tayyorlangan fayl ([MediaPreparer]) va uning SHA-256'i serverga sessiya ochilganda e'lon qilinadi.
+ *
  * Qoidalar:
  *  - offset HECH QACHON taxmin qilinmaydi: davom ettirishda (ilova qayta ochildi, internet uzildi)
  *    serverdan `HEAD` bilan so'raladi, 409 OFFSET_MISMATCH'dan keyin ham shunday;
@@ -39,10 +47,12 @@ class MediaUploader @Inject constructor(
 
     /** Natija — xabarga biriktiriladigan `mediaId`. */
     suspend fun upload(initial: UploadEntity): AppResult<String> {
+        // Oldingi urinishda yuklash tugagan, lekin xabar yuborilmay qolgan — qayta yuklash shart emas.
         if (initial.completed && initial.mediaId != null) return AppResult.Success(initial.mediaId)
         val file = File(initial.localPath)
         if (!file.exists()) return fileMissing()
 
+        // Sessiyani qayta ochishlar soni — server doim "yo'q" desa cheksiz aylanib qolmaslik uchun.
         var restarts = 0
         var upload = initial
         var offset: Long
@@ -75,6 +85,7 @@ class MediaUploader @Inject constructor(
 
             when (val result = safeApiCall { mediaApi.uploadChunk(uploadId, offset, chunk.toRequestBody(OCTET_STREAM)) }) {
                 is AppResult.Success -> {
+                    // Keyingi bo'lak server tasdiqlagan joydan boshlanadi (o'zimiz hisoblamaymiz).
                     offset = result.data.confirmedOffset
                     if (result.data.mediaReady) {
                         uploadDao.markCompleted(upload.clientMessageId)
@@ -88,6 +99,7 @@ class MediaUploader @Inject constructor(
                 is AppResult.Error -> {
                     val error = result.error
                     when {
+                        // Server boshqa offset kutyapti (masalan, oldingi javob yo'qolgan) — HEAD bilan aniqlaymiz.
                         error.hasCode(ErrorCodes.OFFSET_MISMATCH) -> offset = when (val remote = remoteOffset(uploadId)) {
                             is AppResult.Success -> remote.data
                             is AppResult.Error -> return remote
@@ -114,6 +126,10 @@ class MediaUploader @Inject constructor(
         }
     }
 
+    /**
+     * Serverda yangi yuklash sessiyasini ochadi va uni bazaga yozadi. Qaytgan nusxada offset 0 —
+     * chaqiruvchi yuklashni boshidan boshlaydi.
+     */
     private suspend fun startSession(upload: UploadEntity): AppResult<UploadEntity> {
         val request = StartUploadRequest(
             kind = upload.kind,
@@ -142,6 +158,7 @@ class MediaUploader @Inject constructor(
         val result = safeApiCall { mediaApi.uploadOffset(uploadId) }
         if (result is AppResult.Error) return result
         val response = (result as AppResult.Success).data
+        // HEAD javobida body yo'q, shuning uchun HTTP xatoni safeApiCall emas, shu yerda o'zimiz o'giramiz.
         if (!response.isSuccessful) {
             return AppResult.Error(
                 AppError.Api(response.code(), if (response.code() == 404) ErrorCodes.NOT_FOUND else "HTTP_${response.code()}", "HEAD failed", response.code() >= 500)
@@ -152,6 +169,10 @@ class MediaUploader @Inject constructor(
         return AppResult.Success(offset)
     }
 
+    /**
+     * Fayldan [offset] dan boshlab ko'pi bilan [chunkSize] bayt o'qiydi. RandomAccessFile — faylni boshidan
+     * o'qimasdan kerakli joyga `seek` qilish uchun; IO dispatcher'da, chunki disk o'qish bloklovchi.
+     */
     private suspend fun readChunk(file: File, offset: Long, chunkSize: Int): ByteArray = withContext(dispatchers.io) {
         RandomAccessFile(file, "r").use { raf ->
             val size = minOf(chunkSize.toLong(), raf.length() - offset).toInt().coerceAtLeast(0)
@@ -164,9 +185,11 @@ class MediaUploader @Inject constructor(
 
     private fun AppError.hasCode(code: String) = this is AppError.Api && this.code == code
 
+    /** Sessiya serverda endi yo'q (muddati o'tgan, topilmadi yoki ruxsat yo'q) — yangisini ochish kerak. */
     private fun AppError.isSessionGone() =
         hasCode(ErrorCodes.UPLOAD_EXPIRED) || (this is AppError.Api && (httpStatus == 404 || httpStatus == 403))
 
+    /** Lokal nusxa o'chib ketgan — qayta urinish befoyda, xabar FAILED bo'ladi. */
     private fun fileMissing(): AppResult<String> =
         AppResult.Error(AppError.Api(0, ErrorCodes.MEDIA_FILE_MISSING, "Local file is missing", retryable = false))
 
@@ -175,6 +198,7 @@ class MediaUploader @Inject constructor(
         AppResult.Error(AppError.Api(0, CANCELED, "Upload canceled", retryable = false))
 
     companion object {
+        /** Foydalanuvchi bekor qilgan yuklash uchun ichki xato kodi (server kodi emas). */
         const val CANCELED = "UPLOAD_CANCELED"
         private const val UPLOAD_OFFSET = "Upload-Offset"
         private const val MAX_RESTARTS = 2

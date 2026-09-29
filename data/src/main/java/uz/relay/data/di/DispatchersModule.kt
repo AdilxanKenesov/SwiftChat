@@ -11,6 +11,13 @@ import uz.relay.core.common.dispatcher.AppDispatchers
 import uz.relay.core.common.dispatcher.ApplicationScope
 import javax.inject.Singleton
 
+/**
+ * Coroutine dispatcher'lari va ilova darajasidagi [CoroutineScope] ni beradi.
+ *
+ * Nega: dispatcher'larni to'g'ridan-to'g'ri `Dispatchers.IO` deb yozish o'rniga [AppDispatchers] inject
+ * qilinadi — testlarda ularni test dispatcher bilan almashtirish oson bo'ladi. [ApplicationScope] esa
+ * ekran yopilganda ham davom etishi kerak bo'lgan ishlar (WebSocket, sync, receipt yuborish) uchun.
+ */
 @Module
 @InstallIn(SingletonComponent::class)
 object DispatchersModule {
@@ -27,6 +34,6 @@ object DispatchersModule {
     @Singleton
     @ApplicationScope
     fun provideApplicationScope(dispatchers: AppDispatchers): CoroutineScope =
-        // SupervisorJob: one failing job does not cancel the others (e.g. the WebSocket).
+        // SupervisorJob: bitta job xato bilan tugasa, qolganlari (masalan, WebSocket) bekor bo'lib ketmaydi.
         CoroutineScope(SupervisorJob() + dispatchers.default)
 }

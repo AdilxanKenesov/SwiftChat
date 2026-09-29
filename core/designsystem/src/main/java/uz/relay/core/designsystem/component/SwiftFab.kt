@@ -35,6 +35,7 @@ fun SwiftFab(
         shape = shape,
         containerColor = colors.primary,
         contentColor = colors.onPrimary,
+        // Material soyasi nolga tushiriladi — yuqoridagi `shadow` bilan rangli soya chiziladi.
         elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp)
     ) {
         Icon(painter = painterResource(icon), contentDescription = contentDescription, modifier = Modifier.size(24.dp))

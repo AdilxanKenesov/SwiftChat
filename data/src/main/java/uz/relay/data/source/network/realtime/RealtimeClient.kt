@@ -34,6 +34,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.random.Random
 
+/** WebSocket ulanish holati — UI'dagi "Ulanmoqda..." indikatori va RealtimeCoordinator shunga qaraydi. */
 enum class RealtimeState {
     /** Ishga tushirilmagan: ilova fonda yoki login qilinmagan. Indikator kerak emas. */
     IDLE,
@@ -51,6 +52,13 @@ enum class RealtimeState {
  * Socket faqat "optimallashtirish": hujjatga ko'ra jonli frame'lar yo'qolishi, takrorlanishi yoki tartibsiz
  * kelishi mumkin, haqiqat manbai esa `GET /v1/updates`. Shuning uchun bu klass hech narsani bazaga
  * qo'llamaydi — faqat frame'larni [frames] oqimiga uzatadi. Qo'llash va teshiklarni yamash SyncEngine'da.
+ *
+ * Nega OkHttp WebSocket: REST bilan bir xil klient (DNS, TLS, proxy sozlamalari umumiy), ping/pong'ni
+ * o'zi boshqaradi va qo'shimcha kutubxona talab qilmaydi. `@PublicClient` olinadi, chunki token HTTP
+ * sarlavhada emas, birinchi `auth` frame'ida yuboriladi — TokenInterceptor/Authenticator bu yerda keraksiz.
+ *
+ * Kim ishlatadi: RealtimeCoordinator (start/stop, frame'larni SyncEngine'ga uzatish), OutboxSender,
+ * ReceiptSender va MessageRepositoryImpl ([send] orqali; ulanish bo'lmasa REST'ga o'tiladi).
  */
 @Singleton
 class RealtimeClient @Inject constructor(
@@ -85,15 +93,21 @@ class RealtimeClient @Inject constructor(
     private var socket: WebSocket? = null
 
     private var loopJob: Job? = null
+
+    // CONFLATED: bir nechta "uyg'on" signali bittaga birlashadi — backoff kutishini uzish uchun bittasi yetarli.
     private val wakeUp = Channel<Unit>(Channel.CONFLATED)
 
-    /** @param cursorProvider `auth` frame'idagi kursor (server uchun ma'lumot). */
+    /**
+     * Ulanish siklini ishga tushiradi (allaqachon ishlayotgan bo'lsa hech narsa qilmaydi).
+     * @param cursorProvider `auth` frame'idagi kursor (server uchun ma'lumot); har qayta ulanishda qayta o'qiladi.
+     */
     @Synchronized
     fun start(cursorProvider: suspend () -> Long) {
         if (loopJob?.isActive == true) return
         loopJob = scope.launch { runLoop(cursorProvider) }
     }
 
+    /** Siklni to'xtatadi va socket'ni yopadi (ilova fonga o'tganda yoki logout'da). */
     @Synchronized
     fun stop() {
         loopJob?.cancel()
@@ -113,10 +127,12 @@ class RealtimeClient @Inject constructor(
         var unauthorizedInARow = 0
         try {
             while (currentCoroutineContext().isActive) {
+                // Sessiya yo'q (logout) — ulanishga urinish ma'nosiz, sikl tugaydi.
                 val session = sessionStorage.current() ?: break
                 _state.value = RealtimeState.CONNECTING
 
                 val outcome = connectOnce(session, cursorProvider())
+                // Muvaffaqiyatli auth bo'lgan bo'lsa, backoff va 4003 hisoblagichlari noldan boshlanadi.
                 if (outcome.wasAuthenticated) {
                     failedAttempts = 0
                     unauthorizedInARow = 0
@@ -157,10 +173,12 @@ class RealtimeClient @Inject constructor(
         }
     }
 
+    /** Bitta ulanish natijasi: yopilish kodi (`null` — tarmoq xatosi) va auth'gacha yetib borilganmi. */
     private class Outcome(val closeCode: Int?, val wasAuthenticated: Boolean)
 
     /** Bitta ulanish: ochiladi, `auth` yuboriladi, yopilguncha frame'lar o'qiladi. */
     private suspend fun connectOnce(session: Session, cursor: Long): Outcome = coroutineScope {
+        // UNLIMITED: OkHttp listener'i bloklanmasligi kerak, trySend hech qachon rad etilmaydi.
         val incoming = Channel<String>(Channel.UNLIMITED)
         val closed = CompletableDeferred<Int?>()
         val authenticated = AtomicBoolean(false)
@@ -168,6 +186,7 @@ class RealtimeClient @Inject constructor(
         val webSocket = client.newWebSocket(
             Request.Builder().url(BuildConfig.WS_URL).build(),
             object : WebSocketListener() {
+                // Protokol: ochilgandan keyin birinchi frame albatta `auth` bo'lishi kerak.
                 override fun onOpen(webSocket: WebSocket, response: Response) {
                     webSocket.send(json.encodeClientFrame(ClientFrame.Auth(session.accessToken, session.deviceId, cursor)))
                 }
@@ -176,6 +195,7 @@ class RealtimeClient @Inject constructor(
                     incoming.trySend(text)
                 }
 
+                // Server yopishni boshladi — javoban biz ham yopamiz va kodni natija sifatida olamiz.
                 override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
                     webSocket.close(code, null)
                     closed.complete(code)
@@ -185,6 +205,7 @@ class RealtimeClient @Inject constructor(
                     closed.complete(code)
                 }
 
+                // Tarmoq xatosi: yopilish kodi yo'q — oddiy backoff bilan qayta ulanamiz.
                 override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
                     closed.complete(null)
                 }
@@ -222,9 +243,11 @@ class RealtimeClient @Inject constructor(
     private suspend fun waitBeforeReconnect(attempt: Int) {
         val base = (1_000L shl (attempt - 1).coerceAtMost(5)).coerceAtMost(MAX_BACKOFF_MS)
         val delayMs = base + Random.nextLong(0, 500)
+        // Timeout — oddiy kutish tugadi; wakeUp kelsa — darhol qayta ulanamiz.
         withTimeoutOrNull(delayMs) { wakeUp.receive() }
     }
 
+    // WebSocket yopilish kodlari (protokol hujjatidan).
     private companion object {
         const val CLOSE_NORMAL = 1000
         const val CLOSE_TOKEN_EXPIRED = 4001

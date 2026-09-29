@@ -90,9 +90,18 @@ private val ChromeBackground = Color.Black.copy(alpha = 0.55f)
 private val SeekColor = Color(0xFFA59DFF)
 private val Secondary = Color.White.copy(alpha = 0.7f)
 
+// Zoom chegaralari: pinch bilan eng ko'pi 5×, ikki marta tegishda 2.5×.
 private const val MAX_ZOOM = 5f
 private const val DOUBLE_TAP_ZOOM = 2.5f
 
+/**
+ * To'liq ekranli media ko'ruvchi (Nav3 entry: MediaViewerKey). Chatdagi rasm/video bubble bosilganda ochiladi,
+ * orqaga bosilsa chatga qaytiladi.
+ *
+ * Pleyer ViewModel'dan olinadi (konfiguratsiya o'zgarishida ijro uzilmasin). Sahifalar HorizontalPager'da,
+ * rasmlar Coil `AsyncImage` bilan — ilova darajasidagi (token qo'shadigan) ImageLoader orqali yuklanadi, shuning
+ * uchun himoyalangan media URL'lari ham alohida sozlamasiz ochiladi.
+ */
 @Composable
 internal fun MediaViewerScreen(chatId: String, clientMessageId: String) {
     val viewModel = hiltViewModel<MediaViewerViewModel, MediaViewerViewModel.Factory>(
@@ -131,6 +140,10 @@ internal fun MediaViewerScreen(chatId: String, clientMessageId: String) {
     }
 }
 
+/**
+ * Pager + ustki/pastki panellar. Sahifa to'liq to'xtaganda (`settledPage`) ViewModel'ga xabar beriladi —
+ * surish davomida har oraliq sahifada video yuklab yurmaslik uchun.
+ */
 @Composable
 private fun BoxScope.ViewerContent(
     uiState: MediaViewerContract.UiState,
@@ -176,6 +189,7 @@ private fun BoxScope.ViewerContent(
         }
     }
 
+    // Panellar joriy sahifaga bog'liq; video boshqaruvi faqat sahifa to'xtaganda ko'rsatiladi (pleyer o'sha videoga yuklangan).
     val current = items.getOrNull(pagerState.currentPage) ?: return
     AnimatedVisibility(visible = chromeVisible, enter = fadeIn(), exit = fadeOut(), modifier = Modifier.align(Alignment.TopCenter)) {
         TopBar(
@@ -372,6 +386,7 @@ private fun ZoomableImage(item: ViewerItem, onZoomChange: (Boolean) -> Unit, onT
     var translation by remember { mutableStateOf(Offset.Zero) }
     var size by remember { mutableStateOf(IntSize.Zero) }
 
+    // Rasm chetlari ekran chetidan ichkariga kirib qolmasligi uchun surish chegarasi.
     fun clamp(offset: Offset, forScale: Float): Offset {
         val maxX = (size.width * (forScale - 1)) / 2
         val maxY = (size.height * (forScale - 1)) / 2
@@ -384,6 +399,7 @@ private fun ZoomableImage(item: ViewerItem, onZoomChange: (Boolean) -> Unit, onT
         onZoomChange(newScale > 1f)
     }
 
+    // Lokal nusxa bo'lsa (o'zim yuborgan yoki keshlangan) — undan, aks holda serverdagi URL'dan.
     val model: Any? = item.media.localPath?.let(::File)?.takeIf { it.exists() } ?: item.media.url
     Box(
         modifier = Modifier

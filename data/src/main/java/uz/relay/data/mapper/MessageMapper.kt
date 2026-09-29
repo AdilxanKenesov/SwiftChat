@@ -16,6 +16,13 @@ import uz.relay.domain.model.MessageStatus
 import uz.relay.domain.model.MessageType
 import uz.relay.domain.model.UploadProgress
 
+/*
+ * Xabar mapper'lari: server javobi → Room [MessageEntity], entity → domain [Message], entity → yuborish so'rovi.
+ *
+ * Xabar holati (✓/✓✓) bazada saqlanmaydi, a'zolar kursorlaridan hisoblanadi; lokal yuklash qatori
+ * ([UploadEntity]) bilan birlashtirilib, o'zim yuborgan media serverga yetmasdan ham ko'rinadi.
+ * MessageRepositoryImpl, OutboxSender va UpdateApplier ishlatadi.
+ */
 /** Mendan boshqa a'zolarning eng katta kursorlari (guruhda "kamida bittasi"). */
 data class PeerCursors(val readUpToSeq: Long = 0, val deliveredUpToSeq: Long = 0)
 
@@ -54,6 +61,7 @@ fun MessageResponse.toEntity() = MessageEntity(
     media = media.map { it.toEntity() }
 )
 
+/** Xabardagi media metasi → xabar qatoriga JSON ko'rinishida saqlanadigan element. */
 fun MediaMetaResponse.toEntity() = MediaItemEntity(
     mediaId = mediaId,
     kind = kind,
@@ -109,6 +117,7 @@ fun MessageEntity.toDomain(myUserId: String?, peers: PeerCursors, json: Json, up
 private fun MessageEntity.mediaFor(upload: UploadEntity?): List<MessageMedia> {
     if (media.isEmpty()) return listOfNotNull(upload?.toDomainMedia())
     return media.map { item ->
+        // Bitta media bo'lsa mediaId solishtirilmaydi: yuklash qatorida mediaId hali yozilmagan bo'lishi mumkin.
         val local = upload?.takeIf { it.mediaId == item.mediaId || media.size == 1 }
         MessageMedia(
             mediaId = item.mediaId,
@@ -125,6 +134,7 @@ private fun MessageEntity.mediaFor(upload: UploadEntity?): List<MessageMedia> {
     }
 }
 
+/** Serverga hali yetmagan media: `url` yo'q, UI faqat lokal fayldan ko'rsatadi. */
 private fun UploadEntity.toDomainMedia() = MessageMedia(
     mediaId = mediaId,
     kind = kind.toMediaKind(),
@@ -138,12 +148,17 @@ private fun UploadEntity.toDomainMedia() = MessageMedia(
     posterPath = posterPath
 )
 
+/** Media turini enum'ga aylantiradi; noma'lum tur oddiy FILE deb ko'rsatiladi (yuklab olish baribir ishlaydi). */
 fun String.toMediaKind(): MediaKind = when (this) {
     "IMAGE" -> MediaKind.IMAGE
     "VIDEO" -> MediaKind.VIDEO
     else -> MediaKind.FILE
 }
 
+/**
+ * Outbox'dagi xabarni serverga yuborish so'roviga aylantiradi. `clientMessageId` idempotentlik kaliti:
+ * qayta urinishda server dublikat yaratmay, o'sha xabarni qaytaradi.
+ */
 fun MessageEntity.toSendRequest(mediaIds: List<String>? = null) = SendMessageRequest(
     clientMessageId = clientMessageId,
     type = type,

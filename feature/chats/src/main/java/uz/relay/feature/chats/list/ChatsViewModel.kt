@@ -17,6 +17,13 @@ import uz.relay.domain.usecase.user.ObserveUserNamesUseCase
 import uz.relay.domain.usecase.user.RefreshMeUseCase
 import javax.inject.Inject
 
+/**
+ * Chatlar ro'yxati ViewModel'i (Orbit MVI). Vazifalari:
+ *  - lokal bazadagi chatlar, ismlar, o'z profilim, ulanish holati va "yozmoqda"ni bitta [ChatsContract.UiState]ga yig'ish;
+ *  - ochilganda server bilan sync qilish;
+ *  - ovozsiz qilish va navigatsiya intent'larini bajarish.
+ * Hilt inject qiladi; runtime argument yo'q, shuning uchun oddiy @Inject (AssistedInject kerak emas).
+ */
 @HiltViewModel
 class ChatsViewModel @Inject constructor(
     private val observeChats: ObserveChatsUseCase,
@@ -31,6 +38,7 @@ class ChatsViewModel @Inject constructor(
     private val directions: ChatsContract.Directions
 ) : ViewModel(), ChatsContract.ViewModel {
 
+    // Container yaratilganda (ekran birinchi ochilganda) bir marta: kuzatish, sync va profilni yuklash.
     override val container =
         orbitContainer<ChatsContract.UiState, ChatsContract.SideEffect>(ChatsContract.UiState()) {
             observeData()
@@ -38,6 +46,7 @@ class ChatsViewModel @Inject constructor(
             loadMe()
         }
 
+    /** UI'dan kelgan har bir Intent shu yerda tegishli amalga yo'naltiriladi. */
     override fun onEventDispatcher(intent: ChatsContract.Intent) {
         when (intent) {
             ChatsContract.Intent.OnRetrySync -> sync()

@@ -8,6 +8,12 @@ import uz.relay.domain.model.ThemeMode
 import uz.relay.domain.repository.SettingsRepository
 import javax.inject.Inject
 
+/**
+ * [SettingsRepository] implementatsiyasi: mavzu, bildirishnomalar va ilova tili.
+ *
+ * Yupqa qatlam — domain faqat interfeysni biladi, saqlash esa DataStore ([AppSettingsStorage]) va tilni
+ * tizimga qo'llash [AppLocaleManager] zimmasida. Sozlamalar ekrani va ilova mavzusini kuzatuvchi qism ishlatadi.
+ */
 internal class SettingsRepositoryImpl @Inject constructor(
     private val storage: AppSettingsStorage,
     private val localeManager: AppLocaleManager

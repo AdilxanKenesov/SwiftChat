@@ -141,6 +141,7 @@ internal fun ChatRow(
                         if (chat.type == ChatType.GROUP && name != null) stringResource(R.string.typing_named, name)
                         else stringResource(R.string.typing)
                     }
+                    // AnnotatedString qurish arzon emas — faqat kirish ma'lumotlari o'zgarganda qayta hisoblanadi.
                     val preview = remember(last, chat.type, userNames, colors) {
                         last?.let {
                             buildChatPreview(

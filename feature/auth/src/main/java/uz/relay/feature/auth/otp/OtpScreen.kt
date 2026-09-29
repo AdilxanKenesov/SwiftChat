@@ -57,13 +57,21 @@ import uz.relay.feature.auth.otp.components.OtpCodeInput
 import uz.relay.feature.auth.util.formatFullPhone
 import uz.relay.feature.auth.util.messageRes
 
+/**
+ * Tasdiqlash kodini kiritish ekrani (stateful qism).
+ *
+ * Phone ekrani kod so'ralgach shu ekranni ochadi; kod to'g'ri bo'lsa ProfileSetup yoki Chats ekraniga o'tiladi.
+ * `phone` Nav3 key'dan keladi va AssistedInject factory orqali ViewModel'ga uzatiladi.
+ */
 @Composable
 internal fun OtpScreen(phone: String) {
+    // Runtime argument (phone) bilan ViewModel yaratish: Hilt factory'ni beradi, biz unga raqamni uzatamiz.
     val viewModel = hiltViewModel<OtpViewModel, OtpViewModel.Factory>(
         creationCallback = { factory -> factory.create(phone) }
     )
     val uiState by viewModel.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    // Shake - bir martalik hodisa; uni Flow orqali OtpCodeInput'ga uzatamiz. Buffer tryEmit yo'qolmasligi uchun.
     val shakeEvents = remember { MutableSharedFlow<Unit>(extraBufferCapacity = 1) }
     val context = LocalContext.current
 
@@ -93,6 +101,10 @@ internal fun OtpScreen(phone: String) {
     }
 }
 
+/**
+ * Ekranning stateless UI qismi: [uiState] ni chizadi, harakatlarni [onEventDispatcher] orqali qaytaradi.
+ * ViewModel'siz bo'lgani uchun har bir holat (kiritish, xato, muddati o'tgan, bloklangan) Preview'da ko'rinadi.
+ */
 @Composable
 private fun OtpScreenContent(
     uiState: OtpContract.UiState,
@@ -102,6 +114,7 @@ private fun OtpScreenContent(
     val colors = SwiftTheme.colors
     val typography = SwiftTheme.typography
     val status = uiState.status
+    // Kod muddati o'tgan yoki bloklangan bo'lsa taymer o'rniga "Yangi kod" tugmasi ko'rsatiladi.
     val renew = status == OtpContract.Status.Expired || status == OtpContract.Status.Locked
 
     Column(
@@ -141,6 +154,7 @@ private fun OtpScreenContent(
                 modifier = Modifier.padding(top = 24.dp, bottom = 8.dp)
             )
 
+            // Matndagi telefon raqami qalin qilinadi; tarjimada raqam o'rni har xil bo'lgani uchun indexOf bilan topiladi.
             val formattedPhone = formatFullPhone(uiState.phone)
             val subtitle = stringResource(R.string.otp_sent, formattedPhone)
             val phoneStart = subtitle.indexOf(formattedPhone)
@@ -217,6 +231,7 @@ private fun OtpScreenContent(
     }
 }
 
+/** Ikonka va qizil matndan iborat holat qatori (noto'g'ri kod, muddati o'tgan). */
 @Composable
 private fun StatusRow(@DrawableRes icon: Int, text: String) {
     val colors = SwiftTheme.colors
@@ -230,6 +245,7 @@ private fun StatusRow(@DrawableRes icon: Int, text: String) {
     }
 }
 
+/** Kod bloklanganda ko'rsatiladigan ogohlantirish kartasi. */
 @Composable
 private fun LockedCard() {
     val colors = SwiftTheme.colors
@@ -267,6 +283,7 @@ private fun LockedCard() {
     }
 }
 
+/** Qayta yuborishgacha qolgan vaqt ("0:42"); vaqt tugagach "Qayta yuborish" tugmasiga aylanadi. */
 @Composable
 private fun ResendTimer(
     secondsLeft: Int,
@@ -280,6 +297,7 @@ private fun ResendTimer(
         val line = stringResource(R.string.resend_in, time)
         Text(
             text = buildAnnotatedString {
+                // Vaqt qismi qalin ko'rsatiladi, shuning uchun satr vaqtdan oldingi va vaqt qismiga bo'linadi.
                 append(line.removeSuffix(time))
                 withStyle(SpanStyle(color = colors.text, fontWeight = FontWeight.Bold)) { append(time) }
             },
@@ -300,6 +318,7 @@ private fun ResendTimer(
     }
 }
 
+// Preview'lar: har bir Status uchun yorug' va qorong'i variant.
 @Composable
 private fun OtpPreview(darkTheme: Boolean, state: OtpContract.UiState) {
     SwiftChatTheme(darkTheme = darkTheme) {

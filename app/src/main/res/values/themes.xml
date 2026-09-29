@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <!-- Asosiy oyna temasi: faqat fon rangi, qolgan hammasi Compose'da (SwiftChatTheme). -->
     <style name="Theme.SwiftChat" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/window_background</item>
     </style>
 
+    <!-- Splash screen temasi (core-splashscreen): ilova ochilgach postSplashScreenTheme'ga almashadi. -->
     <style name="Theme.SwiftChat.Starting" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/window_background</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo</item>

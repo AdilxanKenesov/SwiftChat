@@ -10,12 +10,23 @@ import uz.relay.domain.model.MemberRole
 import uz.relay.domain.model.Message
 import uz.relay.domain.model.MessageType
 
+/**
+ * Chat ekranining Orbit MVI shartnomasi: bitta [UiState], foydalanuvchi harakatlari [Intent] va bir martalik
+ * [SideEffect]lar.
+ *
+ * Nega shunday: ekran holati bitta immutable obyektda bo'lgani uchun UI har doim izchil chiziladi va
+ * process death/rotatsiyada tiklash oson. Xato ko'rsatish yoki fayl ochish kabi "bir marta bo'ladigan" ishlar
+ * state'ga emas, SideEffect'ga qo'yiladi — aks holda qayta chizishda takrorlanib qolardi. Navigatsiya esa
+ * [Directions] interfeysi orqali: ViewModel navigator tafsilotlarini bilmaydi va testda oson almashtiriladi.
+ */
 interface ChatContract {
 
+    /** Screen faqat shu interfeysni ko'radi: state/sideEffect oqimi va yagona kirish nuqtasi [onEventDispatcher]. */
     interface ViewModel : OrbitContainerHost<UiState, UiState, SideEffect> {
         fun onEventDispatcher(intent: Intent)
     }
 
+    /** Ekrandan ViewModel'ga keladigan barcha foydalanuvchi harakatlari. */
     sealed interface Intent {
         object OnBack : Intent
         data class OnTextChange(val text: String) : Intent
@@ -39,12 +50,14 @@ interface ChatContract {
         data class OnMediaClick(val message: Message) : Intent
     }
 
+    /** Bir martalik hodisalar: Screen ularni `collectSideEffect` bilan tutib, Snackbar/Intent'ga aylantiradi. */
     sealed interface SideEffect {
         data class ShowError(val error: AppError) : SideEffect
         /** Yuklab olingan faylni boshqa ilovada ochish (FileProvider orqali — bu UI qatlami ishi). */
         data class OpenFile(val path: String, val mimeType: String) : SideEffect
     }
 
+    /** Chat ekranining to'liq holati; hisoblanadigan bayroqlar (isGroup, canSend...) shu yerda getter sifatida. */
     data class UiState(
         /** Sarlavha uchun (ism, avatar, online). Chat bazada hali bo'lmasa `null`. */
         val chat: ChatSummary? = null,
@@ -78,6 +91,10 @@ interface ChatContract {
         data class Edit(val message: Message) : ComposerMode
     }
 
+    /**
+     * Chat'dan chiqish yo'llari: orqaga, guruh ma'lumoti, foydalanuvchi profili va media ko'ruvchi.
+     * Amalga oshirilishi — [ChatDirectionsImpl] (AppNavigator event bus orqali).
+     */
     interface Directions {
         suspend fun back()
         suspend fun navigateToGroupInfo(chatId: String)

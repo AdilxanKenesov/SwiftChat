@@ -19,6 +19,10 @@ import javax.inject.Singleton
  * Nega xotirada (bazada emas): typing hech qachon saqlanmaydi va `/v1/updates` da yo'q (protokol) —
  * u faqat "hozir" uchun. Server bitta foydalanuvchidan 3 s da ko'pi bilan bitta frame uzatadi, shuning
  * uchun 5 s ichida yangisi kelmasa, odam yozishni to'xtatgan deb hisoblaymiz (spec: "expire after ~5s").
+ *
+ * Domain'dagi [TypingRepository] interfeysini ham shu klass bajaradi — UI "yozmoqda..." belgisini
+ * [typing] StateFlow'dan o'qiydi. Ma'lumotni [RealtimeCoordinator] (`typing` frame) va
+ * UpdateApplier (xabar kelganda [clear]) yangilaydi.
  */
 @Singleton
 class TypingTracker @Inject constructor(
@@ -28,8 +32,11 @@ class TypingTracker @Inject constructor(
     private val _typing = MutableStateFlow<Map<String, Set<String>>>(emptyMap())
     override val typing: StateFlow<Map<String, Set<String>>> = _typing.asStateFlow()
 
+    // (chatId, userId) → muddat tugashini kutayotgan job. Bir nechta coroutine'dan o'zgargani uchun
+    // `synchronized` bilan himoyalangan.
     private val expiryJobs = HashMap<Pair<String, String>, Job>()
 
+    /** `typing` frame keldi: foydalanuvchini ro'yxatga qo'shadi va 5 s lik taymerni qayta boshlaydi. */
     fun onTyping(chatId: String, userId: String) {
         _typing.update { current -> current + (chatId to (current[chatId].orEmpty() + userId)) }
         val key = chatId to userId

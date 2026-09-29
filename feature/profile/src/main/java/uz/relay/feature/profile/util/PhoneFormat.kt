@@ -1,5 +1,6 @@
 package uz.relay.feature.profile.util
 
+// O'zbekiston xalqaro prefiksi — Relay faqat shu raqamlar bilan ro'yxatdan o'tkazadi.
 private const val UZ_PREFIX = "+998"
 
 /**

@@ -20,6 +20,9 @@ import javax.inject.Singleton
  * - Faqat keshda YO'Qlari so'raladi: butun sinf bitta IP'dan 300 so'rov/daqiqa limitini bo'lishadi.
  * - Parallel, lekin bir vaqtda ko'pi bilan 4 ta — limitni bir zumda yeb qo'ymaslik uchun.
  * - Bitta profil yuklanmasa xato otilmaydi: ism keyingi sync'da to'ldiriladi, ro'yxat esa baribir chiziladi.
+ *
+ * Kim ishlatadi: SyncEngine/UpdateApplier va repository'lar — yangi chat yoki a'zo paydo bo'lganda
+ * uning ismini ko'rsatish uchun profilni oldindan tortib oladi.
  */
 @Singleton
 class UserCache @Inject constructor(
@@ -34,12 +37,14 @@ class UserCache @Inject constructor(
         val unique = ids.distinct()
         if (unique.isEmpty()) return emptyList()
 
+        // Keshda borlarini tashlab, faqat yo'qlarini tarmoqdan so'raymiz.
         val missing = unique - userDao.existingIds(unique).toSet()
         val semaphore = Semaphore(permits = MAX_PARALLEL_REQUESTS)
         return coroutineScope {
             missing.map { id ->
                 async { semaphore.withPermit { safeApiCall { userApi.getUser(id) } } }
             }.awaitAll()
+        // Muvaffaqiyatsizlari jimgina tashlanadi (yuqoridagi KDoc'ga qarang).
         }.mapNotNull { (it as? AppResult.Success)?.data?.toEntity() }
     }
 

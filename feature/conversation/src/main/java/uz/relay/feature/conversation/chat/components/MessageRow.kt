@@ -40,6 +40,9 @@ import uz.relay.feature.conversation.chat.ChatItem
  *
  * Uzoq bosilganda bubble'ning ekrandagi joyi ([Rect]) ham beriladi — menyu o'sha joyda "ko'tarilgan" bubble'ni
  * chizishi uchun.
+ *
+ * Qaysi qatorda ism/avatar ko'rinishi bu yerda hisoblanmaydi — [ChatItem.Bubble] bayroqlari ViewModel'da tayyorlanadi.
+ * `combinedClickable` (ExperimentalFoundationApi) bitta modifier'da oddiy bosish (media ochish) va uzoq bosishni (menyu) beradi.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable

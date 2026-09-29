@@ -21,6 +21,13 @@ import uz.relay.domain.model.User
 import uz.relay.domain.repository.UserRepository
 import javax.inject.Inject
 
+/**
+ * [UserRepository] implementatsiyasi: o'z profilim, boshqa foydalanuvchilar, qidiruv va ismlar xaritasi.
+ *
+ * Har bir server javobi Room'dagi [UserDao] keshiga yoziladi, UI esa faqat keshni kuzatadi — shu bois
+ * profil, chat sarlavhasi va a'zolar ro'yxati bitta manbadan bir vaqtda yangilanadi.
+ * Profil, qidiruv, kontakt tanlash va suhbat ekranlari ishlatadi.
+ */
 @OptIn(ExperimentalCoroutinesApi::class) // flatMapLatest
 internal class UserRepositoryImpl @Inject constructor(
     private val userApi: UserApi,
@@ -34,6 +41,7 @@ internal class UserRepositoryImpl @Inject constructor(
             .onSuccess { userDao.upsert(it.toEntity()) }
             .map { it.toUser() }
 
+    /** Joriy foydalanuvchi profilini keshdan kuzatadi; hisob almashsa avtomatik yangisiga o'tadi. */
     override fun observeMe(): Flow<User?> = sessionStorage.session
         .map { it?.userId }
         .distinctUntilChanged()
@@ -41,11 +49,13 @@ internal class UserRepositoryImpl @Inject constructor(
             if (me == null) flowOf(null) else userDao.observe(me).map { it?.toDomain() }
         }
 
+    /** O'z profilimni serverdan qayta yuklab keshga yozadi. */
     override suspend fun refreshMe(): AppResult<User> =
         safeApiCall { userApi.getMe() }
             .onSuccess { userDao.upsert(it.toEntity()) }
             .map { it.toUser() }
 
+    /** Foydalanuvchi profilini keshdan kuzatadi (online/lastSeen presence update'lari bilan yangilanadi). */
     override fun observeUser(userId: String): Flow<User?> = userDao.observe(userId).map { it?.toDomain() }
 
     /** Kesh bo'lsa ham qayta yuklanadi: profil ochilganda ism/username va online holat eng yangisi bo'lsin. */
@@ -57,6 +67,7 @@ internal class UserRepositoryImpl @Inject constructor(
                 entity.toDomain()
             }
 
+    /** Username/ism bo'yicha server qidiruvi; o'zim natijadan chiqarib tashlanaman. */
     override suspend fun search(query: String): AppResult<List<User>> =
         safeApiCall { userApi.search(query) }
             .map { response ->
@@ -67,6 +78,7 @@ internal class UserRepositoryImpl @Inject constructor(
                 entities.filter { it.id != me }.map { it.toDomain() }
             }
 
+    /** Keshdagi barcha foydalanuvchilar (o'zimdan tashqari) — guruhga a'zo tanlash ro'yxati uchun. */
     override fun observeKnownUsers(): Flow<List<User>> = sessionStorage.session
         .map { it?.userId }
         .distinctUntilChanged()
@@ -74,6 +86,7 @@ internal class UserRepositoryImpl @Inject constructor(
             if (me == null) flowOf(emptyList()) else userDao.observeAllExcept(me).map { users -> users.map { it.toDomain() } }
         }
 
+    /** userId → ism xaritasi: SYSTEM xabarlar matni va guruhdagi yuboruvchi ismini chizish uchun. */
     override fun observeUserNames(): Flow<Map<String, String>> = userDao.observeNames()
         .map { names -> names.associate { it.id to it.displayName } }
         .distinctUntilChanged()

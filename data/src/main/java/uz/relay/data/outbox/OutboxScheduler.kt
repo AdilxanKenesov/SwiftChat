@@ -12,6 +12,14 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Outbox'ni yuborish ishini WorkManager navbatiga qo'yadi yoki bekor qiladi.
+ *
+ * Chaqiruvchilar: ilova ishga tushganda (App.onCreate — oldingi sessiyadan qolgan PENDING'lar uchun),
+ * yangi/qayta yuborilgan xabarda (MessageRepository), socket ulanganda (RealtimeCoordinator,
+ * `auth_ok`) va logout'da (`cancel`). Barcha yuborish bitta joydan — [OutboxWorker] orqali — o'tadi,
+ * shuning uchun ilova yopilsa ham ish internet paydo bo'lganda davom etadi.
+ */
 @Singleton
 class OutboxScheduler @Inject constructor(
     @ApplicationContext private val context: Context
@@ -22,6 +30,7 @@ class OutboxScheduler @Inject constructor(
      * "bo'sh" deb tugayotgan lahzada qo'shilgan xabar keyingi safargacha osilib qolardi.)
      */
     fun schedule() {
+        // Faqat internet bor paytda ishlaydi; `Result.retry()` bo'lsa 10 s dan boshlab eksponensial kutish.
         val request = OneTimeWorkRequestBuilder<OutboxWorker>()
             .setConstraints(Constraints(requiredNetworkType = NetworkType.CONNECTED))
             .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 10, TimeUnit.SECONDS)

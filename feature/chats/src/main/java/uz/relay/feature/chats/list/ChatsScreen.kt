@@ -54,6 +54,11 @@ import uz.relay.feature.chats.list.components.EmptyChats
 import uz.relay.feature.chats.list.components.MuteSheet
 import uz.relay.feature.chats.util.messageRes
 
+/**
+ * Chatlar ro'yxati ekrani (stateful qobiq). ViewModel'dan holatni `collectAsState` bilan oladi, SideEffect'larni
+ * snackbar sifatida ko'rsatadi va chizishni holatsiz [ChatsScreenContent]ga topshiradi.
+ * Vaqtinchalik xatoda snackbar'dagi "Qayta urinish" sync'ni qaytadan boshlaydi.
+ */
 @Composable
 internal fun ChatsScreen(viewModel: ChatsViewModel = hiltViewModel()) {
     val uiState by viewModel.collectAsState()
@@ -90,6 +95,10 @@ internal fun ChatsScreen(viewModel: ChatsViewModel = hiltViewModel()) {
     }
 }
 
+/**
+ * Holatsiz (stateless) UI: faqat `uiState` va `onEventDispatcher` oladi. Shu tufayli ViewModel'siz Preview'da
+ * istalgan holatni (ro'yxat, offline, skeleton, bo'sh) ko'rsatish va UI test yozish oson.
+ */
 @Composable
 private fun ChatsScreenContent(
     uiState: ChatsContract.UiState,
@@ -164,7 +173,11 @@ private fun ChatsScreenContent(
     }
 }
 
-/** Tablar va ular ostidagi sahifalar: tabni bosish ham, chapga-o'ngga surish ham ishlaydi. */
+/**
+ * Tablar va ular ostidagi sahifalar: tabni bosish ham, chapga-o'ngga surish ham ishlaydi.
+ * HorizontalPager — Telegram'dagidek swipe bilan tab almashtirish tabiiy; tanlangan tab alohida holat emas,
+ * `pagerState.currentPage`dan olinadi (bitta haqiqat manbai).
+ */
 @Composable
 private fun ChatsPager(
     uiState: ChatsContract.UiState,
@@ -205,6 +218,7 @@ private fun ChatsPager(
     }
 }
 
+/** Birinchi sync tugaguncha ko'rsatiladigan "skelet" qatorlar — bo'sh ekran yoki spinner o'rniga. */
 @Composable
 private fun SkeletonList() {
     Column {
@@ -273,6 +287,7 @@ private val PreviewChats = listOf(
 
 private val PreviewNames = mapOf("malika" to "Malika")
 
+/** Preview'lar: har bir holat yorug' va qorong'i temada, ViewModel'siz — Content'ga to'g'ridan-to'g'ri UiState beriladi. */
 @Composable
 private fun ChatsPreview(darkTheme: Boolean, state: ChatsContract.UiState) {
     SwiftChatTheme(darkTheme = darkTheme) { ChatsScreenContent(uiState = state, onEventDispatcher = {}) }

@@ -14,6 +14,10 @@ import uz.relay.domain.usecase.chat.SetChatMutedUseCase
 import uz.relay.domain.usecase.user.ObserveUserUseCase
 import uz.relay.domain.usecase.user.RefreshUserUseCase
 
+/**
+ * Foydalanuvchi profili ViewModel'i. `userId` Nav3 kalitidan AssistedInject orqali keladi (runtime qiymat),
+ * use case'lar esa Hilt'dan. Ma'lumot offline-first: avval lokal kesh ko'rsatiladi, fonda serverdan yangilanadi.
+ */
 @HiltViewModel(assistedFactory = UserProfileViewModel.Factory::class)
 class UserProfileViewModel @AssistedInject constructor(
     @Assisted private val userId: String,
@@ -25,6 +29,7 @@ class UserProfileViewModel @AssistedInject constructor(
     private val directions: UserProfileContract.Directions
 ) : ViewModel(), UserProfileContract.ViewModel {
 
+    /** UserProfileScreen shu factory orqali ViewModel'ni `userId` bilan yaratadi. */
     @AssistedFactory
     interface Factory {
         fun create(userId: String): UserProfileViewModel
@@ -36,6 +41,7 @@ class UserProfileViewModel @AssistedInject constructor(
             refresh()
         }
 
+    /** Screen'dan keladigan barcha Intent'lar uchun yagona kirish nuqtasi. */
     override fun onEventDispatcher(intent: UserProfileContract.Intent) {
         when (intent) {
             UserProfileContract.Intent.OnBack -> intent { directions.back() }
@@ -63,6 +69,7 @@ class UserProfileViewModel @AssistedInject constructor(
         }
     }
 
+    /** Shaxsiy chat bo'lsa — darhol ochiladi, bo'lmasa serverda yaratilib (idempotent), keyin ochiladi. */
     private fun openChat() = intent {
         val chatId = state.chat?.id ?: when (val result = openDirectChat(userId)) {
             is AppResult.Success -> result.data

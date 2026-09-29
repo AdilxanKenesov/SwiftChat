@@ -3,9 +3,16 @@ package uz.relay.core.designsystem.theme
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 
-// Brand (same in both themes – used for logo tile, brand icon tiles, FAB glow)
+/** Brend rangi — ikkala temada bir xil: logo plitkasi, brend ikonka plitkalari va FAB soyasi uchun. */
 val Brand = Color(0xFF5B4FE9)
 
+/**
+ * Ilovaning rang tokenlari (dizayn spec'idagi nomlar bilan: bg, surface, bubbleIn, tickRead...).
+ *
+ * Nega MaterialTheme.colorScheme yetarli emas: messenger'ga Material'da yo'q ranglar kerak (xabar pufakchalari,
+ * ✓✓ belgisi, reply, skeleton, chat foni). Shuning uchun o'z tokenlarimiz [LocalSwiftColors] orqali beriladi.
+ * `@Immutable` — Compose bu obyekt o'zgarmasligini bilsin va keraksiz recomposition bo'lmasin.
+ */
 @Immutable
 data class SwiftColors(
     val bg: Color, val surface: Color, val surface2: Color,
@@ -20,6 +27,7 @@ data class SwiftColors(
     val scrim: Color, val skeleton: Color, val muted: Color, val onMuted: Color, val menu: Color,
 )
 
+/** Kunduzgi tema ranglari. */
 val LightSwift = SwiftColors(
     bg = Color(0xFFFFFFFF), surface = Color(0xFFF4F3F8), surface2 = Color(0xFFEAE8F1),
     page = Color(0xFFF4F3F8), card = Color(0xFFFFFFFF), cardBorder = Color.Transparent,
@@ -33,6 +41,7 @@ val LightSwift = SwiftColors(
     scrim = Color(0x66141220), skeleton = Color(0xFFEDEBF3), muted = Color(0xFFE3E1EA), onMuted = Color(0xFF5A576B), menu = Color(0xFFFFFFFF),
 )
 
+/** Tungi tema ranglari. */
 val DarkSwift = SwiftColors(
     bg = Color(0xFF131218), surface = Color(0xFF1C1B23), surface2 = Color(0xFF282731),
     page = Color(0xFF0E0D12), card = Color(0xFF1C1B23), cardBorder = Color(0xFF26252F),
@@ -46,16 +55,16 @@ val DarkSwift = SwiftColors(
     scrim = Color(0x99000000), skeleton = Color(0xFF23222B), muted = Color(0xFF33313C), onMuted = Color(0xFFB9B6C6), menu = Color(0xFF2A2933),
 )
 
-// Avatar palette (white initials on top). Pick by stable hash of userId/chatId.
+/** Avatar palitrasi (ustida oq bosh harflar). userId/chatId'ning barqaror hash'i bo'yicha tanlanadi. */
 val AvatarColors = listOf(
     Color(0xFF6655E0), Color(0xFF0E8577), Color(0xFFC8553D), Color(0xFFA86A12),
     Color(0xFFB8386A), Color(0xFF2F6BD6), Color(0xFF3D8A4F),
 )
 
-// Group sender-name colors (readable on both bubble colors)
+/** Guruhda yuboruvchi ismi ranglari (ikkala pufakcha rangida ham o'qiladigan). */
 val SenderNameColors = listOf(Color(0xFF1A9A8A), Color(0xFFD0573A), Color(0xFF3D7BE0), Color(0xFFC07A12))
 
-// Settings row icon tiles
+/** Sozlamalar qatorlaridagi ikonka plitkalari ranglari (temaga bog'liq emas). */
 object SettingsTileColors {
     val Phone = Color(0xFF2F6BD6)
     val Username = Color(0xFF3D8A4F)

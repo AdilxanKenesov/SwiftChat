@@ -4,6 +4,11 @@ import uz.relay.core.common.result.AppResult
 import uz.relay.domain.repository.GroupRepository
 import javax.inject.Inject
 
+/**
+ * Yangi guruh yaratadi; yaratuvchi OWNER bo'ladi.
+ *
+ * Kichik mantiq: nom chetidagi bo'sh joylar olib tashlanadi (trim), keyin repository'ga uzatiladi.
+ */
 class CreateGroupUseCase @Inject constructor(
     private val repository: GroupRepository
 ) {

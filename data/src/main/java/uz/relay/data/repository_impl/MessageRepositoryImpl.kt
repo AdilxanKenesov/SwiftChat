@@ -44,6 +44,15 @@ import java.io.IOException
 import java.util.UUID
 import javax.inject.Inject
 
+/**
+ * [MessageRepository] implementatsiyasi: xabarlar tarixi, yuborish (matn/media), tahrir, o'chirish,
+ * o'qildi belgisi, typing va qidiruv.
+ *
+ * Yuborish outbox naqshida: xabar avval PENDING holatda Room'ga yoziladi (UI uni darhol ko'rsatadi),
+ * keyin [OutboxScheduler] WorkManager orqali yuboradi — ilova yopilsa yoki internet uzilsa ham xabar
+ * yo'qolmaydi. `clientMessageId` shu yerda yaratiladi va idempotentlik kaliti bo'ladi.
+ * Suhbat ekrani ViewModel'i ishlatadi.
+ */
 internal class MessageRepositoryImpl @Inject constructor(
     private val database: RelayDatabase,
     private val messageDao: MessageDao,
@@ -61,6 +70,7 @@ internal class MessageRepositoryImpl @Inject constructor(
     private val json: Json
 ) : MessageRepository {
 
+    /** Xabarlar + a'zolar kursorlari + yuklashlar birlashtiriladi: istalgan biri o'zgarsa ro'yxat qayta hisoblanadi. */
     override fun observeMessages(chatId: String): Flow<List<Message>> = combine(
         messageDao.observeMessages(chatId),
         memberCursorDao.observe(chatId),
@@ -78,13 +88,16 @@ internal class MessageRepositoryImpl @Inject constructor(
         entities.map { it.toDomain(myUserId, peers, json, uploadsById[it.clientMessageId]) }
     }
 
+    /** Eng yangi sahifani yuklaydi. `true` — serverda yana eskiroq xabarlar bor. */
     override suspend fun loadLatest(chatId: String): AppResult<Boolean> = loadPage(chatId, beforeSeq = null)
 
+    /** Lokal eng eski xabardan oldingi sahifani yuklaydi (yuqoriga scroll); lokal bo'sh bo'lsa — eng yangisini. */
     override suspend fun loadOlder(chatId: String): AppResult<Boolean> {
         val oldest = messageDao.minSeq(chatId) ?: return loadLatest(chatId)
         return loadPage(chatId, beforeSeq = oldest)
     }
 
+    /** Sahifani yuklab, profillar bilan birga bitta tranzaksiyada yozadi (UI ismsiz bubble'ni ko'rmasin). */
     private suspend fun loadPage(chatId: String, beforeSeq: Long?): AppResult<Boolean> {
         val result = safeApiCall { messageApi.getMessages(chatId, beforeSeq = beforeSeq) }
         if (result is AppResult.Error) return result
@@ -117,6 +130,7 @@ internal class MessageRepositoryImpl @Inject constructor(
         return pageMin > localMax + 1
     }
 
+    /** Matnli xabarni PENDING holatda bazaga yozadi va outbox'ni ishga tushiradi; natija kutilmaydi. */
     override suspend fun sendText(chatId: String, text: String, replyToClientMessageId: String?) {
         val myUserId = sessionStorage.current()?.userId ?: return
         messageDao.insert(
@@ -142,6 +156,10 @@ internal class MessageRepositoryImpl @Inject constructor(
         outboxScheduler.schedule()
     }
 
+    /**
+     * Faylni tayyorlaydi (nusxa, hash, o'lcham, thumbnail), keyin xabar va yuklash qatorini bitta tranzaksiyada
+     * yozadi. Yuklashning o'zi outbox'da, bo'laklab va davom ettiriladigan tarzda bajariladi.
+     */
     override suspend fun sendMedia(
         chatId: String,
         attachment: Attachment,
@@ -229,6 +247,7 @@ internal class MessageRepositoryImpl @Inject constructor(
         }
     }
 
+    /** FAILED xabarni qayta PENDING qiladi va outbox'ni qayta ishga tushiradi (xuddi shu clientMessageId bilan). */
     override suspend fun retry(clientMessageId: String) {
         messageDao.markPendingAgain(clientMessageId)
         outboxScheduler.schedule()
@@ -250,11 +269,13 @@ internal class MessageRepositoryImpl @Inject constructor(
                 )
             }
 
+    /** Xabarni hamma uchun o'chiradi; lokal qator tombstone bo'lib qoladi (matn yashiriladi, joyi saqlanadi). */
     override suspend fun delete(serverId: Long): AppResult<Unit> =
         safeApiCall { messageApi.deleteMessage(serverId) }
             // Server 204 qaytaradi (vaqtsiz); aniq `deletedAt` keyin `message_delete` update'ida keladi.
             .map { messageDao.applyDelete(serverId, System.currentTimeMillis()) }
 
+    /** "Yozmoqda..." signalini socket orqali yuboradi. */
     override fun sendTyping(chatId: String) {
         // Server bitta foydalanuvchi/chat uchun 3 s da bittadan ortig'ini o'zi tashlaydi — klientda qo'shimcha
         // cheklov kerak emas (spec). Socket bo'lmasa signal shunchaki yuborilmaydi: u saqlanmaydigan hodisa.
@@ -271,6 +292,7 @@ internal class MessageRepositoryImpl @Inject constructor(
         return receiptSender.read(chatId, upToSeq)
     }
 
+    /** Chat ichida faqat lokal bazadan qidiradi (yuklanmagan eski xabarlar topilmaydi). */
     override suspend fun search(chatId: String, query: String): List<Message> {
         val myUserId = sessionStorage.current()?.userId
         // Qidiruv natijasida ✓ belgilari kerak emas — kursorlar hisoblanmaydi.

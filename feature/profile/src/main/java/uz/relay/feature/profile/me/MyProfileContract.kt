@@ -7,12 +7,22 @@ import uz.relay.domain.model.ConnectionStatus
 import uz.relay.domain.model.ThemeMode
 import uz.relay.domain.model.User
 
+/**
+ * "Mening profilim" ekranining Orbit MVI shartnomasi: profil ma'lumoti, ulanish holati va ilova sozlamalari
+ * (bildirishnomalar, tungi rejim, til) hamda chiqish. Chatlar ro'yxatidagi profil tugmasidan ochiladi,
+ * bu yerdan profilni tahrirlashga o'tiladi.
+ *
+ * Sozlamalar state'da faqat aks ettiriladi — haqiqiy qiymat sozlamalar ombori (DataStore) da, shuning uchun
+ * switch bosilganda state'ni qo'lda o'zgartirmaymiz: use case yozadi, Flow yangi qiymatni qaytaradi.
+ */
 interface MyProfileContract {
 
+    /** Screen ko'radigan ViewModel interfeysi: state/sideEffect va yagona [onEventDispatcher]. */
     interface ViewModel : OrbitContainerHost<UiState, UiState, SideEffect> {
         fun onEventDispatcher(intent: Intent)
     }
 
+    /** Foydalanuvchi harakatlari: navigatsiya, sozlamalarni o'zgartirish va chiqish. */
     sealed interface Intent {
         object OnBack : Intent
         object OnEdit : Intent
@@ -24,10 +34,12 @@ interface MyProfileContract {
         object OnLogout : Intent
     }
 
+    /** Bir martalik xatolar — Screen ularni Snackbar'ga aylantiradi. */
     sealed interface SideEffect {
         data class ShowError(val error: AppError) : SideEffect
     }
 
+    /** Ekran holati; `me == null` — kesh hali bo'sh (masalan, birinchi ishga tushishda). */
     data class UiState(
         val me: User? = null,
         /** Ism tagidagi holat: ulangan bo'lsam "online", aks holda "Ulanmoqda…" / "Internet aloqasi yoʻq". */

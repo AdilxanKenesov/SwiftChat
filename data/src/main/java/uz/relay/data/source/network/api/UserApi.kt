@@ -10,11 +10,17 @@ import uz.relay.data.model.response.UserMeResponse
 import uz.relay.data.model.response.UserResponse
 import uz.relay.data.model.response.UserSearchResponse
 
+/**
+ * Foydalanuvchi profillari endpoint'lari: o'z profilim, boshqalarning ochiq profili va qidiruv.
+ * Kim ishlatadi: UserRepositoryImpl, AuthRepositoryImpl va [uz.relay.data.source.local.cache.UserCache].
+ */
 interface UserApi {
 
+    /** O'z profilim (telefon raqami bilan — boshqalarniki bilan kelmaydi). */
     @GET("v1/users/me")
     suspend fun getMe(): UserMeResponse
 
+    /** Profilni yangilash (ism, username, avatar). */
     @PATCH("v1/users/me")
     suspend fun updateMe(@Body request: UpdateMeRequest): UserMeResponse
 

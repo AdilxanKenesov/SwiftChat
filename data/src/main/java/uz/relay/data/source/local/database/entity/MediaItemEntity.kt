@@ -21,8 +21,12 @@ data class MediaItemEntity(
     val durationMs: Long? = null
 )
 
-/** Tiplar aniq yozilgan: KSP (Room) serialization plugin yaratadigan tiplarni hali ko'rmaydi. */
+/**
+ * Room TypeConverter: `List<MediaItemEntity>` ↔ JSON matn.
+ * Tiplar aniq yozilgan: KSP (Room) serialization plugin yaratadigan tiplarni hali ko'rmaydi.
+ */
 class MediaConverters {
+    // ignoreUnknownKeys: keyinroq qo'shilgan maydonlar eski versiyani yiqitmasin.
     private val json: Json = Json { ignoreUnknownKeys = true }
     private val serializer: KSerializer<List<MediaItemEntity>> = ListSerializer(MediaItemEntity.serializer())
 

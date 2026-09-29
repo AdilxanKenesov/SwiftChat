@@ -9,8 +9,11 @@ import uz.relay.domain.usecase.auth.ObserveAuthStateUseCase
 import javax.inject.Inject
 
 /**
- * Only picks the first screen. Later changes (session ended) are MainViewModel's job:
- * a session can end on any screen, long after the splash is gone.
+ * Faqat birinchi ekranni tanlaydi. Keyingi o'zgarishlar (sessiya tugashi) MainViewModel'ning ishi:
+ * sessiya istalgan ekranda, splash allaqachon yopilganidan ancha keyin tugashi mumkin.
+ *
+ * Mantiq Orbit container'ning `onCreate` blokida - u faqat birinchi obuna bo'lganda bir marta ishlaydi
+ * va konfiguratsiya o'zgarishida (ekran aylanishi) qayta ishga tushmaydi.
  */
 @HiltViewModel
 class SplashViewModel @Inject constructor(
@@ -20,7 +23,7 @@ class SplashViewModel @Inject constructor(
 
     override val container =
         orbitContainer<SplashContract.UiState, SplashContract.SideEffect>(SplashContract.UiState) {
-            // The splash stays until the stored session is read.
+            // Saqlangan sessiya o'qilmaguncha splash ko'rinib turadi.
             when (observeAuthState().first()) {
                 AuthState.LOGGED_OUT -> directions.navigateToPhone()
                 AuthState.NEEDS_PROFILE -> directions.navigateToProfileSetup()

@@ -42,8 +42,15 @@ import uz.relay.core.designsystem.theme.SwiftTheme
 import uz.relay.feature.auth.otp.OtpContract
 
 /**
- * [codeLength] boxes (up to 54×62) driven by one hidden [BasicTextField] (NumberPassword keyboard).
- * [shakeEvents] triggers the wrong-code shake, drawn with graphicsLayer.
+ * OTP kiritish maydoni: [codeLength] ta katak (eng ko'pi 54x62), ularni bitta yashirin [BasicTextField]
+ * boshqaradi (NumberPassword klaviatura).
+ *
+ * Nega har bir katak uchun alohida TextField emas: bitta maydon bo'lsa fokusni kataklar orasida
+ * ko'chirish, o'chirish (backspace) va SMS/klaviaturadan kodni to'liq joylash (paste/autofill) o'z-o'zidan
+ * to'g'ri ishlaydi. Kataklar faqat [code] satrini chizadi.
+ *
+ * [shakeEvents] noto'g'ri kod silkinishini ishga tushiradi; u graphicsLayer'da chiziladi -
+ * layout qayta hisoblanmaydi va offset modifier ishlatilmaydi.
  */
 @Composable
 fun OtpCodeInput(
@@ -61,11 +68,13 @@ fun OtpCodeInput(
     val shake = remember { Animatable(0f) }
     val density = LocalDensity.current
 
+    // Ekran ochilishi bilan fokus va klaviatura beriladi - foydalanuvchi darhol yozishi mumkin.
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
     LaunchedEffect(shakeEvents) {
         shakeEvents.collect {
             shake.animateTo(
                 targetValue = 0f,
+                // Chapga-o'ngga so'nib boruvchi tebranish, oxirida 0 ga qaytadi.
                 animationSpec = keyframes {
                     durationMillis = 400
                     -12f at 50
@@ -81,7 +90,7 @@ fun OtpCodeInput(
     BasicTextField(
         value = code,
         onValueChange = onCodeChange,
-        // readOnly (not disabled) keeps focus and the keyboard while the code is verified.
+        // readOnly (disabled emas) kod tekshirilayotganda fokus va klaviaturani saqlab qoladi.
         readOnly = !enabled,
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
@@ -92,10 +101,10 @@ fun OtpCodeInput(
             .graphicsLayer { translationX = with(density) { shake.value.dp.toPx() } },
         decorationBox = { innerTextField ->
             Box {
-                // The real text field stays invisible; the boxes render the digits.
+                // Haqiqiy matn maydoni ko'rinmaydi; raqamlarni kataklar chizadi.
                 Box(modifier = Modifier.alpha(0f)) { innerTextField() }
-                // Each box takes its share of the width, at most 54dp: 5 boxes keep the design size,
-                // 6 boxes shrink to fit a 360dp screen.
+                // Har bir katak kenglikning o'z ulushini oladi, ko'pi bilan 54dp: 5 ta katak dizayn o'lchamida qoladi,
+                // 6 ta katak 360dp ekranga sig'ishi uchun kichrayadi.
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
@@ -114,6 +123,7 @@ fun OtpCodeInput(
     )
 }
 
+/** Bitta raqam katagi; ko'rinishi holatga qarab tanlanadi (xato ustuvor, keyin faol, to'ldirilgan, bo'sh). */
 @Composable
 private fun CodeBox(digit: String, active: Boolean, status: OtpContract.Status, modifier: Modifier = Modifier) {
     val colors = SwiftTheme.colors
@@ -145,6 +155,7 @@ private fun CodeBox(digit: String, active: Boolean, status: OtpContract.Status, 
     }
 }
 
+/** Faol bo'sh katakdagi miltillovchi kursor (asl kursor yashirin maydonda qolgani uchun alohida chiziladi). */
 @Composable
 private fun BlinkingCaret(color: Color) {
     val transition = rememberInfiniteTransition(label = "caret")
@@ -162,6 +173,7 @@ private fun BlinkingCaret(color: Color) {
     )
 }
 
+/** Katak ko'rinishi parametrlari - `when` ichida o'qilishi oson bo'lishi uchun bitta obyektga yig'ilgan. */
 private data class BoxStyle(
     val borderWidth: Dp,
     val border: Color,

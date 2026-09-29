@@ -79,6 +79,16 @@ import uz.relay.feature.conversation.util.formatDateSeparator
 import uz.relay.feature.conversation.util.messageRes
 import uz.relay.feature.conversation.util.systemText
 
+/**
+ * Suhbat ekrani (Nav3 entry: ChatKey). Chatlar ro'yxatidan, push'dan, profil yoki qidiruvdan ochiladi; bu yerdan
+ * guruh ma'lumoti, foydalanuvchi profili va media ko'ruvchiga o'tiladi.
+ *
+ * Bu "stateful" qism: ViewModel'ni (AssistedInject factory orqali `chatId` bilan) oladi, state'ni kuzatadi va
+ * SideEffect'larni Snackbar yoki tashqi Intent'ga aylantiradi. Chizish esa [ChatScreenContent]da — u faqat
+ * state va callback oladi, shuning uchun Preview'da ViewModel'siz ishlaydi.
+ *
+ * @param focusMessageId qidiruvdan kelinganda shu xabarga bir marta scroll qilinadi.
+ */
 @Composable
 internal fun ChatScreen(chatId: String, focusMessageId: String? = null) {
     val viewModel = hiltViewModel<ChatViewModel, ChatViewModel.Factory>(
@@ -108,6 +118,15 @@ internal fun ChatScreen(chatId: String, focusMessageId: String? = null) {
     )
 }
 
+/**
+ * Chat UI'si: sarlavha, xabarlar ro'yxati, yozish paneli va ustki qatlamlar (biriktirish sheet'i, xabar menyusi,
+ * o'chirish dialogi).
+ *
+ * Ro'yxat `reverseLayout = true` LazyColumn: 0-element (eng yangi xabar) pastda turadi. Shunday qilinganda
+ * chat ochilganda qo'shimcha scroll kerak emas, yangi xabar qo'shilganda pozitsiya sakramaydi va eski sahifalar
+ * ro'yxat oxiriga (ekranda yuqoriga) qo'shiladi. Menyu/dialog kabi vaqtinchalik UI holati ViewModel'ga emas,
+ * shu yerda `remember` ichida saqlanadi — bu faqat ko'rinishga tegishli.
+ */
 @Composable
 private fun ChatScreenContent(
     uiState: ChatContract.UiState,
@@ -178,7 +197,7 @@ private fun ChatScreenContent(
                 names = uiState.userNames,
                 memberCount = uiState.memberCount,
                 onBack = { onEventDispatcher(ChatContract.Intent.OnBack) },
-                // Guruhda — guruh ma'lumoti. Shaxsiy chatda foydalanuvchi profili profil bosqichida qo'shiladi.
+                // Guruhda — guruh ma'lumoti, shaxsiy chatda — suhbatdoshning profili (tanlovni ViewModel qiladi).
                 onTitleClick = { onEventDispatcher(ChatContract.Intent.OnOpenInfo) },
                 onMoreClick = { onEventDispatcher(ChatContract.Intent.OnOpenInfo) },
                 modifier = Modifier
@@ -329,6 +348,7 @@ private fun ChatScreenContent(
 private const val LOAD_OLDER_THRESHOLD = 8
 
 // ---------------- Preview'lar ----------------
+// Shaxsiy chat: turli holatdagi xabarlar (yuborilmoqda, xato, o'chirilgan, tahrirlangan, javob), javob va tahrir rejimlari.
 
 private const val ME = "me"
 private const val PEER = "jasur"

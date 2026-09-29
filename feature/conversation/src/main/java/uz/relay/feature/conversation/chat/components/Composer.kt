@@ -43,6 +43,10 @@ import uz.relay.feature.conversation.chat.ChatContract
  * Yozish paneli (spec 3.8): ixtiyoriy yuqori panel (javob yoki tahrir) · biriktirish · "Xabar" maydoni (pill, 44)
  * · yuborish tugmasi (44 doira).
  * Tugma holatlari: bo'sh → surface2/text2 va o'chiq; matn bor → primary + "yuborish"; tahrirda → "✓ saqlash".
+ *
+ * Stateless: matn va rejim ChatViewModel'da saqlanadi (ChatContract.UiState), bu yerga faqat qiymat va callback'lar
+ * keladi. BasicTextField ishlatilgan — Material TextField'ning ichki padding va indikatorlari dizayndagi "pill"
+ * shakliga mos kelmaydi, decorationBox bilan esa placeholder'ni o'zimiz chizamiz.
  */
 @Composable
 fun Composer(

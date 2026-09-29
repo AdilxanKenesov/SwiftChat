@@ -20,8 +20,17 @@ import uz.relay.domain.usecase.settings.ObserveThemeModeUseCase
 import javax.inject.Inject
 
 /**
- * Activity-level work. A session can end on any screen (TOKEN_REUSED, a failed refresh, later WS 4003):
- * then the app returns to login wherever it is. The first value is skipped — Splash picks the start screen.
+ * Activity darajasidagi ishlar: butun ilova temasi va sessiya tugashini kuzatish.
+ *
+ * Sessiya istalgan ekranda tugashi mumkin (TOKEN_REUSED, refresh muvaffaqiyatsiz, WS 4003 yopilishi yoki
+ * profildan logout): shunda ilova qaysi ekranda bo'lmasin, stek tozalanib telefon kiritish ekraniga
+ * ([PhoneKey]) qaytadi — [AppNavigationParam.ResetTo], chunki orqaga bosib yopiq sessiya ekranlariga qaytib
+ * bo'lmasligi kerak. Bu mantiq har bir feature'da takrorlanmasligi uchun bitta joyda — shu yerda.
+ *
+ * Birinchi qiymat o'tkazib yuboriladi (`drop(1)`): boshlang'ich ekranni Splash o'zi tanlaydi, aks holda
+ * ilova ochilishida ikki marta navigatsiya bo'lardi.
+ *
+ * [navigationHandler] shu yerda ochiq, chunki MainActivity uni [uz.relay.app.navigation.AppNavHost] ga uzatadi.
  */
 @HiltViewModel
 class MainViewModel @Inject constructor(

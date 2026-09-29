@@ -70,8 +70,18 @@ import uz.relay.domain.model.MemberRole
 import uz.relay.feature.group.R
 import uz.relay.feature.group.util.messageRes
 
+/**
+ * Guruh ma'lumotlari ekranining kirish nuqtasi (stateful qism).
+ *
+ * Chat ekranidagi guruh sarlavhasi bosilganda ochiladi. Bu yerdan: chat ichida qidiruv, a'zo qo'shish
+ * (guruh yaratish ekrani qayta ishlatiladi), a'zo bilan shaxsiy chat va guruhdan chiqish (chatlar ro'yxatiga).
+ *
+ * Funksiya ViewModel'ni oladi, holatni yig'adi va SideEffect'larni (snackbar) ushlaydi; chizish stateless
+ * [GroupInfoContent] da — Preview va testlarda ViewModel'siz ishlatish uchun.
+ */
 @Composable
 internal fun GroupInfoScreen(chatId: String) {
+    // AssistedInject: runtime argument `chatId` factory orqali ViewModel'ga uzatiladi.
     val viewModel = hiltViewModel<GroupInfoViewModel, GroupInfoViewModel.Factory>(
         creationCallback = { factory -> factory.create(chatId) }
     )
@@ -98,6 +108,10 @@ internal fun GroupInfoScreen(chatId: String) {
     }
 }
 
+/**
+ * Ekranning stateless qismi: yuqori panel · sarlavha · amal kartalari · a'zolar ro'yxati · "Guruhdan chiqish".
+ * Butun kontent bitta [LazyColumn] da — a'zolar ko'p bo'lsa ham faqat ko'rinadiganlari chiziladi.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun GroupInfoContent(
@@ -226,6 +240,7 @@ private fun GroupInfoContent(
         }
     }
 
+    // Sheet va dialoglar Column'dan tashqarida — ular o'z oynasida (overlay) ko'rsatiladi.
     selectedMember?.let { member ->
         MemberSheet(
             member = member,
@@ -396,6 +411,9 @@ private fun RolePill(role: MemberRole) {
 /**
  * A'zo amallari (spec 3.11): sarlavha (avatar + ism + rol) · "Admin qilish"/"Aʼzo qilish" (faqat OWNER)
  * · "Xabar yozish" · "Guruhdan chiqarish" (OWNER har kimni, ADMIN faqat oddiy a'zoni). Ruxsat yo'q amal ko'rinmaydi.
+ *
+ * Nega ModalBottomSheet: amallar ro'yxati kontekstli (bitta a'zoga tegishli), ekrandan chiqmasdan pastdan ochiladi
+ * va tashqariga bosish/pastga surish bilan yopiladi — alohida ekran yoki menyu kerak emas.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -461,12 +479,14 @@ private fun MemberSheet(
     }
 }
 
+/** Rol → matn resursi (sheet sarlavhasidagi rol nomi uchun). */
 private fun roleLabel(role: MemberRole): Int = when (role) {
     MemberRole.OWNER -> R.string.owner
     MemberRole.ADMIN -> R.string.admin
     else -> R.string.member
 }
 
+/** Sheet ichidagi bitta amal qatori (56dp): ikonka + yorliq, rang amal turiga qarab (xavfli — qizil). */
 @Composable
 private fun SheetItem(icon: Int, label: String, color: Color, onClick: () -> Unit, bold: Boolean = false) {
     Row(
@@ -483,6 +503,7 @@ private fun SheetItem(icon: Int, label: String, color: Color, onClick: () -> Uni
     }
 }
 
+/** Xavfli amallar (a'zoni chiqarish, guruhdan chiqish) uchun tasdiqlash dialogi — tasodifiy bosishdan himoya. */
 @Composable
 private fun ConfirmDialog(title: String, text: String?, confirm: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
     val colors = SwiftTheme.colors
@@ -504,6 +525,7 @@ private fun ConfirmDialog(title: String, text: String?, confirm: String, onConfi
 @Composable
 private fun RenameDialog(initial: String, onSave: (String) -> Unit, onDismiss: () -> Unit) {
     val colors = SwiftTheme.colors
+    // Kiritilayotgan nom vaqtinchalik UI holati — faqat "Saqlash" bosilganda ViewModel'ga yuboriladi.
     var title by remember { mutableStateOf(initial) }
     val valid = title.trim().length in 1..128 && title.trim() != initial
     AlertDialog(
@@ -529,6 +551,7 @@ private fun RenameDialog(initial: String, onSave: (String) -> Unit, onDismiss: (
 }
 
 // ---------------- Preview'lar ----------------
+// Stateless GroupInfoContent: OWNER (boshqaruv tugmalari bilan) va oddiy MEMBER ko'rinishi, yorug'/qorong'i temada.
 
 private val PreviewGroup = ChatSummary(
     id = "g1",

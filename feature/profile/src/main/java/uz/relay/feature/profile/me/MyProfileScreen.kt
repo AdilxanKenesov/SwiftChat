@@ -68,6 +68,10 @@ import uz.relay.feature.profile.components.TileColors
 import uz.relay.feature.profile.util.formatPhone
 import uz.relay.feature.profile.util.messageRes
 
+/**
+ * "Mening profilim" ekrani (Nav3 entry: MyProfileKey). Stateful qism: ViewModel'ni `hiltViewModel()` bilan
+ * oladi, SideEffect'larni Snackbar'ga aylantiradi; chizish [MyProfileContent]da (Preview ViewModel'siz ishlaydi).
+ */
 @Composable
 internal fun MyProfileScreen(viewModel: MyProfileViewModel = hiltViewModel()) {
     val uiState by viewModel.collectAsState()
@@ -93,6 +97,10 @@ internal fun MyProfileScreen(viewModel: MyProfileViewModel = hiltViewModel()) {
     }
 }
 
+/**
+ * Profil UI'si: sarlavha, ism + ulanish holati, telefon/username kartasi, sozlamalar kartasi va pastda "Chiqish".
+ * Til tanlash sheet'i va chiqish dialogi — vaqtinchalik ko'rinish holati, shuning uchun ViewModel'da emas.
+ */
 @Composable
 private fun MyProfileContent(
     uiState: MyProfileContract.UiState,
@@ -297,6 +305,7 @@ private fun LogoutButton(loading: Boolean, onClick: () -> Unit) {
 }
 
 // ---------------- Preview'lar ----------------
+// Yorug' va qorong'i temada to'ldirilgan profil.
 
 private val PreviewMe = User("me", "dawran_n", "Dawran", null, 0, "+998901234567", online = true)
 

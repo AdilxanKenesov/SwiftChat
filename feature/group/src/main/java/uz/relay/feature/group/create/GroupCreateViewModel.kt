@@ -21,7 +21,16 @@ import uz.relay.domain.usecase.user.ObserveKnownUsersUseCase
 import uz.relay.domain.usecase.user.SearchUsersUseCase
 import kotlin.time.Duration.Companion.milliseconds
 
-/** `addToChatId` Nav3 kalitidan keladi: `null` — yangi guruh, aks holda mavjud guruhga a'zo qo'shish. */
+/**
+ * "Yangi guruh" / "A'zo qo'shish" ekranining ViewModel'i (Orbit MVI).
+ *
+ * `addToChatId` Nav3 kalitidan keladi: `null` — yangi guruh, aks holda mavjud guruhga a'zo qo'shish.
+ * U runtime argument bo'lgani uchun Hilt uni o'zi bilolmaydi — shu sababli `@AssistedInject` + [Factory]
+ * ishlatiladi: qolgan bog'liqliklarni Hilt beradi, `addToChatId` ni esa ekran `creationCallback` orqali uzatadi.
+ *
+ * Nega Orbit: bitta o'zgarmas [GroupCreateContract.UiState], Intent'lar va SideEffect'lar — holat bir joyda,
+ * ViewModel konfiguratsiya o'zgarishida (ekran aylanishi) saqlanib qoladi va unit-test qilish oson.
+ */
 @HiltViewModel(assistedFactory = GroupCreateViewModel.Factory::class)
 class GroupCreateViewModel @AssistedInject constructor(
     @Assisted private val addToChatId: String?,
@@ -33,11 +42,13 @@ class GroupCreateViewModel @AssistedInject constructor(
     private val directions: GroupCreateContract.Directions
 ) : ViewModel(), GroupCreateContract.ViewModel {
 
+    /** Hilt generatsiya qiladigan factory: ekran `hiltViewModel(creationCallback = ...)` ichida chaqiradi. */
     @AssistedFactory
     interface Factory {
         fun create(addToChatId: String?): GroupCreateViewModel
     }
 
+    // Container yaratilganda (birinchi obunada) nomzodlar ro'yxatini kuzatish boshlanadi.
     override val container =
         orbitContainer<GroupCreateContract.UiState, GroupCreateContract.SideEffect>(
             GroupCreateContract.UiState(addToChatId = addToChatId)
@@ -50,12 +61,15 @@ class GroupCreateViewModel @AssistedInject constructor(
     private val queryFlow = MutableStateFlow("")
     private var searchJob: Job? = null
 
+    /** UI'dan keladigan barcha Intent'lar uchun yagona kirish nuqtasi. */
     override fun onEventDispatcher(intent: GroupCreateContract.Intent) {
         when (intent) {
             GroupCreateContract.Intent.OnBack -> onBack()
             is GroupCreateContract.Intent.OnQueryChange -> onQueryChange(intent.query)
             is GroupCreateContract.Intent.OnToggle -> toggle(intent.user)
             GroupCreateContract.Intent.OnNext -> next()
+            // Matn kiritish `blockingIntent` bilan: holat darhol, sinxron yangilanadi — aks holda tez yozganda
+            // TextField kursori sakrashi yoki harf yo'qolishi mumkin.
             is GroupCreateContract.Intent.OnTitleChange -> blockingIntent {
                 reduce { state.copy(title = intent.title.take(TITLE_MAX)) }
             }
@@ -69,6 +83,7 @@ class GroupCreateViewModel @AssistedInject constructor(
      */
     private fun observeCandidates() = intent {
         val existingIds = addToChatId?.let { chatId -> observeMembers(chatId).first().mapTo(HashSet()) { it.userId } }.orEmpty()
+        // `repeatOnSubscription`: ekran ko'rinib turgandagina kuzatadi, fonda keraksiz ishlamaydi.
         repeatOnSubscription {
             combine(observeKnownUsers(), searchResults, queryFlow) { known, found, query ->
                 val q = query.trim().removePrefix("@")
@@ -80,7 +95,10 @@ class GroupCreateViewModel @AssistedInject constructor(
         }
     }
 
-    /** Qidiruv 300 ms debounce bilan (spec 3.6) — har harfda serverga so'rov yuborilmaydi. */
+    /**
+     * Qidiruv 300 ms debounce bilan (spec 3.6) — har harfda serverga so'rov yuborilmaydi.
+     * Oldingi qidiruv `Job` bekor qilinadi, shuning uchun eskirgan javob yangi natijani ustidan yozib yubormaydi.
+     */
     private fun onQueryChange(query: String) {
         blockingIntent { reduce { state.copy(query = query) } }
         queryFlow.value = query
@@ -100,6 +118,7 @@ class GroupCreateViewModel @AssistedInject constructor(
         }
     }
 
+    /** Odamni tanlash / tanlovdan chiqarish (ro'yxat qatori yoki chip bosilganda). */
     private fun toggle(user: User) = intent {
         reduce {
             val selected = if (user.id in state.selectedIds) state.selected.filterNot { it.id == user.id } else state.selected + user
@@ -116,6 +135,7 @@ class GroupCreateViewModel @AssistedInject constructor(
         }
     }
 
+    /** 1-qadamdagi FAB: yangi guruhda — nom qadamiga o'tadi, a'zo qo'shish rejimida — serverga yuborib, orqaga qaytadi. */
     private fun next() = intent {
         if (!state.canProceed) return@intent
         val chatId = state.addToChatId
@@ -136,6 +156,7 @@ class GroupCreateViewModel @AssistedInject constructor(
         }
     }
 
+    /** Guruhni yaratadi va muvaffaqiyatda yangi guruh chatini ochadi; xatoda snackbar ko'rsatiladi. */
     private fun create() = intent {
         if (!state.canCreate) return@intent
         reduce { state.copy(isSubmitting = true) }

@@ -20,6 +20,14 @@ import uz.relay.domain.usecase.user.ObserveMeUseCase
 import uz.relay.domain.usecase.user.RefreshMeUseCase
 import javax.inject.Inject
 
+/**
+ * "Mening profilim" ViewModel'i. Profil (Room keshi), ulanish holati va sozlamalarni bitta state'ga yig'adi.
+ *
+ * Til va tema kabi o'zgarishlar to'g'ridan-to'g'ri DataStore'ga emas, use case'lar orqali yoziladi: feature
+ * modul saqlash tafsilotini bilmaydi, til almashganda locale qo'llash kabi qo'shimcha ishlar esa bitta joyda
+ * (domain/data'da) bajariladi. Sozlamalar alohida ombor (DataStore) da, profil ma'lumotlari bilan aralashmaydi:
+ * ular qurilmaga tegishli va logout'da tozalanmasligi, serverga ham ketmasligi kerak.
+ */
 @HiltViewModel
 class MyProfileViewModel @Inject constructor(
     private val observeMe: ObserveMeUseCase,
@@ -41,6 +49,7 @@ class MyProfileViewModel @Inject constructor(
             refresh()
         }
 
+    /** Screen'dan keladigan barcha Intent'lar uchun yagona kirish nuqtasi. */
     override fun onEventDispatcher(intent: MyProfileContract.Intent) {
         when (intent) {
             MyProfileContract.Intent.OnBack -> intent { directions.back() }
@@ -87,6 +96,10 @@ class MyProfileViewModel @Inject constructor(
      */
     private fun refresh() = intent { refreshMe() }
 
+    /**
+     * Chiqish: ikki marta bosilishdan himoya. Keyingi o'tish yo'q — sessiya o'chgach MainViewModel login
+     * ekraniga o'zi olib boradi (Directions'da shuning uchun "logout" yo'nalishi yo'q).
+     */
     private fun logoutNow() = intent {
         if (state.loggingOut) return@intent
         reduce { state.copy(loggingOut = true) }

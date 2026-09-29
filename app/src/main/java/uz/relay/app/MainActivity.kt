@@ -24,11 +24,22 @@ import uz.relay.app.navigation.AppNavHost
 import uz.relay.core.designsystem.theme.SwiftChatTheme
 import uz.relay.domain.model.ThemeMode
 
+/**
+ * Ilovaning yagona Activity'si (single-activity): hamma ekranlar Compose'da, Navigation 3 orqali
+ * [AppNavHost] ichida almashadi.
+ *
+ * Vazifalari: splash screen, edge-to-edge, tema (ilova sozlamasidan, tizimdan emas) va til.
+ * Til per-app locale: Android 13+ da tizimning o'z mexanizmi, 8–12 da esa [AppLocaleManager.wrap] bilan
+ * Context almashtiriladi va til o'zgarsa Activity qayta yaratiladi (pastdagi `observeLanguage`).
+ *
+ * `@AndroidEntryPoint` — Hilt bu Activity'ga va uning ViewModel'lariga inject qila olishi uchun.
+ */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     private val viewModel: MainViewModel by viewModels()
 
+    /** Tanlangan tilni kuzatish va Android 8–12 da qo'llash uchun. */
     @Inject
     lateinit var localeManager: AppLocaleManager
 
@@ -38,6 +49,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Tema DataStore'dan o'qilmaguncha splash ushlab turiladi — noto'g'ri tema bir lahza miltillamasligi uchun.
         installSplashScreen().setKeepOnScreenCondition { viewModel.themeMode.value == null }
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -54,6 +66,7 @@ class MainActivity : ComponentActivity() {
                     statusBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { darkTheme },
                     navigationBarStyle = SystemBarStyle.auto(LightScrim, DarkScrim) { darkTheme }
                 )
+                // Tozalash kerak emas: keyingi tema kelganda enableEdgeToEdge qayta chaqiriladi.
                 onDispose {}
             }
 

@@ -15,9 +15,11 @@ import uz.relay.data.model.response.StartUploadResponse
 /**
  * Rezyumlanadigan (to'xtagan joyidan davom etadigan) yuklash. Yuklab olish bu yerda emas: u Retrofit'siz,
  * to'g'ridan-to'g'ri OkHttp oqimi bilan (MediaRepositoryImpl) — javob tanasi xotiraga to'liq o'qilmasin.
+ * Kim ishlatadi: MediaUploader.
  */
 interface MediaApi {
 
+    /** Yuklash sessiyasini ochadi: server `uploadId`, `mediaId` va bo'lak (chunk) hajmini beradi. */
     @POST("v1/media/uploads")
     suspend fun startUpload(@Body request: StartUploadRequest): StartUploadResponse
 

@@ -15,6 +15,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import uz.relay.core.designsystem.theme.SwiftTheme
 
+/*
+ * Ro'yxat markazidagi "chip"lar: sana ajratgichi va SYSTEM xabarlar. Ikkalasi bir xil ko'rinishda, faqat
+ * qalinligi va vertikal oralig'i farq qiladi — shuning uchun umumiy [CenterChip] ustiga qurilgan.
+ */
+
 /** Sana ajratgichi: markazda chip ("Bugun", "Kecha", "24-sentabr"), 13/600. */
 @Composable
 fun DateChip(text: String, modifier: Modifier = Modifier) {
@@ -27,6 +32,7 @@ fun SystemChip(text: String, modifier: Modifier = Modifier) {
     CenterChip(text = text, bold = false, modifier = modifier.padding(vertical = 3.dp))
 }
 
+/** Markazlangan, yumaloq fonli bir qatorli yorliq — DateChip va SystemChip uchun umumiy asos. */
 @Composable
 private fun CenterChip(text: String, bold: Boolean, modifier: Modifier) {
     val colors = SwiftTheme.colors

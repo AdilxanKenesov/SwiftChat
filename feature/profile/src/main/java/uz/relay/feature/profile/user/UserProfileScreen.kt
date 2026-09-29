@@ -40,6 +40,10 @@ import uz.relay.feature.profile.components.ProfileTopBar
 import uz.relay.feature.profile.components.TileColors
 import uz.relay.feature.profile.util.messageRes
 
+/**
+ * Foydalanuvchi profili ekrani (Nav3 entry: UserProfileKey). ViewModel AssistedInject factory bilan `userId`ni
+ * kalitdan oladi; SideEffect'lar Snackbar'ga aylanadi, chizish [UserProfileContent]da.
+ */
 @Composable
 internal fun UserProfileScreen(userId: String) {
     val viewModel = hiltViewModel<UserProfileViewModel, UserProfileViewModel.Factory>(
@@ -127,6 +131,7 @@ private fun UserProfileContent(
 }
 
 // ---------------- Preview'lar ----------------
+// Yorug' va qorong'i temada, "oxirgi marta 5 daqiqa oldin" holatidagi foydalanuvchi.
 
 private val PreviewUser = User(
     id = "u1",

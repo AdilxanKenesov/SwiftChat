@@ -49,6 +49,12 @@ import uz.relay.feature.conversation.util.formatSize
 import uz.relay.feature.conversation.util.formatSizeProgress
 import java.io.File
 
+/*
+ * Media xabarlar ko'rinishi: rasm/video bubble'i, fayl kartasi, yuklash/yuklab olish progressi.
+ * MessageBubble media turini ko'rib shu yerdagi funksiyalarga yo'naltiradi. Upload holati (`message.upload`)
+ * lokal bazadan keladi — yuklash WorkManager/fon jarayonida bo'lsa ham bubble progressni jonli ko'rsatadi.
+ */
+
 /** Spec: rasm/video bubble eni ≈232, balandligi 120..300 (nisbat saqlanadi). */
 private val VisualBubbleWidth = 232.dp
 private val VisualInnerWidth = VisualBubbleWidth - 6.dp
@@ -59,7 +65,10 @@ private val VideoPlaceholder = Color(0xFF2B2838)
 private val PillBackground = Color.Black.copy(alpha = 0.5f)
 private val UploadScrim = Color(0xFF0A0814).copy(alpha = 0.38f)
 
-/** Rasm yoki video xabar: media ustida, izoh (bo'lsa) pastda. Izoh bo'lmasa vaqt media ustidagi pill'da. */
+/**
+ * Rasm yoki video xabar: media ustida, izoh (bo'lsa) pastda. Izoh bo'lmasa vaqt media ustidagi pill'da.
+ * Balandlik media nisbatidan oldindan hisoblanadi ([visualHeight]) — rasm yuklanganda ro'yxat "sakramasin".
+ */
 @Composable
 internal fun VisualMessageBubble(
     message: Message,
@@ -156,6 +165,10 @@ internal fun VisualMessageBubble(
 /**
  * Rasm: o'zimniki bo'lsa lokal nusxa (darhol, tarmoqsiz), aks holda server URL (Coil token bilan yuklaydi).
  * Video: faqat o'zim yuborganda poster bor — server thumbnail bermaydi, qabul qiluvchida to'q fon.
+ *
+ * Coil `AsyncImage` ilova darajasidagi yagona ImageLoader'dan foydalanadi (app modulida sozlangan, Authorization
+ * header qo'shadi va disk keshiga ega) — shuning uchun bu yerda token yoki kesh haqida o'ylash shart emas.
+ * Media ko'ruvchi ham shu funksiyani qo'shni (joriy bo'lmagan) video sahifalarida ishlatadi.
  */
 @Composable
 internal fun MediaPreview(media: MessageMedia, modifier: Modifier = Modifier, contentScale: ContentScale = ContentScale.Crop) {
@@ -312,6 +325,7 @@ private fun MediaMetaPill(message: Message, modifier: Modifier = Modifier) {
     }
 }
 
+/** Media ustidagi kichik yarim shaffof yorliq (davomiylik, yuklash hajmi). */
 @Composable
 private fun Pill(text: String, modifier: Modifier = Modifier, bold: Boolean = false) {
     Text(

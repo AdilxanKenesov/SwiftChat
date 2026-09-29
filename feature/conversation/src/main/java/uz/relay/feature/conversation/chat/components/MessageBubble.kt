@@ -53,6 +53,10 @@ internal data class BubbleColors(
     val replySnippet: Color
 )
 
+/**
+ * Yo'nalishga qarab bubble ranglarini SwiftTheme'dan yig'adi. Ranglar bitta joyda tanlanadi, shunda matnli,
+ * media va fayl bubble'lari (hamda iqtibos) bir xil palitradan foydalanadi.
+ */
 @Composable
 internal fun bubbleColors(isOut: Boolean): BubbleColors {
     val colors = SwiftTheme.colors
@@ -86,6 +90,9 @@ fun senderNameColor(userId: String): Color = SenderNameColors[Math.floorMod(user
 
 /**
  * Xabar bubble'i (maksimal eni 264dp): [ism] · [javob iqtibosi] · matn/media + ichki meta (vaqt, ✓).
+ *
+ * MessageRow ichida chaqiriladi. Media xabarlar (rasm/video/fayl) MessageMedia.kt'dagi alohida bubble'larga
+ * yo'naltiriladi — shu sababli bu funksiya "dispatcher" vazifasini ham bajaradi va ekran bitta kirish nuqtasini biladi.
  *
  * @param senderName guruhda ketma-ketlikning birinchi xabarida ko'rsatiladi, aks holda `null`.
  * @param replied javob berilgan xabar (bazada bo'lsa); [repliedSenderName] — uning egasi.

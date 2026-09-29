@@ -25,14 +25,18 @@ import javax.inject.Singleton
  *
  * Tanlanmagan bo'lsa Android resurslarni telefon tiliga qarab o'zi tanlaydi (values-ru, values-en, aks holda
  * standart `values` — o'zbekcha). [language] ham shu qoidaga mos keladi.
+ *
+ * Ishlatuvchilar: SettingsRepositoryImpl (til tanlash ekrani) va MainActivity ([wrap], [refresh]).
  */
 @Singleton
 class AppLocaleManager @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     private val _language = MutableStateFlow(readCurrent())
+    /** Hozir amalda bo'lgan til — UI'da tanlangan variantni belgilash uchun. */
     val language: StateFlow<AppLanguage> = _language.asStateFlow()
 
+    /** Ilova tilini o'zgartiradi: 13+ da tizim orqali, eski versiyalarda SharedPreferences'ga yozib. */
     fun set(language: AppLanguage) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             context.getSystemService(LocaleManager::class.java).applicationLocales = LocaleList.forLanguageTags(language.tag)
@@ -48,8 +52,10 @@ class AppLocaleManager @Inject constructor(
         _language.value = readCurrent()
     }
 
+    /** Tanlangan til, u bo'lmasa telefon tili asosida joriy [AppLanguage]. */
     private fun readCurrent(): AppLanguage = AppLanguage.fromTag(explicitTag() ?: systemTag())
 
+    /** Foydalanuvchi ilova ichida aniq tanlagan til; tanlamagan bo'lsa — `null`. */
     private fun explicitTag(): String? =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             context.getSystemService(LocaleManager::class.java).applicationLocales.get(0)?.language
@@ -74,6 +80,7 @@ class AppLocaleManager @Inject constructor(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) return base
             val tag = prefs(base).getString(KEY_LANGUAGE, null) ?: return base
             val locale = Locale.forLanguageTag(tag)
+            // Default locale ham o'zgaradi — sana/son formatlash (String.format, DateFormat) shu tilda bo'lsin.
             Locale.setDefault(locale)
             val config = Configuration(base.resources.configuration).apply { setLocales(LocaleList(locale)) }
             return base.createConfigurationContext(config)

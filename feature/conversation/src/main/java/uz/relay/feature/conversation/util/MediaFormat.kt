@@ -5,6 +5,11 @@ import android.webkit.MimeTypeMap
 import uz.relay.feature.conversation.R
 import java.util.Locale
 
+/*
+ * Media bubble'lar va ko'ruvchi uchun o'lcham, progress va davomiylik formatlari. Raqamlar Locale.US bilan
+ * formatlanadi (nuqta ajratgich barqaror bo'lsin), birlik ("KB"/"MB") esa tarjima resurslaridan.
+ */
+
 /** "2.4 MB" / "820 KB" (spec: "1.4 / 3.2 MB"). 1 MB = 1024 KB — Android fayl menejerlari kabi. */
 fun formatSize(bytes: Long, resources: Resources): String {
     val kb = bytes / 1024.0

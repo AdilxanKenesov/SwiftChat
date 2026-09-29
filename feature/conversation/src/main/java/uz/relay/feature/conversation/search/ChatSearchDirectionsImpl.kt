@@ -6,6 +6,7 @@ import uz.relay.core.navigation.key.ChatKey
 import uz.relay.core.navigation.key.ChatsKey
 import javax.inject.Inject
 
+/** [ChatSearchContract.Directions] implementatsiyasi: Nav3 kalitlarini AppNavigator event bus'iga yuboradi. */
 internal class ChatSearchDirectionsImpl @Inject constructor(
     private val navigator: AppNavigator
 ) : ChatSearchContract.Directions {

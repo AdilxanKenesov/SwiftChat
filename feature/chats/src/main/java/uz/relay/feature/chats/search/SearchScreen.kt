@@ -64,6 +64,10 @@ import uz.relay.domain.model.User
 import uz.relay.feature.chats.R
 import uz.relay.feature.chats.util.messageRes
 
+/**
+ * Qidiruv ekrani (stateful qobiq): holatni yig'adi, xatolarni snackbar'da ko'rsatadi va chizishni
+ * holatsiz [SearchScreenContent]ga beradi. Snackbar klaviatura ustida turishi uchun `imePadding`.
+ */
 @Composable
 internal fun SearchScreen(viewModel: SearchViewModel = hiltViewModel()) {
     val uiState by viewModel.collectAsState()
@@ -89,6 +93,10 @@ internal fun SearchScreen(viewModel: SearchViewModel = hiltViewModel()) {
     }
 }
 
+/**
+ * Holatsiz UI: qidiruv paneli, progress chizig'i, "Yangi guruh" qatori va natijalar. Preview'da ViewModel'siz
+ * ishlatiladi. "Yangi guruh" doim ro'yxat boshida turadi — qidiruv bo'sh bo'lsa ham.
+ */
 @Composable
 private fun SearchScreenContent(
     uiState: SearchContract.UiState,
@@ -162,6 +170,7 @@ private fun SearchScreenContent(
 private fun SearchBar(query: String, onQueryChange: (String) -> Unit, onClear: () -> Unit, onBack: () -> Unit) {
     val colors = SwiftTheme.colors
     val focusRequester = remember { FocusRequester() }
+    // Ekran ochilishi bilan klaviatura chiqsin — foydalanuvchi darhol yoza boshlasin.
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
 
     Column {
@@ -185,6 +194,7 @@ private fun SearchBar(query: String, onQueryChange: (String) -> Unit, onClear: (
                 singleLine = true,
                 textStyle = TextStyle(color = colors.text, fontSize = 18.sp, fontFamily = FigtreeFontFamily),
                 cursorBrush = SolidColor(colors.primary),
+                // Ascii — username lotin harflarida; autoCorrect o'chiq, aks holda klaviatura so'rovni "tuzatib" yuboradi.
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii, autoCorrectEnabled = false, imeAction = ImeAction.Search),
                 modifier = Modifier
                     .weight(1f)
@@ -212,6 +222,7 @@ private fun SearchBar(query: String, onQueryChange: (String) -> Unit, onClear: (
     }
 }
 
+/** "Yangi guruh" qatori — guruh yaratish ekraniga olib boradi. */
 @Composable
 private fun NewGroupRow(onClick: () -> Unit) {
     val colors = SwiftTheme.colors
@@ -329,6 +340,7 @@ private val PreviewUsers = listOf(
     User("4", "aliya_s", "Aliya Sodiqova", null, 0, null)
 )
 
+/** Preview'lar: natijalar va "Hech kim topilmadi" holatlari, yorug' va qorong'i temada. */
 @Composable
 private fun SearchPreview(darkTheme: Boolean, state: SearchContract.UiState) {
     SwiftChatTheme(darkTheme = darkTheme) { SearchScreenContent(uiState = state, onEventDispatcher = {}) }

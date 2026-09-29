@@ -7,6 +7,10 @@ import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 import uz.relay.data.source.local.database.entity.UploadEntity
 
+/**
+ * `uploads` jadvali uchun DAO — resumable (bo'lakli) media yuklash holati.
+ * MediaUploader sessiya/progress'ni yozadi, suhbat ekrani progress va lokal nusxani kuzatadi.
+ */
 @Dao
 interface UploadDao {
 
@@ -17,6 +21,7 @@ interface UploadDao {
     @Query("SELECT * FROM uploads WHERE chatId = :chatId")
     fun observeByChat(chatId: String): Flow<List<UploadEntity>>
 
+    /** REPLACE: bir xabar uchun qayta tayyorlangan fayl eski yozuvni to'liq almashtiradi. */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(upload: UploadEntity)
 
@@ -30,6 +35,7 @@ interface UploadDao {
     )
     suspend fun startSession(clientMessageId: String, uploadId: String, mediaId: String, chunkSize: Int)
 
+    /** Har bir bo'lak tasdiqlangandan keyin — UI'dagi progress uchun. */
     @Query("UPDATE uploads SET confirmedBytes = :confirmedBytes WHERE clientMessageId = :clientMessageId")
     suspend fun updateProgress(clientMessageId: String, confirmedBytes: Long)
 

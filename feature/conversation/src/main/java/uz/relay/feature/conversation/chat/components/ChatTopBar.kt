@@ -37,7 +37,10 @@ import uz.relay.core.designsystem.util.formatPresence
  * 64dp sarlavha: orqaga · avatar 40 · ism (17/700) + holat (13) · "ko'proq".
  *
  * Holat ustuvorligi (spec 3.8): yozmoqda (primary) > online (primary) > "oxirgi marta …" (text2).
- * Guruhda: yozmoqda > "12 aʼzo". Sarlavha bosilsa guruh ma'lumoti ochiladi.
+ * Guruhda: yozmoqda > "12 aʼzo". Sarlavha bosilsa guruh ma'lumoti (shaxsiy chatda — suhbatdosh profili) ochiladi.
+ *
+ * "Oxirgi marta ..." matni core:designsystem'dagi umumiy `formatPresence` bilan tuziladi — chatlar ro'yxati va
+ * profil ekrani bilan bir xil ko'rinsin. `chat == null` (baza hali bo'sh) holatida joy saqlanadi, sarlavha sakramaydi.
  */
 @Composable
 fun ChatTopBar(

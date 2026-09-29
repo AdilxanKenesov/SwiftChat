@@ -52,6 +52,13 @@ import uz.relay.feature.auth.R
 import uz.relay.feature.auth.profile.components.AvatarPicker
 import uz.relay.feature.auth.util.messageRes
 
+/**
+ * Profil sozlash ekrani (stateful qism).
+ *
+ * OTP'dan keyin yangi foydalanuvchi yoki profili to'ldirilmagan sessiya bilan Splash shu ekranni ochadi;
+ * "Davom etish" muvaffaqiyatli bo'lsa Chats ekraniga o'tiladi. ViewModel'ga ulanadi, SideEffect'larni
+ * snackbar orqali ko'rsatadi va chizishni stateless [ProfileSetupScreenContent] ga topshiradi.
+ */
 @Composable
 internal fun ProfileSetupScreen(viewModel: ProfileSetupViewModel = hiltViewModel()) {
     val uiState by viewModel.collectAsState()
@@ -81,6 +88,10 @@ internal fun ProfileSetupScreen(viewModel: ProfileSetupViewModel = hiltViewModel
     }
 }
 
+/**
+ * Ekranning stateless UI qismi: [uiState] ni chizadi, harakatlarni [onEventDispatcher] orqali qaytaradi.
+ * Preview'larda "to'g'ri" va "band" holatlarini ViewModel'siz ko'rsatish uchun ajratilgan.
+ */
 @Composable
 private fun ProfileSetupScreenContent(
     uiState: ProfileSetupContract.UiState,
@@ -99,6 +110,7 @@ private fun ProfileSetupScreenContent(
             .imePadding()
             .padding(start = 24.dp, end = 24.dp, top = 40.dp, bottom = 24.dp)
     ) {
+        // Kichik ekranda klaviatura ochilganda maydonlar skroll bo'ladi, tugma esa pastda qoladi.
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -144,6 +156,7 @@ private fun ProfileSetupScreenContent(
                 leading = {
                     Text(text = "@", fontSize = 17.sp, color = colors.text2, modifier = Modifier.padding(end = 2.dp))
                 },
+                // Band bo'lsa xato ikonkasi, qoidaga mos bo'lsa yashil belgi, aks holda hech narsa.
                 trailing = {
                     when {
                         usernameError -> Icon(
@@ -171,6 +184,7 @@ private fun ProfileSetupScreenContent(
                 modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 6.dp)
             )
 
+            // Takliflar faqat username band bo'lganda paydo bo'ladi.
             if (uiState.suggestions.isNotEmpty()) {
                 Row(
                     modifier = Modifier.padding(top = 14.dp),
@@ -197,6 +211,7 @@ private fun ProfileSetupScreenContent(
     }
 }
 
+/** Bosilganda username'ni taklif qilingan qiymat bilan almashtiradigan chip. */
 @Composable
 private fun SuggestionChip(text: String, onClick: () -> Unit) {
     val colors = SwiftTheme.colors
@@ -214,6 +229,7 @@ private fun SuggestionChip(text: String, onClick: () -> Unit) {
     }
 }
 
+// Preview'lar: to'g'ri va band username holatlari, yorug'/qorong'i tema.
 @Composable
 private fun ProfileSetupPreview(darkTheme: Boolean, state: ProfileSetupContract.UiState) {
     SwiftChatTheme(darkTheme = darkTheme) {

@@ -15,6 +15,15 @@ import uz.relay.data.source.network.api.SyncApi
 import uz.relay.data.source.network.api.UserApi
 import javax.inject.Singleton
 
+/**
+ * Retrofit API interfeyslarini Hilt grafiga beradi.
+ *
+ * Nega alohida modul: har bir API qaysi [Retrofit] (qaysi OkHttp klient) ustida qurilishi aynan shu yerda
+ * hal qilinadi. [AuthApi] token talab qilmaydi ([PublicClient]) — aks holda refresh/OTP so'rovi o'zi
+ * token kutib qolib, aylanma bog'liqlik hosil bo'lardi. Media fayllari esa logging'siz [MediaClient]
+ * orqali ketadi. Qolganlari [AuthorizedClient] ustida: token avtomatik qo'shiladi va 401 da yangilanadi.
+ * Repository'lar va sync/outbox qismlari bu API'larni inject qilib oladi.
+ */
 @Module
 @InstallIn(SingletonComponent::class)
 object ApiModule {

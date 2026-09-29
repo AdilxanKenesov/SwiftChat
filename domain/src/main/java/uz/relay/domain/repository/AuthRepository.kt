@@ -4,16 +4,24 @@ import kotlinx.coroutines.flow.Flow
 import uz.relay.core.common.result.AppResult
 import uz.relay.domain.model.AuthState
 
+/**
+ * Avtorizatsiya: OTP so'rash/tekshirish, sessiya va chiqish.
+ *
+ * Nega interface: domain toza Kotlin moduli (Android'ga bog'liq emas) va faqat shartnomani belgilaydi,
+ * amalga oshirish esa `data` modulida (Retrofit + Room). Shunda feature modullar data'ni bilmaydi,
+ * use case'larni fake repository bilan oson test qilish mumkin (clean architecture, dependency inversion).
+ */
 interface AuthRepository {
 
+    /** Joriy avtorizatsiya holati; sessiya o'zgarganda (masalan, token bekor bo'lganda) yangi qiymat keladi. */
     val authState: Flow<AuthState>
 
     suspend fun requestOtp(phone: String): AppResult<Unit>
 
-    /** Persists the session on success; the value is `isNewUser`. */
+    /** Muvaffaqiyatda sessiyani saqlaydi; qiymat — `isNewUser`. */
     suspend fun verifyOtp(phone: String, code: String): AppResult<Boolean>
 
-    /** The new user filled in the profile: the main part of the app is open now. */
+    /** Yangi foydalanuvchi profilni to'ldirdi: endi ilovaning asosiy qismi ochiladi. */
     suspend fun completeProfileSetup()
 
     /**

@@ -16,8 +16,11 @@ import okhttp3.OkHttpClient
 import javax.inject.Singleton
 
 /**
- * Media'ni KO'RSATISH uchun vositalar. Ikkalasi ham [MediaClient] ustida: `GET /v1/media/{id}` token talab
- * qiladi, token eskirsa authenticator uni yangilaydi — feature modullar bu haqda hech narsa bilmaydi.
+ * Media'ni KO'RSATISH uchun vositalar (Coil rasm yuklovchi va Media3/ExoPlayer tarmoq manbai).
+ *
+ * Ikkalasi ham [MediaClient] ustida: `GET /v1/media/{id}` token talab qiladi, token eskirsa authenticator
+ * uni yangilaydi — feature modullar bu haqda hech narsa bilmaydi. Logging'siz klient ishlatiladi, chunki
+ * BODY logger katta faylni xotiraga to'liq o'qib olardi.
  */
 @Module
 @InstallIn(SingletonComponent::class)

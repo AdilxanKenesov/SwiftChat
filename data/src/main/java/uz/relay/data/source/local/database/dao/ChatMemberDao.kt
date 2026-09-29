@@ -19,6 +19,11 @@ data class MemberItem(
     val lastSeenAt: Long?
 )
 
+/**
+ * `chat_members` jadvali uchun DAO. API'da a'zolarni o'qish endpoint'i yo'qligi sababli ro'yxat lokal
+ * yig'iladi ([ChatMemberEntity] KDoc'iga qarang); GroupRepositoryImpl va UpdateApplier yozadi,
+ * guruh ma'lumotlari ekrani [observe] orqali o'qiydi.
+ */
 @Dao
 interface ChatMemberDao {
 
@@ -40,6 +45,7 @@ interface ChatMemberDao {
     @Query("SELECT * FROM chat_members WHERE chatId = :chatId AND userId = :userId")
     suspend fun get(chatId: String, userId: String): ChatMemberEntity?
 
+    /** Chatdagi lokal ma'lum a'zolar soni. */
     @Query("SELECT COUNT(*) FROM chat_members WHERE chatId = :chatId")
     suspend fun count(chatId: String): Int
 

@@ -22,9 +22,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import uz.relay.core.designsystem.theme.SwiftTheme
 
+// 56dp balandlikda 28dp radius — to'liq "pill" (kapsula) shakli.
 private val PillShape = RoundedCornerShape(28.dp)
 
-/** Pill 56dp primary button. Disabled = surface2/text2; [loading] shows a spinner inside. */
+/**
+ * Asosiy (primary) tugma: 56dp pill shakl, dizayndagi ranglar. O'chiq holatda surface2/text2;
+ * [loading] bo'lsa ichida spinner ko'rinadi va tugma bosilmaydi (so'rov ikki marta ketmasligi uchun).
+ *
+ * Nega o'z komponentimiz: Material Button'ning standart ranglari va o'lchami dizaynga mos emas —
+ * hamma ekranda bir xil ko'rinish shu yerda bir marta belgilanadi.
+ */
 @Composable
 fun SwiftPrimaryButton(
     text: String,
@@ -45,7 +52,7 @@ fun SwiftPrimaryButton(
     )
 }
 
-/** Pill 56dp tonal button (primaryContainer), optional trailing icon. */
+/** Ikkinchi darajali (tonal) tugma: 56dp pill, primaryContainer fon, ixtiyoriy o'ng ikonka. */
 @Composable
 fun SwiftTonalButton(
     text: String,
@@ -65,6 +72,7 @@ fun SwiftTonalButton(
     )
 }
 
+/** Ikkala tugmaning umumiy asosi — shakl, balandlik va o'chiq holat ranglari bir joyda. */
 @Composable
 private fun SwiftPillButton(
     text: String,
@@ -87,7 +95,7 @@ private fun SwiftPillButton(
         colors = ButtonDefaults.buttonColors(
             containerColor = container,
             contentColor = content,
-            // A loading button keeps its colors; only a truly disabled one greys out.
+            // Yuklanayotgan tugma o'z ranglarini saqlaydi; faqat haqiqatan o'chiq tugma kulrang bo'ladi.
             disabledContainerColor = if (loading) container else colors.surface2,
             disabledContentColor = if (loading) content else colors.text2,
         ),

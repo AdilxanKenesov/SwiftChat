@@ -7,6 +7,12 @@ import uz.relay.core.navigation.key.PhoneKey
 import uz.relay.core.navigation.key.ProfileSetupKey
 import javax.inject.Inject
 
+/**
+ * [SplashContract.Directions] ning [AppNavigator] (event-bus navigator) orqali amalga oshirilishi.
+ *
+ * Hamma o'tishlar `ResetTo` - splash back stack'da qolmasligi kerak, aks holda "orqaga"
+ * bosilganda foydalanuvchi yana splash'ga qaytib qolardi.
+ */
 internal class SplashDirectionsImpl @Inject constructor(
     private val navigator: AppNavigator
 ) : SplashContract.Directions {

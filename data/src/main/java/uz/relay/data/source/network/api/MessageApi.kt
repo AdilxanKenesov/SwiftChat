@@ -14,6 +14,11 @@ import uz.relay.data.model.response.MessagePageResponse
 import uz.relay.data.model.response.MessageResponse
 import uz.relay.data.model.response.SendMessageResultResponse
 
+/**
+ * Xabarlar bo'yicha REST endpoint'lar: tarix sahifalari, yuborish, tahrir, o'chirish va kvitansiyalar.
+ * Yuborish idempotent — `clientMessageId` kaliti bilan, shuning uchun outbox xavfsiz qayta urina oladi.
+ * Kim ishlatadi: MessageRepositoryImpl, OutboxSender, ReceiptSender.
+ */
 interface MessageApi {
 
     /**
@@ -48,6 +53,7 @@ interface MessageApi {
     suspend fun markReceived(@Path("id") chatId: String, @Body request: UpToSeqRequest)
 
     companion object {
+        /** Tarix sahifasi hajmi — bir ekranni to'ldirishga yetarli, lekin trafikni tejaydi. */
         const val PAGE_SIZE = 50
     }
 }

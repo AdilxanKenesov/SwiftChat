@@ -38,7 +38,14 @@ import uz.relay.core.designsystem.theme.SwiftChatTheme
 import uz.relay.core.designsystem.theme.SwiftTheme
 import uz.relay.feature.auth.R
 
-/** Shown on 409 TELEGRAM_NOT_LINKED. The code is re-requested only when the user taps resend. */
+/**
+ * 409 TELEGRAM_NOT_LINKED xatosida ko'rsatiladi: OTP Telegram bot orqali yuboriladi, raqam esa
+ * hali bot'ga bog'lanmagan. Foydalanuvchi bot'ni ochadi, raqamini ulaydi va "qayta yuborish"ni bosadi -
+ * kod faqat shu tugma bosilganda qayta so'raladi.
+ *
+ * ModalBottomSheet tanlangan, chunki bu telefon ekranidan chiqmasdan bajariladigan qisqa qo'shimcha
+ * qadam: orqa fondagi kontekst (kiritilgan raqam) ko'rinib turadi va sheet'ni surib yopish oson.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TelegramLinkSheet(
@@ -51,6 +58,7 @@ fun TelegramLinkSheet(
     val colors = SwiftTheme.colors
     ModalBottomSheet(
         onDismissRequest = onDismiss,
+        // Kontent qisqa, yarim ochiq holat kerak emas - sheet darhol to'liq ochiladi.
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
         containerColor = colors.bg,
@@ -67,6 +75,7 @@ fun TelegramLinkSheet(
     }
 }
 
+/** Sheet ichidagi stateless kontent; Preview'larda ModalBottomSheet'siz ko'rsatish uchun alohida ajratilgan. */
 @Composable
 private fun TelegramLinkSheetContent(
     phone: String,
@@ -104,7 +113,7 @@ private fun TelegramLinkSheetContent(
         ) {
             StepRow(number = 1) { Text(stringResource(R.string.tg_step1)) }
             StepRow(number = 2) {
-                // Design: "Start" is bold inside step 2.
+                // Dizayn bo'yicha 2-qadamda "Start" so'zi qalin yoziladi (tarjimada ham birinchi so'z).
                 val step = stringResource(R.string.tg_step2)
                 val boldWord = step.substringBefore(' ')
                 Text(buildAnnotatedString {
@@ -133,6 +142,7 @@ private fun TelegramLinkSheetContent(
     }
 }
 
+/** Raqamli doira va matndan iborat bitta qadam qatori; matn uslubi ProvideTextStyle orqali beriladi. */
 @Composable
 private fun StepRow(number: Int, text: @Composable () -> Unit) {
     val colors = SwiftTheme.colors
@@ -154,6 +164,7 @@ private fun StepRow(number: Int, text: @Composable () -> Unit) {
     }
 }
 
+// Preview'lar: yorug' va qorong'i tema.
 @Preview(name = "Light", showBackground = true)
 @Composable
 private fun TelegramLinkLightPreview() {

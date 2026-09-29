@@ -5,7 +5,10 @@ import uz.relay.core.common.result.AppError
 import uz.relay.core.common.result.ErrorCodes
 import uz.relay.feature.conversation.R
 
-/** ViewModel [AppError] ni saqlaydi, matnga UI aylantiradi — ViewModel Android resurslariga bog'lanmaydi. */
+/**
+ * ViewModel [AppError] ni saqlaydi, matnga UI aylantiradi — ViewModel Android resurslariga bog'lanmaydi.
+ * Server xato kodi (ErrorCodes) ustun, HTTP status esa zaxira: ba'zi javoblarda body bo'lmasligi mumkin.
+ */
 @StringRes
 fun AppError.messageRes(): Int = when (this) {
     AppError.Network -> R.string.no_internet

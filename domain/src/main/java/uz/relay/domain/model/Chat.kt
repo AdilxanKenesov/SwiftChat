@@ -46,6 +46,7 @@ data class ChatSummary(
     val mutedUntil: Long? = null
 )
 
+/** Chatlar ro'yxatidagi qatorda ko'rinadigan oxirgi xabarning qisqa ko'rinishi. */
 data class LastMessage(
     val serverId: Long,
     val senderId: String,

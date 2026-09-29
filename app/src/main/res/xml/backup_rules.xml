@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?><!--
-   Sample backup rules file; uncomment and customize as necessary.
-   See https://developer.android.com/guide/topics/data/autobackup
-   for details.
-   Note: This file is ignored for devices older than API 31
-   See https://developer.android.com/about/versions/12/backup-restore
+   Zaxira nusxa (Auto Backup) qoidalari — Android 11 va undan eski qurilmalar uchun (fullBackupContent).
+   Hozircha standart shablon: hech narsa alohida kiritilmagan/chiqarilmagan.
+   Batafsil: https://developer.android.com/guide/topics/data/autobackup
+   Android 12+ (API 31+) da buning o'rniga data_extraction_rules.xml ishlatiladi:
+   https://developer.android.com/about/versions/12/backup-restore
 -->
 <full-backup-content>
     <!--

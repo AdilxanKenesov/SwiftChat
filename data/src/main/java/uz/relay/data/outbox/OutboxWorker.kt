@@ -8,6 +8,10 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 
 /**
+ * Outbox'ni fonda yuboradigan WorkManager ishi: [OutboxSender.flush]ni chaqiradi va natijani
+ * WorkManager tiliga (success/retry) o'giradi. [OutboxScheduler] navbatga qo'yadi; @HiltWorker —
+ * Hilt bog'liqliklarni (OutboxSender) worker'ga inject qilishi uchun.
+ *
  * Nega WorkManager: foydalanuvchi internet yo'qligida xabar yozib, ilovani yopib qo'yishi mumkin. WorkManager
  * ishni process o'lganidan keyin ham eslab qoladi va internet paydo bo'lganda (NetworkType.CONNECTED sharti)
  * o'zi ishga tushiradi — xabar yo'qolmaydi.

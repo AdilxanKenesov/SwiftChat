@@ -38,7 +38,17 @@ import uz.relay.domain.usecase.message.SendTypingUseCase
 import uz.relay.domain.usecase.user.ObserveMeUseCase
 import uz.relay.domain.usecase.user.ObserveUserNamesUseCase
 
-/** `chatId` Nav3 kalitidan keladi (runtime qiymat), use-case'lar Hilt'dan — AssistedInject ularni birlashtiradi. */
+/**
+ * Chat ekranining ViewModel'i (Orbit MVI): xabarlar, sarlavha, yozish paneli, media yuborish/ochish.
+ *
+ * `chatId` Nav3 kalitidan keladi (runtime qiymat), use-case'lar Hilt'dan — AssistedInject ularni birlashtiradi.
+ * SavedStateHandle o'rniga AssistedInject tanlangan: Nav3 kaliti allaqachon tipli obyekt, uni qator argumentlarga
+ * aylantirib qayta o'qish shart emas va `chatId` konstruktorda majburiy (null bo'la olmaydi).
+ *
+ * Ma'lumot oqimi offline-first: ekran faqat lokal bazani kuzatadi, serverdan kelgan har narsa (sahifalar,
+ * socket update'lari, o'zim yuborgan xabar) avval bazaga yoziladi va shu yerdan UI'ga tushadi.
+ * Ro'yxat elementlari ([ChatItem]) shu yerda [buildChatItems] bilan tuziladi — UI faqat tayyor ro'yxatni chizadi.
+ */
 @HiltViewModel(assistedFactory = ChatViewModel.Factory::class)
 class ChatViewModel @AssistedInject constructor(
     @Assisted private val chatId: String,
@@ -63,11 +73,13 @@ class ChatViewModel @AssistedInject constructor(
     private val directions: ChatContract.Directions
 ) : ViewModel(), ChatContract.ViewModel {
 
+    /** ChatScreen `hiltViewModel(creationCallback = ...)` orqali shu factory bilan `chatId`ni beradi. */
     @AssistedFactory
     interface Factory {
         fun create(chatId: String): ChatViewModel
     }
 
+    // Container yaratilganda: bazani kuzatish boshlanadi va parallel ravishda eng yangi sahifa serverdan so'raladi.
     override val container =
         orbitContainer<ChatContract.UiState, ChatContract.SideEffect>(ChatContract.UiState()) {
             observeData()
@@ -77,6 +89,10 @@ class ChatViewModel @AssistedInject constructor(
     /** Serverga oxirgi yuborilgan o'qish kursori — bir xil qiymatni qayta-qayta yubormaslik uchun. */
     private var lastReadSeq = -1L
 
+    /**
+     * Screen'dan keladigan barcha Intent'lar uchun yagona kirish nuqtasi. Matn va composer rejimi
+     * `blockingIntent` bilan sinxron yangilanadi (TextField kursori sakramasligi uchun), qolganlari oddiy `intent`.
+     */
     override fun onEventDispatcher(intent: ChatContract.Intent) {
         when (intent) {
             ChatContract.Intent.OnBack -> intent { directions.back() }
@@ -144,6 +160,7 @@ class ChatViewModel @AssistedInject constructor(
         if (result is AppResult.Error) showError(result.error)
     }
 
+    /** Rasm/video — to'liq ekranli ko'ruvchiga o'tiladi; fayl — yuklab olinib, tashqi ilovada ochiladi. */
     private fun openMedia(message: Message) = intent {
         val media = message.media.firstOrNull() ?: return@intent
         when (message.type) {
@@ -220,6 +237,7 @@ class ChatViewModel @AssistedInject constructor(
         }
     }
 
+    /** `combine` natijalarini bitta `reduce`ga yig'ish uchun oraliq konteyner. */
     private data class ChatData(
         val chat: ChatSummary?,
         val items: List<ChatItem>,
@@ -244,6 +262,7 @@ class ChatViewModel @AssistedInject constructor(
         }
     }
 
+    /** Eski xabarlar sahifasi; parallel so'rovlar va oxiriga yetilgach qayta so'rash bloklanadi. */
     private fun loadOlder() = intent {
         if (!state.hasMore || state.isLoadingOlder) return@intent
         reduce { state.copy(isLoadingOlder = true) }
@@ -269,6 +288,7 @@ class ChatViewModel @AssistedInject constructor(
         if (shouldSignal) sendTyping(chatId)
     }
 
+    /** Tahrir rejimida — mavjud xabarni tahrirlaydi; aks holda yangi matnli xabar (javob bo'lsa replyTo bilan) yuboradi. */
     private fun send() = intent {
         val text = state.composerText.trim()
         if (text.isEmpty()) return@intent
@@ -294,6 +314,7 @@ class ChatViewModel @AssistedInject constructor(
         }
     }
 
+    /** O'chirish serverda bajariladi; tombstone update'i kelgach bazada xabar "o'chirilgan" bo'ladi. */
     private fun delete(serverId: Long?) = intent {
         if (serverId == null) return@intent
         when (val result = deleteMessage(serverId)) {
