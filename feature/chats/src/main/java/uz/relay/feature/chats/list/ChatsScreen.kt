@@ -31,12 +31,14 @@ import kotlinx.coroutines.launch
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
 import uz.relay.core.designsystem.R as DesignR
+import uz.relay.core.designsystem.component.OfflineBanner
 import uz.relay.core.designsystem.component.SkeletonChatRow
 import uz.relay.core.designsystem.component.SwiftFab
 import uz.relay.core.designsystem.theme.SwiftChatTheme
 import uz.relay.core.designsystem.theme.SwiftTheme
 import uz.relay.domain.model.ChatSummary
 import uz.relay.domain.model.ChatType
+import uz.relay.domain.model.ConnectionStatus
 import uz.relay.domain.model.LastMessage
 import uz.relay.domain.model.MessageStatus
 import uz.relay.domain.model.MessageType
@@ -98,10 +100,14 @@ private fun ChatsScreenContent(uiState: ChatsContract.UiState) {
         ) {
             ChatsTopBar(
                 me = uiState.me,
-                isSyncing = uiState.isSyncing,
+                connectionStatus = uiState.connectionStatus,
                 onSearchClick = {},
                 onMyProfileClick = {}
             )
+            if (uiState.connectionStatus == ConnectionStatus.OFFLINE) {
+                // Offline'da ham ro'yxat ko'rinadi (lokal bazadan) — banner faqat ogohlantiradi.
+                OfflineBanner(text = stringResource(R.string.no_internet))
+            }
 
             when {
                 uiState.showSkeleton -> SkeletonList()
@@ -152,7 +158,12 @@ private fun ChatsPager(uiState: ChatsContract.UiState) {
             contentPadding = PaddingValues(bottom = 96.dp)
         ) {
             items(items = chats, key = { it.id }) { chat ->
-                ChatRow(chat = chat, userNames = uiState.userNames, onClick = {})
+                ChatRow(
+                    chat = chat,
+                    userNames = uiState.userNames,
+                    typingUserIds = uiState.typing[chat.id].orEmpty(),
+                    onClick = {}
+                )
             }
         }
     }
@@ -244,13 +255,41 @@ private fun ChatsListDarkPreview() = ChatsPreview(
     ChatsContract.UiState(chats = PreviewChats, userNames = PreviewNames, me = PreviewMe, isBootstrapped = true)
 )
 
+@Preview(name = "Offline · Light", showSystemUi = true)
+@Composable
+private fun ChatsOfflineLightPreview() = ChatsPreview(
+    false,
+    ChatsContract.UiState(
+        chats = PreviewChats,
+        userNames = PreviewNames,
+        me = PreviewMe,
+        connectionStatus = ConnectionStatus.OFFLINE,
+        typing = mapOf("2" to setOf("malika")),
+        isBootstrapped = true
+    )
+)
+
+@Preview(name = "Offline · Dark", showSystemUi = true)
+@Composable
+private fun ChatsOfflineDarkPreview() = ChatsPreview(
+    true,
+    ChatsContract.UiState(
+        chats = PreviewChats,
+        userNames = PreviewNames,
+        me = PreviewMe,
+        connectionStatus = ConnectionStatus.OFFLINE,
+        typing = mapOf("2" to setOf("malika")),
+        isBootstrapped = true
+    )
+)
+
 @Preview(name = "Loading · Light", showSystemUi = true)
 @Composable
-private fun ChatsLoadingLightPreview() = ChatsPreview(false, ChatsContract.UiState(me = PreviewMe, isSyncing = true))
+private fun ChatsLoadingLightPreview() = ChatsPreview(false, ChatsContract.UiState(me = PreviewMe, connectionStatus = ConnectionStatus.UPDATING))
 
 @Preview(name = "Loading · Dark", showSystemUi = true)
 @Composable
-private fun ChatsLoadingDarkPreview() = ChatsPreview(true, ChatsContract.UiState(me = PreviewMe, isSyncing = true))
+private fun ChatsLoadingDarkPreview() = ChatsPreview(true, ChatsContract.UiState(me = PreviewMe, connectionStatus = ConnectionStatus.UPDATING))
 
 @Preview(name = "Empty · Light", showSystemUi = true)
 @Composable

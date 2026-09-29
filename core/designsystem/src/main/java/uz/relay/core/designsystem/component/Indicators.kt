@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -28,11 +29,13 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import uz.relay.core.designsystem.R
 import uz.relay.core.designsystem.theme.SwiftChatTheme
 import uz.relay.core.designsystem.theme.SwiftTheme
 
@@ -114,6 +117,33 @@ fun ConnectionTitle(text: String, modifier: Modifier = Modifier) {
 }
 
 /**
+ * "Internet aloqasi yoʻq" banneri (spec 4-bo'lim): app bar ostida, 12dp chekka, 44dp, radius 14,
+ * errorContainer fon va error rangli matn. Matn chaqiruvchidan keladi (stringlar feature'da).
+ */
+@Composable
+fun OfflineBanner(text: String, modifier: Modifier = Modifier) {
+    val colors = SwiftTheme.colors
+    Row(
+        modifier = modifier
+            .padding(start = 12.dp, end = 12.dp, bottom = 6.dp)
+            .fillMaxWidth()
+            .height(44.dp)
+            .background(colors.errorContainer, RoundedCornerShape(14.dp))
+            .padding(horizontal = 14.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_wifi_off),
+            contentDescription = null,
+            tint = colors.error,
+            modifier = Modifier.size(18.dp)
+        )
+        Text(text = text, color = colors.error, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+/**
  * Yuklanish paytidagi "soya" qator: 56dp doira + ikki yumaloq chiziq. Kengliklar har qatorda turlicha
  * beriladi — bir xil chiziqlar sun'iy ko'rinadi.
  */
@@ -179,6 +209,7 @@ private fun IndicatorsPreviewContent() {
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         ConnectionTitle(text = "Yangilanmoqda…", modifier = Modifier.padding(horizontal = 20.dp))
+        OfflineBanner(text = "Internet aloqasi yoʻq")
         Row(
             modifier = Modifier.padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)

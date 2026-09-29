@@ -17,6 +17,8 @@ import uz.relay.data.model.response.MessageEditPayload
 import uz.relay.data.model.response.MessageResponse
 import uz.relay.data.model.response.UpdateKinds
 import uz.relay.data.model.response.UpdateResponse
+import uz.relay.data.realtime.ReceiptSender
+import uz.relay.data.realtime.TypingTracker
 import uz.relay.data.source.local.SessionStorage
 import uz.relay.data.source.local.cache.UserCache
 import uz.relay.data.source.local.database.RelayDatabase
@@ -68,7 +70,9 @@ class UpdateApplier @Inject constructor(
     private val chatApi: ChatApi,
     private val userCache: UserCache,
     private val sessionStorage: SessionStorage,
-    private val json: Json
+    private val json: Json,
+    private val typingTracker: TypingTracker,
+    private val receiptSender: ReceiptSender
 ) {
     /**
      * @param updates `updateSeq` bo'yicha o'sish tartibida va teshiksiz (buni [SyncEngine] kafolatlaydi).
@@ -120,6 +124,17 @@ class UpdateApplier @Inject constructor(
             val newCursor = maxOf(syncStateDao.getCursor() ?: 0, updates.last().updateSeq)
             syncStateDao.setCursor(newCursor)
         }
+
+        // ---- 3. Tranzaksiyadan keyin: yon ta'sirlar (bazaga emas, tashqariga) ----
+        val incoming = decoded.filterIsInstance<Decoded.NewMessage>()
+            .map { it.message }
+            .filter { it.senderId != myUserId }
+        // Xabar yuborgan odam endi "yozmayapti" — 5 s kutmasdan belgini olib tashlaymiz.
+        incoming.forEach { typingTracker.clear(it.chatId, it.senderId) }
+        // Yetkazilish kvitansiyasi: yuboruvchi ✓✓ ko'radi. Har chat bo'yicha faqat eng katta seq yetarli (max-wins).
+        incoming.groupBy { it.chatId }
+            .mapValues { (_, messages) -> messages.maxOf { it.serverSeq } }
+            .forEach { (chatId, upToSeq) -> receiptSender.received(chatId, upToSeq) }
     }
 
     private suspend fun applyOne(update: Decoded, myUserId: String) {

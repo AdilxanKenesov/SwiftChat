@@ -47,6 +47,8 @@ import uz.relay.feature.chats.util.formatChatTime
 internal fun ChatRow(
     chat: ChatSummary,
     userNames: Map<String, String>,
+    /** Hozir shu chatda yozayotganlar (o'zimsiz). Bo'sh bo'lmasa, oxirgi xabar o'rnida "yozmoqda…". */
+    typingUserIds: Set<String>,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -131,6 +133,12 @@ internal fun ChatRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    // "Yozmoqda…" oxirgi xabardan ustun turadi (spec 3.5). Guruhda kim yozayotgani ham aytiladi.
+                    val typingText = typingUserIds.firstOrNull()?.let { userId ->
+                        val name = userNames[userId]
+                        if (chat.type == ChatType.GROUP && name != null) stringResource(R.string.typing_named, name)
+                        else stringResource(R.string.typing)
+                    }
                     val preview = remember(last, chat.type, userNames, colors) {
                         last?.let {
                             buildChatPreview(
@@ -143,8 +151,8 @@ internal fun ChatRow(
                         }
                     }
                     Text(
-                        text = preview ?: AnnotatedString(""),
-                        color = colors.text2,
+                        text = typingText?.let(::AnnotatedString) ?: preview ?: AnnotatedString(""),
+                        color = if (typingText != null) colors.primary else colors.text2,
                         fontSize = 15.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,

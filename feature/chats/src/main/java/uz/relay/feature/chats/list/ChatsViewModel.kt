@@ -7,6 +7,8 @@ import org.orbitmvi.orbit.viewmodel.orbitContainer
 import uz.relay.core.common.result.AppResult
 import uz.relay.core.common.result.isRetryable
 import uz.relay.domain.usecase.chat.ObserveChatsUseCase
+import uz.relay.domain.usecase.chat.ObserveConnectionStatusUseCase
+import uz.relay.domain.usecase.chat.ObserveTypingUseCase
 import uz.relay.domain.usecase.chat.ObserveSyncStatusUseCase
 import uz.relay.domain.usecase.chat.RefreshChatsUseCase
 import uz.relay.domain.usecase.user.ObserveMeUseCase
@@ -20,6 +22,8 @@ class ChatsViewModel @Inject constructor(
     private val observeSyncStatus: ObserveSyncStatusUseCase,
     private val observeUserNames: ObserveUserNamesUseCase,
     private val observeMe: ObserveMeUseCase,
+    private val observeConnectionStatus: ObserveConnectionStatusUseCase,
+    private val observeTyping: ObserveTypingUseCase,
     private val refreshChats: RefreshChatsUseCase,
     private val refreshMe: RefreshMeUseCase
 ) : ViewModel(), ChatsContract.ViewModel {
@@ -38,18 +42,28 @@ class ChatsViewModel @Inject constructor(
     }
 
     /**
-     * Ekran faqat lokal bazani kuzatadi (offline-first): sync bazani yangilaydi, ro'yxat esa o'zi o'zgaradi.
+     * Ekran faqat lokal bazani kuzatadi (offline-first): sync va WebSocket bazani yangilaydi, ro'yxat esa
+     * o'zi o'zgaradi.
      * `repeatOnSubscription` — ekran ko'rinmay turganda (fon) kuzatish to'xtaydi va resurs tejaladi,
      * qaytib kelganda yana davom etadi.
      */
     private fun observeData() = intent {
         repeatOnSubscription {
-            combine(observeChats(), observeSyncStatus(), observeUserNames(), observeMe()) { chats, sync, names, me ->
+            // combine ko'pi bilan 5 ta oqimni tiplangan holda qabul qiladi — shuning uchun ikki bosqichda.
+            val data = combine(observeChats(), observeUserNames(), observeMe()) { chats, names, me ->
+                Triple(chats, names, me)
+            }
+            val status = combine(observeSyncStatus(), observeConnectionStatus(), observeTyping()) { sync, connection, typing ->
+                Triple(sync, connection, typing)
+            }
+            combine(data, status) { (chats, names, me), (sync, connection, typing) ->
                 ChatsContract.UiState(
                     chats = chats,
                     userNames = names,
                     me = me,
-                    isSyncing = sync.isSyncing,
+                    connectionStatus = connection,
+                    // O'zimning boshqa qurilmamdagi yozishim ro'yxatda ko'rinmasin.
+                    typing = typing.mapValues { (_, users) -> users - me?.id.orEmpty() }.filterValues { it.isNotEmpty() },
                     isBootstrapped = sync.isBootstrapped
                 )
             }.collect { newState -> reduce { newState } }

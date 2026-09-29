@@ -1,5 +1,6 @@
 package uz.relay.data.sync
 
+import android.util.Log
 import androidx.room.withTransaction
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,6 +13,7 @@ import uz.relay.core.common.result.AppResult
 import uz.relay.data.mapper.systemEventUserIds
 import uz.relay.data.mapper.toEntity
 import uz.relay.data.model.response.ChatResponse
+import uz.relay.data.model.response.UpdateResponse
 import uz.relay.data.source.local.cache.UserCache
 import uz.relay.data.source.local.database.RelayDatabase
 import uz.relay.data.source.local.database.dao.ChatDao
@@ -21,11 +23,27 @@ import uz.relay.data.source.local.database.dao.UserDao
 import uz.relay.data.source.network.api.ChatApi
 import uz.relay.data.source.network.api.SyncApi
 import uz.relay.data.utils.safeApiCall
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/** Jonli frame bilan nima qilish kerak (Guide, 4-bo'lim "Gap detection"). */
+enum class LiveUpdateAction { IGNORE, APPLY, CATCH_UP }
+
 /**
- * Server bilan sinxronlash markazi: bootstrap va catch-up (keyinroq WebSocket'ning jonli update'lari ham).
+ * - `seq <= cursor` → allaqachon qo'llangan (dublikat yoki kechikkan frame) — e'tiborsiz qoldiramiz.
+ * - `seq == cursor + 1` → navbatdagisi — qo'llaymiz.
+ * - `seq > cursor + 1` → orada nimadir tushib qolgan (yo'qolgan yoki tartibsiz frame): bu frame'ni
+ *   ko'r-ko'rona qo'llamaymiz, teshikni REST'dan to'ldiramiz (bu frame ham o'sha javob ichida keladi).
+ */
+fun classifyLiveUpdate(cursor: Long, updateSeq: Long): LiveUpdateAction = when {
+    updateSeq <= cursor -> LiveUpdateAction.IGNORE
+    updateSeq == cursor + 1 -> LiveUpdateAction.APPLY
+    else -> LiveUpdateAction.CATCH_UP
+}
+
+/**
+ * Server bilan sinxronlash markazi: bootstrap, catch-up va WebSocket'ning jonli update'lari.
  *
  * Hammasi bitta Mutex ostida: kursor bilan ishlaydigan ikki jarayon hech qachon parallel ketmaydi.
  * Aks holda ikkalasi bir xil kursordan boshlab, bir-birining natijasini buzishi mumkin edi.
@@ -53,8 +71,29 @@ class SyncEngine @Inject constructor(
     /** `null` — baza hali hech qachon to'ldirilmagan (bootstrap bo'lmagan). */
     fun observeCursor(): Flow<Long?> = syncStateDao.observeCursor()
 
+    /** `null` — hali bootstrap qilinmagan. */
+    suspend fun cursor(): Long? = syncStateDao.getCursor()
+
     /** Bootstrap bo'lmagan bo'lsa — bootstrap, aks holda kursordan keyingi hamma hodisalarni olish. */
     suspend fun catchUp(): AppResult<Unit> = mutex.withLock { syncing { catchUpLocked() } }
+
+    /** WebSocket'dan kelgan bitta update (tartib va teshik tekshiruvi bilan). */
+    suspend fun onLiveUpdate(update: UpdateResponse) {
+        mutex.withLock {
+            // Bootstrap hali bo'lmagan: bu hodisa baribir bootstrap snapshot'iga yoki keyingi catch-up'ga kiradi.
+            val cursor = syncStateDao.getCursor() ?: return@withLock
+            when (classifyLiveUpdate(cursor, update.updateSeq)) {
+                LiveUpdateAction.IGNORE -> Unit
+                LiveUpdateAction.APPLY -> try {
+                    updateApplier.apply(listOf(update))
+                } catch (e: IOException) {
+                    // Kerakli chat qatori yuklanmadi — kursor surilmadi; keyingi frame teshikni ko'rib catch-up qiladi.
+                    Log.w(TAG, "Jonli update qo'llanmadi", e)
+                }
+                LiveUpdateAction.CATCH_UP -> syncing { catchUpLocked() }
+            }
+        }
+    }
 
     private suspend fun <T> syncing(block: suspend () -> T): T {
         _isSyncing.value = true
@@ -133,5 +172,9 @@ class SyncEngine @Inject constructor(
             cursor = page.nextCursor
         } while (cursor != null)
         return result
+    }
+
+    private companion object {
+        const val TAG = "SyncEngine"
     }
 }

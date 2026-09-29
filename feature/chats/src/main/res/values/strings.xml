@@ -33,6 +33,9 @@
 
     <!-- Sarlavha va holatlar -->
     <string name="updating">Yangilanmoqda…</string>
+    <string name="connecting">Ulanmoqda…</string>
+    <string name="typing">yozmoqda…</string>
+    <string name="typing_named">%1$s yozmoqda…</string>
     <string name="search">Qidirish</string>
     <string name="my_profile">Mening profilim</string>
     <string name="new_chat">Yangi chat</string>
