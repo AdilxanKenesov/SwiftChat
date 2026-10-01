@@ -58,7 +58,8 @@ data object AddContactKey : NavKey
 
 /**
  * Qo'ng'iroq ekrani (chiquvchi, kiruvchi yoki faol). [video] — chiquvchi qo'ng'iroqda men tanlagan tur;
- * kiruvchida `null` (turi qo'ng'iroq sozlamasidan o'qiladi).
+ * kiruvchida `null` (turi qo'ng'iroq sozlamasidan o'qiladi). [chatId] — faqat chiquvchida: qo'ng'iroq tugagach
+ * shu chatga tarix yozuvi ("📞 Call · audio · 2:31") yuboriladi (kiruvchi tomon yubormaydi — dublikat bo'lmasin).
  */
 @Serializable
-data class CallKey(val callId: String, val video: Boolean? = null) : NavKey
+data class CallKey(val callId: String, val video: Boolean? = null, val chatId: String? = null) : NavKey

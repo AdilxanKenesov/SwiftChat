@@ -106,4 +106,10 @@
     <string name="video_call">Video qoʻngʻiroq</string>
     <string name="error_calls_unavailable">Qoʻngʻiroqlar hozircha ishlamayapti</string>
     <string name="error_call_failed">Qoʻngʻiroqni boshlab boʻlmadi</string>
+    <string name="call_outgoing">Chiquvchi qoʻngʻiroq</string>
+    <string name="call_incoming">Kiruvchi qoʻngʻiroq</string>
+    <string name="call_missed">Oʻtkazib yuborilgan qoʻngʻiroq</string>
+    <string name="call_no_answer">Javobsiz qoʻngʻiroq</string>
+    <string name="call_declined">Rad etilgan qoʻngʻiroq</string>
+    <string name="call_canceled">Bekor qilingan qoʻngʻiroq</string>
 </resources>

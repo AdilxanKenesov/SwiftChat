@@ -7,6 +7,9 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.withStyle
+import uz.relay.domain.model.CallLog
+import uz.relay.domain.model.CallLogFormat
+import uz.relay.domain.model.CallOutcome
 import uz.relay.domain.model.ChatType
 import uz.relay.domain.model.LastMessage
 import uz.relay.domain.model.MessageType
@@ -44,6 +47,17 @@ fun buildChatPreview(
     if (message.type == MessageType.SYSTEM) {
         message.systemEvent?.let { append(systemText(it, message.senderId, names, resources, message.isMine)) }
         return@buildAnnotatedString
+    }
+
+    // Qo'ng'iroq yozuvi: "📞 Chiquvchi qoʻngʻiroq" (prefikssiz — yo'nalish sarlavhaning o'zida).
+    if (message.type == MessageType.TEXT) {
+        CallLogFormat.parse(message.text)?.let { log ->
+            withStyle(SpanStyle(color = colors.highlight)) {
+                append(if (log.video) "🎥 " else "📞 ")
+                append(resources.getString(callTitleRes(log, message.isMine)))
+            }
+            return@buildAnnotatedString
+        }
     }
 
     val prefix = when {
@@ -92,4 +106,12 @@ private fun systemText(
         // Kelajakdagi yangi hodisa turi — bo'sh qoldiramiz, ilova yiqilmaydi.
         else -> ""
     }
+}
+
+/** Qo'ng'iroq yozuvi sarlavhasi (suhbat ekranidagi CallLogBubble bilan bir xil qoida). */
+private fun callTitleRes(log: CallLog, isMine: Boolean): Int = when (log.outcome) {
+    CallOutcome.ANSWERED -> if (isMine) R.string.call_outgoing else R.string.call_incoming
+    CallOutcome.MISSED -> if (isMine) R.string.call_no_answer else R.string.call_missed
+    CallOutcome.DECLINED -> R.string.call_declined
+    CallOutcome.CANCELED -> if (isMine) R.string.call_canceled else R.string.call_missed
 }

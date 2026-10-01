@@ -236,7 +236,9 @@ private fun ChatScreenContent(
                             onRetry = { onEventDispatcher(ChatContract.Intent.OnRetry(item.message)) },
                             onMediaClick = { onEventDispatcher(ChatContract.Intent.OnMediaClick(item.message)) },
                             onCancelUpload = { onEventDispatcher(ChatContract.Intent.OnCancelUpload(item.message)) },
-                            downloadProgress = uiState.fileDownloads[item.message.clientMessageId]
+                            downloadProgress = uiState.fileDownloads[item.message.clientMessageId],
+                            // Qayta qo'ng'iroq faqat shaxsiy chatda (guruhda qo'ng'iroq yozuvi bo'lmaydi).
+                            onCallLogClick = { video -> if (!uiState.isGroup) onEventDispatcher(ChatContract.Intent.OnStartCall(video)) }
                         )
                     }
                 }

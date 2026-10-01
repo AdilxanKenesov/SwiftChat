@@ -1,5 +1,7 @@
 package uz.relay.data.repository_impl
 
+import io.getstream.android.video.generated.models.CallSettingsRequest
+import io.getstream.android.video.generated.models.RingSettingsRequest
 import io.getstream.result.Result
 import io.getstream.video.android.core.RingingState
 import io.getstream.video.android.core.StreamVideo
@@ -34,7 +36,15 @@ internal class CallRepositoryImpl @Inject constructor(
         val client = StreamVideo.instanceOrNull() ?: return unavailable()
         val callId = UUID.randomUUID().toString()
         val call = client.call(type = CALL_TYPE, id = callId)
-        return when (val result = call.create(memberIds = listOf(client.userId, peerUserId), ring = true, video = video)) {
+        val result = call.create(
+            memberIds = listOf(client.userId, peerUserId),
+            ring = true,
+            video = video,
+            // Telegram'dagidek: 15 s ichida javob bo'lmasa server qo'ng'iroqni ikkala tomonda ham o'zi tugatadi
+            // (qo'ng'iroq qiluvchida "javob yo'q", qabul qiluvchida jiringlash to'xtaydi).
+            settings = CallSettingsRequest(ring = RingSettingsRequest(autoCancelTimeoutMs = RING_TIMEOUT_MS, incomingCallTimeoutMs = RING_TIMEOUT_MS))
+        )
+        return when (result) {
             is Result.Success -> AppResult.Success(callId)
             is Result.Failure -> AppError.Api(0, ErrorCodes.CALL_FAILED, result.value.message, retryable = true).let { AppResult.Error(it) }
         }
@@ -62,5 +72,6 @@ internal class CallRepositoryImpl @Inject constructor(
 
     private companion object {
         const val CALL_TYPE = "default"
+        const val RING_TIMEOUT_MS = 15_000
     }
 }

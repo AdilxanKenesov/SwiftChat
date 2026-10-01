@@ -69,4 +69,10 @@
     <string name="remove_contact_title">Удалить %1$s из контактов?</string>
     <string name="remove">Удалить</string>
     <string name="cancel">Отмена</string>
+    <string name="call_outgoing">Исходящий звонок</string>
+    <string name="call_incoming">Входящий звонок</string>
+    <string name="call_missed">Пропущенный звонок</string>
+    <string name="call_no_answer">Нет ответа</string>
+    <string name="call_declined">Отклонённый звонок</string>
+    <string name="call_canceled">Отменённый звонок</string>
 </resources>

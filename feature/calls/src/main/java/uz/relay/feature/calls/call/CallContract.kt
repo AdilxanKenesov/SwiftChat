@@ -26,6 +26,8 @@ interface CallContract {
 
     sealed interface SideEffect {
         data class ShowError(val error: AppError) : SideEffect
+        /** 15 s ichida javob bo'lmadi. */
+        object NoAnswer : SideEffect
     }
 
     data class UiState(

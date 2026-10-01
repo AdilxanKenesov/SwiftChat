@@ -3,6 +3,7 @@ package uz.relay.feature.conversation.chat
 import org.orbitmvi.orbit.OrbitContainerHost
 import uz.relay.core.common.result.AppError
 import uz.relay.domain.model.Attachment
+import uz.relay.domain.model.CallLogFormat
 import uz.relay.domain.model.ChatSummary
 import uz.relay.domain.model.ChatType
 import uz.relay.domain.model.GroupPermissions
@@ -104,7 +105,7 @@ interface ChatContract {
         suspend fun navigateToGroupInfo(chatId: String)
         suspend fun navigateToUserProfile(userId: String)
         suspend fun navigateToMediaViewer(chatId: String, clientMessageId: String)
-        suspend fun navigateToCall(callId: String, video: Boolean)
+        suspend fun navigateToCall(callId: String, video: Boolean, chatId: String)
     }
 }
 
@@ -113,7 +114,9 @@ private const val EDIT_WINDOW_MS = 48L * 60 * 60 * 1000
 
 /** "Tahrirlash" menyuda ko'rinadimi (spec 3.8: o'zimniki, < 48 soat). Faqat serverga yetgan matnli xabar. */
 fun Message.canEdit(now: Long = System.currentTimeMillis()): Boolean =
-    isMine && !isDeleted && serverId != null && type == MessageType.TEXT && now - createdAt < EDIT_WINDOW_MS
+    isMine && !isDeleted && serverId != null && type == MessageType.TEXT && now - createdAt < EDIT_WINDOW_MS &&
+        // Qo'ng'iroq yozuvi matn bo'lib saqlanadi, lekin uni tahrirlash formatni buzadi.
+        CallLogFormat.parse(text) == null
 
 /**
  * "Oʻchirish" menyuda ko'rinadimi. Server qoidasi: yuboruvchi har doim, guruhda OWNER/ADMIN ham

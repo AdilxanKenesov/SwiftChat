@@ -46,9 +46,9 @@ import uz.relay.feature.calls.R
  * Ochiladi: shaxsiy chat sarlavhasidagi 📞/🎥 (chiquvchi) yoki ilova darajasidagi kiruvchi qo'ng'iroq (MainViewModel).
  */
 @Composable
-internal fun CallScreen(callId: String, video: Boolean?) {
+internal fun CallScreen(callId: String, video: Boolean?, chatId: String?) {
     val viewModel = hiltViewModel<CallViewModel, CallViewModel.Factory>(
-        creationCallback = { factory -> factory.create(callId, video) }
+        creationCallback = { factory -> factory.create(callId, video, chatId) }
     )
     val uiState by viewModel.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -57,6 +57,7 @@ internal fun CallScreen(callId: String, video: Boolean?) {
     viewModel.collectSideEffect { sideEffect ->
         when (sideEffect) {
             is CallContract.SideEffect.ShowError -> snackbarHostState.showSnackbar(context.getString(R.string.call_failed))
+            CallContract.SideEffect.NoAnswer -> snackbarHostState.showSnackbar(context.getString(R.string.call_no_answer))
         }
     }
 

@@ -29,7 +29,9 @@ import androidx.compose.ui.unit.dp
 import uz.relay.core.designsystem.R as DesignR
 import uz.relay.core.designsystem.component.Avatar
 import uz.relay.core.designsystem.theme.SwiftTheme
+import uz.relay.domain.model.CallLogFormat
 import uz.relay.domain.model.MessageStatus
+import uz.relay.domain.model.MessageType
 import uz.relay.feature.conversation.R
 import uz.relay.feature.conversation.chat.ChatItem
 
@@ -57,11 +59,16 @@ fun MessageRow(
     /** Rasm/video — ko'ruvchi, fayl — yuklab olib ochish. */
     onMediaClick: () -> Unit = {},
     onCancelUpload: () -> Unit = {},
-    downloadProgress: Float? = null
+    downloadProgress: Float? = null,
+    /** Qo'ng'iroq yozuvi bosildi — shu turdagi (video/audio) qo'ng'iroqni qayta boshlash. */
+    onCallLogClick: (video: Boolean) -> Unit = {}
 ) {
     val message = item.message
     val isOut = message.isMine
     val hasMedia = message.media.isNotEmpty() && !message.isDeleted
+    val callLog = remember(message.text, message.type, message.isDeleted) {
+        if (message.type == MessageType.TEXT && !message.isDeleted) CallLogFormat.parse(message.text) else null
+    }
     // Bubble'ning oxirgi o'lchangan joyi. State emas: u faqat uzoq bosilgan paytda o'qiladi, qayta chizish kerak emas.
     val bounds = remember { arrayOf(Rect.Zero) }
 
@@ -101,7 +108,11 @@ fun MessageRow(
                 .onGloballyPositioned { bounds[0] = it.boundsInRoot() }
                 .clip(RoundedCornerShape(18.dp))
                 .combinedClickable(
-                    onClick = if (hasMedia) onMediaClick else ({}),
+                    onClick = when {
+                        hasMedia -> onMediaClick
+                        callLog != null -> ({ onCallLogClick(callLog.video) })
+                        else -> ({})
+                    },
                     // O'chirilgan xabar uchun menyu yo'q (spec: "no reply/menu").
                     onLongClick = if (message.isDeleted) null else ({ onLongPress(bounds[0]) })
                 )

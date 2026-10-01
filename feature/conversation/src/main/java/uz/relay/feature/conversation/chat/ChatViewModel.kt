@@ -175,7 +175,7 @@ class ChatViewModel @AssistedInject constructor(
         val result = startCall(peerUserId, video)
         reduce { state.copy(isStartingCall = false) }
         when (result) {
-            is AppResult.Success -> directions.navigateToCall(result.data, video)
+            is AppResult.Success -> directions.navigateToCall(result.data, video, chatId)
             is AppResult.Error -> showError(result.error)
         }
     }

@@ -3,4 +3,5 @@
 <resources>
     <string name="calls_unavailable">Звонки сейчас недоступны</string>
     <string name="call_failed">Не удалось начать звонок</string>
+    <string name="call_no_answer">Нет ответа</string>
 </resources>
