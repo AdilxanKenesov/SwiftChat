@@ -48,6 +48,10 @@ jobs:
       - name: Screenshot tests
         run: ./gradlew verifyRoborazziDebug
 
+      # Stream token serveri (Cloudflare Worker) testlari — Node'ning o'z test runner'i, kutubxonasiz.
+      - name: Token server tests
+        run: node --test server/stream-token/test/index.test.mjs
+
       # Error bo'lsa yiqiladi; ogohlantirishlar faqat hisobotda.
       - name: Lint
         run: ./gradlew lintDebug

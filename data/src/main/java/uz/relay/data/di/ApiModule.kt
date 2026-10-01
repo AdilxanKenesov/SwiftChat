@@ -12,6 +12,7 @@ import uz.relay.data.source.network.api.MediaApi
 import uz.relay.data.source.network.api.MessageApi
 import uz.relay.data.source.network.api.SessionApi
 import uz.relay.data.source.network.api.SyncApi
+import uz.relay.data.source.network.api.StreamTokenApi
 import uz.relay.data.source.network.api.UserApi
 import javax.inject.Singleton
 
@@ -35,6 +36,10 @@ object ApiModule {
     @Provides
     @Singleton
     fun provideUserApi(@AuthorizedClient retrofit: Retrofit): UserApi = retrofit.create()
+
+    @Provides
+    @Singleton
+    fun provideStreamTokenApi(@AuthorizedClient retrofit: Retrofit): StreamTokenApi = retrofit.create()
 
     @Provides
     @Singleton

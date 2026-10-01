@@ -1,0 +1,8 @@
+# Cloudflare Worker sozlamasi. Deploy: `npx wrangler deploy` (README'ga qarang).
+name = "swiftchat-stream-token"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+
+[vars]
+# Ochiq qiymat. STREAM_API_SECRET bu yerda EMAS — `npx wrangler secret put STREAM_API_SECRET` bilan beriladi.
+RELAY_BASE_URL = "https://relay.zokirov-mob-dev.uz"

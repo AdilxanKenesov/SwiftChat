@@ -16,3 +16,8 @@ local.properties
 
 # Claude Code uchun Stream Agent Skills (getstream skills --claude) — har kishi o'zi o'rnatadi, repoga kirmaydi
 /.claude/skills/
+
+# Cloudflare Worker (server/stream-token): wrangler keshi va lokal secret fayllari
+/server/stream-token/.wrangler/
+/server/stream-token/node_modules/
+/server/stream-token/.dev.vars

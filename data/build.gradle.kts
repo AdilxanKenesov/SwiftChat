@@ -30,6 +30,9 @@ android {
         buildConfigField("String", "WS_URL", "\"wss://relay.zokirov-mob-dev.uz/v1/ws\"")
         // Stream Video API key — local.properties'dan (git'ga kirmaydi). Bu ochiq kalit; secret ilovaga hech qachon qo'yilmaydi.
         buildConfigField("String", "STREAM_API_KEY", "\"${localProperty("STREAM_API_KEY")}\"")
+        // Stream token serveri (server/stream-token, Cloudflare Worker) manzili — masalan
+        // https://swiftchat-stream-token.<akkaunt>.workers.dev/token. Bo'sh bo'lsa: debug'da dev-token, release'da qo'ng'iroqlar o'chiq.
+        buildConfigField("String", "STREAM_TOKEN_URL", "\"${localProperty("STREAM_TOKEN_URL")}\"")
     }
     // Java 11 — barcha modullarda bir xil.
     compileOptions {
