@@ -106,7 +106,7 @@ internal fun CallControls(call: Call, isVideo: Boolean, onCallAction: (CallActio
             )
         }
         ControlButton(
-            icon = DesignR.drawable.ic_phone_off,
+            icon = DesignR.drawable.ic_call_end,
             label = stringResource(R.string.call_end),
             on = true,
             size = 64.dp,

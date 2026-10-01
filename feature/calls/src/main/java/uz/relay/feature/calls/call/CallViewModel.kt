@@ -18,6 +18,8 @@ import io.getstream.video.android.core.call.state.DeclineCall
 import io.getstream.video.android.core.call.state.LeaveCall
 import io.getstream.video.android.core.model.RejectReason
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.orbitmvi.orbit.syntax.Syntax
@@ -68,6 +70,7 @@ class CallViewModel @AssistedInject constructor(
         ) {
             if (call != null) {
                 observeEnd(call)
+                observeCallClosed(call)
                 watchRingTimeout(call)
             }
         }
@@ -144,6 +147,26 @@ class CallViewModel @AssistedInject constructor(
     }
 
     /**
+     * Qo'ng'iroq boshqa yo'l bilan tugasa ham ekran yopilsin:
+     *  - server qo'ng'iroqni tugatdi (`endedAt` qo'yildi — masalan, suhbatdosh `end` qildi);
+     *  - jiringlash holati jonli holatdan `Idle`ga qaytdi (qo'ng'iroqdan chiqildi).
+     * Aks holda `RingingCallContent` `Idle`da hech narsa chizmaydi va foydalanuvchi qop-qora ekranda qolib ketardi.
+     * `Idle` faqat oldin jonli holat ko'rilgan bo'lsa hisobga olinadi — ekran ochilgan zahoti bir lahza `Idle`
+     * bo'lishi mumkin.
+     */
+    private fun observeCallClosed(call: Call) = intent {
+        var wasLive = false
+        combine(call.state.ringingState, call.state.endedAt) { ringing, endedAt -> ringing to endedAt }
+            .collect { (ringing, endedAt) ->
+                if (ringing !is RingingState.Idle) wasLive = true
+                when {
+                    endedAt != null -> finish(call, outcomeFromRinging(call))
+                    ringing is RingingState.Idle && wasLive -> finish(call, outcomeFromRinging(call))
+                }
+            }
+    }
+
+    /**
      * Zaxira taymer: server 15 s'da qo'ng'iroqni o'zi tugatadi (RingSettings), lekin uning signali kechiksa yoki
      * kelmasa ham chiquvchi qo'ng'iroq ekranda osilib qolmasin — biroz kutib, hali javob yo'q bo'lsa bekor qilamiz.
      */
@@ -173,9 +196,12 @@ class CallViewModel @AssistedInject constructor(
         if (finished) return
         finished = true
         Log.i(TAG, "finish call=${call.id} answered=${answeredAt != null} fallback=$fallback")
-        withContext(Dispatchers.Main) { call.leave() }
-        saveCallLog(fallback)
+        // leave() xato bersa ham ekran yopilishi shart — aks holda qora ekranda qolinadi.
+        runCatching { withContext(Dispatchers.Main) { call.leave() } }
+            .onFailure { Log.w(TAG, "leave failed call=${call.id}", it) }
         directions.back()
+        // Ekran yopilgach ViewModel tozalanadi va uning scope'i bekor bo'ladi — tarix yozuvi yo'qolmasin.
+        withContext(NonCancellable) { saveCallLog(fallback) }
     }
 
     /**

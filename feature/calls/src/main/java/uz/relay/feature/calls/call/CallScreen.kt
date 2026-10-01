@@ -129,7 +129,10 @@ private fun CallContentHost(call: Call, isVideo: Boolean, onEventDispatcher: (Ca
             }
         },
         onRejectedContent = { LaunchedEffect(Unit) { onEventDispatcher(CallContract.Intent.OnFinished) } },
-        onNoAnswerContent = { LaunchedEffect(Unit) { onEventDispatcher(CallContract.Intent.OnFinished) } }
+        onNoAnswerContent = { LaunchedEffect(Unit) { onEventDispatcher(CallContract.Intent.OnFinished) } },
+        // Qo'ng'iroqdan chiqilgach holat `Idle` bo'ladi — Stream bu yerda hech narsa chizmaydi (qora ekran).
+        // Ekranni yopishni asosan ViewModel qiladi; bu zaxira, signal kechiksa ham foydalanuvchi qolib ketmasin.
+        onIdle = { LaunchedEffect(Unit) { onEventDispatcher(CallContract.Intent.OnFinished) } }
     )
 }
 
