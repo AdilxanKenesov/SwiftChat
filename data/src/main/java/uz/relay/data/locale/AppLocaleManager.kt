@@ -15,10 +15,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import uz.relay.domain.model.AppLanguage
-import java.util.Locale
-import javax.inject.Inject
-import javax.inject.Singleton
-import androidx.core.content.edit
 
 /**
  * Ilova ichidagi til tanlovi ("per-app language"), qo'shimcha kutubxonasiz.
