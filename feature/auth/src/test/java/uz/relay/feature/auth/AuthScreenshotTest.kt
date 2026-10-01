@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
 import com.github.takahirom.roborazzi.captureRoboImage
+import java.util.TimeZone
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Rule
 import org.junit.Test
@@ -33,6 +34,8 @@ class AuthScreenshotTest {
     @get:Rule val compose = createComposeRule()
 
     private fun snap(name: String, dark: Boolean, content: @Composable () -> Unit) {
+        // Vaqt/sana matnlari vaqt zonasiga bog'liq — har qanday kompyuterda (CI'da ham) bir xil rasm chiqsin.
+        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tashkent"))
         compose.setContent { SwiftChatTheme(darkTheme = dark) { content() } }
         compose.onRoot().captureRoboImage("src/test/screenshots/${name}_${if (dark) "dark" else "light"}.png")
     }
