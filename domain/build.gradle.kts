@@ -22,4 +22,7 @@ dependencies {
 
     // Paging common — Android'siz PagingData turi (toza Kotlin).
     api(libs.androidx.paging.common)
+
+    // Sof Kotlin modul — testlar oddiy JUnit bilan, Android'siz va tez ishlaydi.
+    testImplementation(libs.junit)
 }
