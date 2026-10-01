@@ -61,6 +61,7 @@ dependencies {
     implementation(project(":feature:conversation"))
     implementation(project(":feature:group"))
     implementation(project(":feature:profile"))
+    implementation(project(":feature:calls"))
 
 
 

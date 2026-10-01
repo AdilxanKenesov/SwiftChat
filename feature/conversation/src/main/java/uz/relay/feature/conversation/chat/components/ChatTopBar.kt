@@ -51,7 +51,10 @@ fun ChatTopBar(
     onBack: () -> Unit,
     onTitleClick: () -> Unit,
     onMoreClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** Shaxsiy chatda audio/video qo'ng'iroq (Stream Video). `null` — tugma ko'rsatilmaydi (guruhda). */
+    onAudioCall: (() -> Unit)? = null,
+    onVideoCall: (() -> Unit)? = null
 ) {
     val colors = SwiftTheme.colors
     val resources = LocalContext.current.resources
@@ -111,6 +114,26 @@ fun ChatTopBar(
                         fontSize = 13.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+            if (onVideoCall != null) {
+                IconButton(onClick = onVideoCall) {
+                    Icon(
+                        painter = painterResource(DesignR.drawable.ic_video),
+                        contentDescription = stringResource(R.string.video_call),
+                        tint = colors.text,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+            }
+            if (onAudioCall != null) {
+                IconButton(onClick = onAudioCall) {
+                    Icon(
+                        painter = painterResource(DesignR.drawable.ic_phone_call),
+                        contentDescription = stringResource(R.string.audio_call),
+                        tint = colors.text,
+                        modifier = Modifier.size(21.dp)
                     )
                 }
             }

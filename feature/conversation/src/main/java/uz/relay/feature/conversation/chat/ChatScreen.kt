@@ -200,6 +200,9 @@ private fun ChatScreenContent(
                 // Guruhda — guruh ma'lumoti, shaxsiy chatda — suhbatdoshning profili (tanlovni ViewModel qiladi).
                 onTitleClick = { onEventDispatcher(ChatContract.Intent.OnOpenInfo) },
                 onMoreClick = { onEventDispatcher(ChatContract.Intent.OnOpenInfo) },
+                // Qo'ng'iroq faqat shaxsiy chatda (1:1) — guruh qo'ng'iroqlari keyinroq.
+                onAudioCall = if (uiState.isGroup || uiState.chat == null) null else ({ onEventDispatcher(ChatContract.Intent.OnStartCall(video = false)) }),
+                onVideoCall = if (uiState.isGroup || uiState.chat == null) null else ({ onEventDispatcher(ChatContract.Intent.OnStartCall(video = true)) }),
                 modifier = Modifier
                     .background(colors.bg)
                     .statusBarsPadding()

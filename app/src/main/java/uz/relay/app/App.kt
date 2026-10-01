@@ -8,6 +8,7 @@ import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import dagger.Lazy
 import dagger.hilt.android.HiltAndroidApp
+import uz.relay.data.call.StreamVideoConnector
 import uz.relay.data.outbox.OutboxScheduler
 import uz.relay.data.realtime.RealtimeCoordinator
 import javax.inject.Inject
@@ -35,6 +36,10 @@ class App : Application(), Configuration.Provider, SingletonImageLoader.Factory 
     lateinit var realtimeCoordinator: RealtimeCoordinator
 
     /** Yuborilmagan xabarlar navbatini (outbox) WorkManager'ga qo'yadi. */
+    /** Stream Video (qo'ng'iroqlar): login'da ulanadi, logout'da uziladi. */
+    @Inject
+    lateinit var streamVideoConnector: StreamVideoConnector
+
     @Inject
     lateinit var outboxScheduler: OutboxScheduler
 
@@ -58,5 +63,7 @@ class App : Application(), Configuration.Provider, SingletonImageLoader.Factory 
         outboxScheduler.schedule()
         // WebSocket: login qilingan va ilova old planda bo'lganda o'zi ulanadi, fonda uziladi.
         realtimeCoordinator.start()
+        // Qo'ng'iroqlar: Stream client Relay sessiyasiga bog'lanadi (API key bo'lmasa hech narsa qilmaydi).
+        streamVideoConnector.start()
     }
 }

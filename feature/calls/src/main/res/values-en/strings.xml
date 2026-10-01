@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Inglizcha tarjima. Kalitlar values/strings.xml (o'zbekcha, asosiy) bilan bir xil. -->
+<resources>
+    <string name="calls_unavailable">Calls are unavailable right now</string>
+    <string name="call_failed">Could not start the call</string>
+</resources>
