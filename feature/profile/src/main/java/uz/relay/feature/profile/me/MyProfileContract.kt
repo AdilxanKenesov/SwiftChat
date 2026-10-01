@@ -27,8 +27,8 @@ interface MyProfileContract {
         object OnBack : Intent
         object OnEdit : Intent
         data class OnNotificationsChange(val enabled: Boolean) : Intent
-        /** Switch'ning yangi holati: yoniq — tungi, o'chiq — kunduzgi rejim. */
-        data class OnDarkModeChange(val enabled: Boolean) : Intent
+        /** Tema tanlandi: tizim, kunduzgi yoki tungi. */
+        data class OnThemeChange(val mode: ThemeMode) : Intent
         data class OnLanguageChange(val language: AppLanguage) : Intent
         /** Tasdiq dialogidan keyin. */
         object OnLogout : Intent

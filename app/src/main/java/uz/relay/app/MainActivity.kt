@@ -9,6 +9,7 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -58,7 +59,12 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val themeMode by viewModel.themeMode.collectAsState()
-            val darkTheme = themeMode == ThemeMode.DARK
+            // "Tizim" rejimida telefon sozlamasi o'qiladi; u o'zgarsa activity qayta yaratiladi va qiymat yangilanadi.
+            val darkTheme = when (themeMode) {
+                ThemeMode.DARK -> true
+                ThemeMode.SYSTEM -> isSystemInDarkTheme()
+                ThemeMode.LIGHT, null -> false
+            }
 
             // Status/navigation bar ikonkalari tizim temasiga emas, ILOVA temasiga moslanadi: aks holda
             // telefon tungi, ilova kunduzgi rejimda bo'lsa, oq ikonkalar oq fonda ko'rinmay qoladi.

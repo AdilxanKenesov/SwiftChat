@@ -55,8 +55,7 @@ class MyProfileViewModel @Inject constructor(
             MyProfileContract.Intent.OnBack -> intent { directions.back() }
             MyProfileContract.Intent.OnEdit -> intent { directions.navigateToEditProfile() }
             is MyProfileContract.Intent.OnNotificationsChange -> intent { setNotificationsEnabled(intent.enabled) }
-            is MyProfileContract.Intent.OnDarkModeChange ->
-                intent { setThemeMode(if (intent.enabled) ThemeMode.DARK else ThemeMode.LIGHT) }
+            is MyProfileContract.Intent.OnThemeChange -> intent { setThemeMode(intent.mode) }
             // Til almashsa Activity yangi tilda qayta yaratiladi — ekran o'zi yangilanadi.
             is MyProfileContract.Intent.OnLanguageChange -> intent { setLanguage(intent.language) }
             MyProfileContract.Intent.OnLogout -> logoutNow()
