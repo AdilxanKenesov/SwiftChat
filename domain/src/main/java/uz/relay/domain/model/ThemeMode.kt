@@ -1,7 +1,7 @@
 package uz.relay.domain.model
 
 /**
- * Ilova temasi: faqat kunduzgi yoki tungi (tizim sozlamasiga ergashish yo'q — foydalanuvchi qarori).
- * Tanlanmagan bo'lsa — [LIGHT].
+ * Ilova temasi: telefon sozlamasiga ergashish ([SYSTEM]), doim kunduzgi yoki doim tungi.
+ * Tanlanmagan bo'lsa — [LIGHT] (oldingi versiyalardagi standart; mavjud foydalanuvchilarda tema o'zgarib qolmasin).
  */
-enum class ThemeMode { LIGHT, DARK }
+enum class ThemeMode { SYSTEM, LIGHT, DARK }
