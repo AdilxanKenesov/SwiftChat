@@ -3,6 +3,7 @@ package uz.relay.feature.conversation.chat
 import org.orbitmvi.orbit.OrbitContainerHost
 import uz.relay.core.common.result.AppError
 import uz.relay.domain.model.Attachment
+import uz.relay.domain.model.CallLogFormat
 import uz.relay.domain.model.ChatSummary
 import uz.relay.domain.model.ChatType
 import uz.relay.domain.model.GroupPermissions
@@ -50,6 +51,8 @@ interface ChatContract {
         data class OnMediaClick(val message: Message) : Intent
         /** Sarlavhadagi 📞 (audio) yoki 🎥 (video) — suhbatdoshga qo'ng'iroq. */
         data class OnStartCall(val video: Boolean) : Intent
+        /** Guruhda 🎥, "Qo'shilish" banneri yoki video chat yozuvi — guruh video chatini boshlash yoki unga qo'shilish. */
+        object OnGroupCall : Intent
     }
 
     /** Bir martalik hodisalar: Screen ularni `collectSideEffect` bilan tutib, Snackbar/Intent'ga aylantiradi. */
@@ -81,7 +84,11 @@ interface ChatContract {
         /** Fayl tayyorlanmoqda (nusxalash/hash) — katta videoda bir necha soniya. */
         val isPreparingMedia: Boolean = false,
         /** Qo'ng'iroq yaratilmoqda — tugma ikki marta bosilsa ikkinchi qo'ng'iroq boshlanmasin. */
-        val isStartingCall: Boolean = false
+        val isStartingCall: Boolean = false,
+        /** Guruh video chatida hozir nechta odam bor (0 — video chat yo'q, banner ko'rinmaydi). */
+        val groupCallCount: Int = 0,
+        /** Guruh a'zolari id'lari — video chat xonasiga a'zo qilib qo'shish uchun. */
+        val memberIds: List<String> = emptyList()
     ) {
         val isGroup: Boolean get() = chat?.type == ChatType.GROUP
         val canSend: Boolean get() = composerText.isNotBlank()
@@ -104,7 +111,8 @@ interface ChatContract {
         suspend fun navigateToGroupInfo(chatId: String)
         suspend fun navigateToUserProfile(userId: String)
         suspend fun navigateToMediaViewer(chatId: String, clientMessageId: String)
-        suspend fun navigateToCall(callId: String, video: Boolean)
+        suspend fun navigateToCall(callId: String, video: Boolean, chatId: String)
+        suspend fun navigateToGroupCall(callId: String, chatId: String)
     }
 }
 
@@ -113,7 +121,9 @@ private const val EDIT_WINDOW_MS = 48L * 60 * 60 * 1000
 
 /** "Tahrirlash" menyuda ko'rinadimi (spec 3.8: o'zimniki, < 48 soat). Faqat serverga yetgan matnli xabar. */
 fun Message.canEdit(now: Long = System.currentTimeMillis()): Boolean =
-    isMine && !isDeleted && serverId != null && type == MessageType.TEXT && now - createdAt < EDIT_WINDOW_MS
+    isMine && !isDeleted && serverId != null && type == MessageType.TEXT && now - createdAt < EDIT_WINDOW_MS &&
+        // Qo'ng'iroq yozuvi matn bo'lib saqlanadi, lekin uni tahrirlash formatni buzadi.
+        CallLogFormat.parse(text) == null
 
 /**
  * "Oʻchirish" menyuda ko'rinadimi. Server qoidasi: yuboruvchi har doim, guruhda OWNER/ADMIN ham

@@ -3,4 +3,16 @@
 <resources>
     <string name="calls_unavailable">Calls are unavailable right now</string>
     <string name="call_failed">Could not start the call</string>
+    <string name="call_no_answer">No answer</string>
+    <string name="call_camera">Camera</string>
+    <string name="call_flip">Flip</string>
+    <string name="call_microphone">Mic</string>
+    <string name="call_speaker">Speaker</string>
+    <string name="call_end">End</string>
+    <string name="call_connecting">Connecting…</string>
+    <string name="call_group_title">Video chat</string>
+    <plurals name="call_participants">
+        <item quantity="one">%d participant</item>
+        <item quantity="other">%d participants</item>
+    </plurals>
 </resources>

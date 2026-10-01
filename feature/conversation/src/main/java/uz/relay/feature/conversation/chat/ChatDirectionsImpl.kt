@@ -26,6 +26,9 @@ internal class ChatDirectionsImpl @Inject constructor(
     override suspend fun navigateToMediaViewer(chatId: String, clientMessageId: String) =
         navigator.navigate(AppNavigationParam.To(MediaViewerKey(chatId, clientMessageId)))
 
-    override suspend fun navigateToCall(callId: String, video: Boolean) =
-        navigator.navigate(AppNavigationParam.To(CallKey(callId, video)))
+    override suspend fun navigateToCall(callId: String, video: Boolean, chatId: String) =
+        navigator.navigate(AppNavigationParam.To(CallKey(callId, video, chatId)))
+
+    override suspend fun navigateToGroupCall(callId: String, chatId: String) =
+        navigator.navigate(AppNavigationParam.To(CallKey(callId, video = true, chatId = chatId, group = true)))
 }

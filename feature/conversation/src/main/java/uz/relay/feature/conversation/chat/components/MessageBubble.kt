@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import uz.relay.core.designsystem.R as DesignR
 import uz.relay.core.designsystem.theme.SenderNameColors
 import uz.relay.core.designsystem.theme.SwiftTheme
+import uz.relay.domain.model.CallLogFormat
 import uz.relay.domain.model.Message
 import uz.relay.domain.model.MessageStatus
 import uz.relay.domain.model.MessageType
@@ -126,6 +127,14 @@ fun MessageBubble(
         }
     }
 
+    // Qo'ng'iroq yozuvi (matnli xabar maxsus formatda) — o'z ko'rinishi.
+    if (message.type == MessageType.TEXT && !message.isDeleted) {
+        CallLogFormat.parse(message.text)?.let { log ->
+            CallLogBubble(message = message, log = log, modifier = modifier)
+            return
+        }
+    }
+
     val isOut = message.isMine
     val bubble = bubbleColors(isOut)
 
@@ -205,7 +214,8 @@ fun snippetOf(message: Message): String = when {
     message.type == MessageType.IMAGE -> message.text?.takeIf { it.isNotBlank() } ?: stringResource(R.string.photo)
     message.type == MessageType.VIDEO -> message.text?.takeIf { it.isNotBlank() } ?: stringResource(R.string.video)
     message.type == MessageType.FILE -> message.text?.takeIf { it.isNotBlank() } ?: stringResource(R.string.file)
-    else -> message.text.orEmpty().replace('\n', ' ')
+    else -> CallLogFormat.parse(message.text)?.let { stringResource(callTitleRes(it, message.isMine)) }
+        ?: message.text.orEmpty().replace('\n', ' ')
 }
 
 /** Javob iqtibosi: radius 10, chapda 3dp rangli chiziq, ism (13/700) + bir qatorli matn. Bosilsa asl xabarga o'tadi. */

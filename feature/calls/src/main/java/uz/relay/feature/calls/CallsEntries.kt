@@ -7,5 +7,5 @@ import uz.relay.feature.calls.call.CallScreen
 
 /** Calls feature ekranlarini ilovaning NavDisplay'iga ro'yxatdan o'tkazadi (NavKey → ekran). */
 fun EntryProviderScope<NavKey>.callsEntries() {
-    entry<CallKey> { key -> CallScreen(callId = key.callId, video = key.video) }
+    entry<CallKey> { key -> CallScreen(callId = key.callId, video = key.video, chatId = key.chatId, group = key.group) }
 }

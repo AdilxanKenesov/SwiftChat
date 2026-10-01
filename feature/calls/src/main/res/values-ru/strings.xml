@@ -3,4 +3,18 @@
 <resources>
     <string name="calls_unavailable">Звонки сейчас недоступны</string>
     <string name="call_failed">Не удалось начать звонок</string>
+    <string name="call_no_answer">Нет ответа</string>
+    <string name="call_camera">Камера</string>
+    <string name="call_flip">Сменить</string>
+    <string name="call_microphone">Микрофон</string>
+    <string name="call_speaker">Динамик</string>
+    <string name="call_end">Завершить</string>
+    <string name="call_connecting">Подключение…</string>
+    <string name="call_group_title">Видеочат</string>
+    <plurals name="call_participants">
+        <item quantity="one">%d участник</item>
+        <item quantity="few">%d участника</item>
+        <item quantity="many">%d участников</item>
+        <item quantity="other">%d участника</item>
+    </plurals>
 </resources>

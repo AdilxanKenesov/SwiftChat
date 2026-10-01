@@ -89,4 +89,18 @@
     <string name="video_call">Video call</string>
     <string name="error_calls_unavailable">Calls are unavailable right now</string>
     <string name="error_call_failed">Could not start the call</string>
+    <string name="call_outgoing">Outgoing call</string>
+    <string name="call_incoming">Incoming call</string>
+    <string name="call_missed">Missed call</string>
+    <string name="call_no_answer">No answer</string>
+    <string name="call_declined">Declined call</string>
+    <string name="call_canceled">Canceled call</string>
+    <string name="call_group_started">Video chat started</string>
+    <string name="call_group_ended">Video chat ended</string>
+    <string name="group_call_banner_title">Video chat</string>
+    <string name="group_call_join">Join</string>
+    <plurals name="group_call_participants">
+        <item quantity="one">%d participant</item>
+        <item quantity="other">%d participants</item>
+    </plurals>
 </resources>

@@ -84,4 +84,12 @@
     <string name="remove_contact_title">%1$s kontaktlardan oʻchirilsinmi?</string>
     <string name="remove">Oʻchirish</string>
     <string name="cancel">Bekor qilish</string>
+    <string name="call_outgoing">Chiquvchi qoʻngʻiroq</string>
+    <string name="call_incoming">Kiruvchi qoʻngʻiroq</string>
+    <string name="call_missed">Oʻtkazib yuborilgan qoʻngʻiroq</string>
+    <string name="call_no_answer">Javobsiz qoʻngʻiroq</string>
+    <string name="call_declined">Rad etilgan qoʻngʻiroq</string>
+    <string name="call_canceled">Bekor qilingan qoʻngʻiroq</string>
+    <string name="call_group_started">Video chat boshlandi</string>
+    <string name="call_group_ended">Video chat tugadi</string>
 </resources>

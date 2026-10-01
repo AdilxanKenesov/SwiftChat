@@ -91,4 +91,20 @@
     <string name="video_call">Видеозвонок</string>
     <string name="error_calls_unavailable">Звонки сейчас недоступны</string>
     <string name="error_call_failed">Не удалось начать звонок</string>
+    <string name="call_outgoing">Исходящий звонок</string>
+    <string name="call_incoming">Входящий звонок</string>
+    <string name="call_missed">Пропущенный звонок</string>
+    <string name="call_no_answer">Нет ответа</string>
+    <string name="call_declined">Отклонённый звонок</string>
+    <string name="call_canceled">Отменённый звонок</string>
+    <string name="call_group_started">Видеочат начат</string>
+    <string name="call_group_ended">Видеочат завершён</string>
+    <string name="group_call_banner_title">Видеочат</string>
+    <string name="group_call_join">Присоединиться</string>
+    <plurals name="group_call_participants">
+        <item quantity="one">%d участник</item>
+        <item quantity="few">%d участника</item>
+        <item quantity="many">%d участников</item>
+        <item quantity="other">%d участника</item>
+    </plurals>
 </resources>

@@ -1,5 +1,6 @@
 package uz.relay.feature.calls.call
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -17,11 +18,18 @@ import io.getstream.video.android.core.call.state.DeclineCall
 import io.getstream.video.android.core.call.state.LeaveCall
 import io.getstream.video.android.core.model.RejectReason
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.orbitmvi.orbit.syntax.Syntax
 import org.orbitmvi.orbit.viewmodel.orbitContainer
 import uz.relay.core.common.result.AppError
 import uz.relay.core.common.result.ErrorCodes
+import uz.relay.domain.model.CallLog
+import uz.relay.domain.model.CallLogFormat
+import uz.relay.domain.model.CallOutcome
+import uz.relay.domain.usecase.message.SendTextMessageUseCase
 
 /**
  * Bitta qo'ng'iroqni boshqaradi. `Call` obyekti ViewModel'da saqlanadi (Stream qoidasi: Composable yoki `remember`
@@ -30,32 +38,54 @@ import uz.relay.core.common.result.ErrorCodes
  * Stream'ning `DefaultOnCallActionHandler`i faqat mikrofon/kamera/karnayni boshqaradi; qabul qilish, rad etish,
  * bekor qilish va chiqish bu yerda — SDK'ning o'z `StreamCallActivity`dagi tartibda (accept → join,
  * reject(Decline/Cancel), leave). Chiquvchi qo'ng'iroqni suhbatdosh qabul qilsa, SDK qo'ng'iroq qiluvchini o'zi ulaydi.
+ *
+ * [group] — guruh video chati (Telegram'dagidek ochiq xona): jiringlash va 15 s taymer yo'q, ekran ochilishi bilan
+ * xonaga qo'shilinadi; kimdir chiqsa qo'ng'iroq tugamaydi — faqat o'zim chiqsam yoki xona tugasa ekran yopiladi.
  */
 @HiltViewModel(assistedFactory = CallViewModel.Factory::class)
 class CallViewModel @AssistedInject constructor(
-    @Assisted callId: String,
+    @Assisted("callId") callId: String,
     @Assisted video: Boolean?,
+    @Assisted("chatId") private val chatId: String?,
+    @Assisted("group") private val group: Boolean,
+    private val sendTextMessage: SendTextMessageUseCase,
     private val directions: CallContract.Directions
 ) : ViewModel(), CallContract.ViewModel {
 
     @AssistedFactory
     interface Factory {
-        fun create(callId: String, video: Boolean?): CallViewModel
+        fun create(
+            @Assisted("callId") callId: String,
+            video: Boolean?,
+            @Assisted("chatId") chatId: String?,
+            @Assisted("group") group: Boolean
+        ): CallViewModel
     }
 
     /** Bir xil (type, id) har doim bir xil `Call` obyektini qaytaradi — kiruvchi qo'ng'iroqning holati ham shu yerda. */
     val call: Call? = StreamVideo.instanceOrNull()?.call(type = CALL_TYPE, id = callId)
 
-    private val isVideo: Boolean = video ?: (call?.isVideoEnabled() ?: true)
+    private val isVideo: Boolean = group || (video ?: (call?.isVideoEnabled() ?: true))
 
     /** Ekran bir marta yopilsin (bir nechta "tugadi" signali kelishi mumkin). */
     private var finished = false
 
+    /** Suhbatdosh ulanib, haqiqiy suhbat boshlangan vaqt — davomiylik shundan hisoblanadi (jiringlash vaqti kirmaydi). */
+    private var answeredAt: Long? = null
+
     override val container =
         orbitContainer<CallContract.UiState, CallContract.SideEffect>(
-            CallContract.UiState(isVideo = isVideo, unavailable = call == null)
+            CallContract.UiState(isVideo = isVideo, isGroup = group, unavailable = call == null)
         ) {
-            if (call != null) observeEnd(call)
+            if (call != null) {
+                observeCallClosed(call)
+                if (group) {
+                    joinGroup(call)
+                } else {
+                    observeEnd(call)
+                    watchRingTimeout(call)
+                }
+            }
         }
 
     init {
@@ -72,11 +102,13 @@ class CallViewModel @AssistedInject constructor(
         when (intent) {
             is CallContract.Intent.OnCallAction -> onCallAction(call, intent.action)
             CallContract.Intent.OnBack -> onCallAction(call, backAction(call))
-            CallContract.Intent.OnFinished -> intent { finish(call) }
+            // Slot'lar: rad etildi yoki server 15 s'da javobsiz deb tugatdi.
+            CallContract.Intent.OnFinished -> intent { finish(call, outcomeFromRinging(call)) }
         }
     }
 
     private fun onCallAction(call: Call, action: CallAction) {
+        Log.i(TAG, "action=${action::class.simpleName} call=${call.id} ringing=${call.state.ringingState.value::class.simpleName}")
         when (action) {
             is AcceptCall -> intent {
                 val result = when (val accepted = call.accept()) {
@@ -92,11 +124,11 @@ class CallViewModel @AssistedInject constructor(
             }
             is DeclineCall -> intent {
                 call.reject(RejectReason.Decline)
-                finish(call)
+                finish(call, CallOutcome.DECLINED)
             }
             is CancelCall -> intent {
                 call.reject(RejectReason.Cancel)
-                finish(call)
+                finish(call, CallOutcome.CANCELED)
             }
             is LeaveCall -> intent { finish(call) }
             // Mikrofon, kamera, karnay, kamerani almashtirish — Stream'ning standart ishlovchisi (main thread'da).
@@ -118,17 +150,120 @@ class CallViewModel @AssistedInject constructor(
     private fun observeEnd(call: Call) = intent {
         var hadRemote = false
         call.state.remoteParticipants.collect { remotes ->
-            if (remotes.isNotEmpty()) hadRemote = true
-            else if (hadRemote) finish(call)
+            if (remotes.isNotEmpty()) {
+                hadRemote = true
+                if (answeredAt == null) answeredAt = System.currentTimeMillis()
+            } else if (hadRemote) {
+                finish(call)
+            }
         }
     }
 
-    /** `leave()` sinxron, lekin SDK ichki obyektlari main thread'da yaratilgan — shuning uchun Main. */
-    private suspend fun Syntax<CallContract.UiState, CallContract.SideEffect>.finish(call: Call) {
+    /**
+     * Qo'ng'iroq boshqa yo'l bilan tugasa ham ekran yopilsin:
+     *  - server qo'ng'iroqni tugatdi (`endedAt` qo'yildi — masalan, suhbatdosh `end` qildi);
+     *  - jiringlash holati jonli holatdan `Idle`ga qaytdi (qo'ng'iroqdan chiqildi).
+     * Aks holda `RingingCallContent` `Idle`da hech narsa chizmaydi va foydalanuvchi qop-qora ekranda qolib ketardi.
+     * `Idle` faqat oldin jonli holat ko'rilgan bo'lsa hisobga olinadi — ekran ochilgan zahoti bir lahza `Idle`
+     * bo'lishi mumkin.
+     */
+    private fun observeCallClosed(call: Call) = intent {
+        var wasLive = false
+        combine(call.state.ringingState, call.state.endedAt) { ringing, endedAt -> ringing to endedAt }
+            .collect { (ringing, endedAt) ->
+                if (ringing !is RingingState.Idle) wasLive = true
+                when {
+                    endedAt != null -> finish(call, outcomeFromRinging(call))
+                    // Guruh xonasida jiringlash yo'q — holat butun qo'ng'iroq davomida Idle bo'lishi mumkin.
+                    !group && ringing is RingingState.Idle && wasLive -> finish(call, outcomeFromRinging(call))
+                }
+            }
+    }
+
+    /**
+     * Guruh xonasiga qo'shilish (xona ChatViewModel'da allaqachon yaratilgan). Davomiylik shu paytdan sanaladi;
+     * xona boshlangan vaqt server'da bo'lsa ("tugadi" yozuvi uchun) — o'shandan.
+     */
+    private fun joinGroup(call: Call) = intent {
+        when (val result = call.join()) {
+            is Result.Success -> {
+                answeredAt = call.state.session.value?.startedAt?.toInstant()?.toEpochMilli() ?: System.currentTimeMillis()
+                Log.i(TAG, "joined group call=${call.id}")
+            }
+            is Result.Failure -> {
+                Log.w(TAG, "group join failed call=${call.id}: ${result.value.message}")
+                postSideEffect(CallContract.SideEffect.ShowError(callError(result.value.message)))
+                finish(call)
+            }
+        }
+    }
+
+    /**
+     * Zaxira taymer: server 15 s'da qo'ng'iroqni o'zi tugatadi (RingSettings), lekin uning signali kechiksa yoki
+     * kelmasa ham chiquvchi qo'ng'iroq ekranda osilib qolmasin — biroz kutib, hali javob yo'q bo'lsa bekor qilamiz.
+     */
+    private fun watchRingTimeout(call: Call) = intent {
+        delay(RING_TIMEOUT_MS + TIMEOUT_GRACE_MS)
+        val state = call.state.ringingState.value
+        if (state is RingingState.Outgoing && !state.acceptedByCallee) {
+            call.reject(RejectReason.Cancel)
+            postSideEffect(CallContract.SideEffect.NoAnswer)
+            finish(call, CallOutcome.MISSED)
+        }
+    }
+
+    /** Jiringlash qanday tugadi: hamma rad etdi → rad etildi, aks holda (vaqt tugadi) → javobsiz. */
+    private fun outcomeFromRinging(call: Call): CallOutcome =
+        if (call.state.ringingState.value is RingingState.RejectedByAll) CallOutcome.DECLINED else CallOutcome.MISSED
+
+    /**
+     * Qo'ng'iroqni yopadi va (men qo'ng'iroq qilgan bo'lsam) chatga tarix yozuvini yuboradi.
+     * [fallback] — suhbat bo'lmagan holat sababi; suhbat bo'lgan bo'lsa natija baribir "javob berildi" + davomiylik.
+     * `leave()` sinxron, lekin SDK ichki obyektlari main thread'da yaratilgan — shuning uchun Main.
+     */
+    private suspend fun Syntax<CallContract.UiState, CallContract.SideEffect>.finish(
+        call: Call,
+        fallback: CallOutcome = CallOutcome.CANCELED
+    ) {
         if (finished) return
         finished = true
-        withContext(Dispatchers.Main) { call.leave() }
+        Log.i(TAG, "finish call=${call.id} answered=${answeredAt != null} fallback=$fallback")
+        // Guruhda: xonadan oxirgi bo'lib chiqyapmanmi — leave()'dan keyin ro'yxat tozalanadi, shuning uchun oldin.
+        val lastInGroup = group && answeredAt != null && call.state.remoteParticipants.value.isEmpty()
+        // leave() xato bersa ham ekran yopilishi shart — aks holda qora ekranda qolinadi.
+        runCatching { withContext(Dispatchers.Main) { call.leave() } }
+            .onFailure { Log.w(TAG, "leave failed call=${call.id}", it) }
         directions.back()
+        // Ekran yopilgach ViewModel tozalanadi va uning scope'i bekor bo'ladi — tarix yozuvi yo'qolmasin.
+        withContext(NonCancellable) {
+            if (group) { if (lastInGroup) saveGroupEndLog() } else saveCallLog(fallback)
+        }
+    }
+
+    /**
+     * Guruhda "Video chat tugadi · 12:34" yozuvini xonadan OXIRGI chiqqan odam yuboradi ("boshlandi"ni xonani
+     * ochgan odam ChatViewModel'da yuboradi) — har bir chiqqan odam yozsa chat yozuvlarga to'lib ketardi.
+     */
+    private suspend fun saveGroupEndLog() {
+        val chatId = chatId ?: return
+        val started = answeredAt ?: return
+        val log = CallLog(video = true, outcome = CallOutcome.ANSWERED, durationSeconds = (System.currentTimeMillis() - started) / 1000, group = true)
+        sendTextMessage(chatId, CallLogFormat.format(log), replyToClientMessageId = null)
+    }
+
+    /**
+     * Tarix faqat chiquvchi qo'ng'iroqda yoziladi ([chatId] faqat shunda bor) — ikkala tomon yozsa dublikat bo'lardi.
+     * Oddiy matnli xabar sifatida outbox orqali ketadi: internet bo'lmasa ham yo'qolmaydi.
+     */
+    private suspend fun saveCallLog(fallback: CallOutcome) {
+        val chatId = chatId ?: return
+        val started = answeredAt
+        val log = if (started != null) {
+            CallLog(video = isVideo, outcome = CallOutcome.ANSWERED, durationSeconds = (System.currentTimeMillis() - started) / 1000)
+        } else {
+            CallLog(video = isVideo, outcome = fallback, durationSeconds = 0)
+        }
+        sendTextMessage(chatId, CallLogFormat.format(log), replyToClientMessageId = null)
     }
 
     private fun callError(message: String) = AppError.Api(0, ErrorCodes.CALL_FAILED, message, retryable = true)
@@ -139,6 +274,11 @@ class CallViewModel @AssistedInject constructor(
     }
 
     private companion object {
+        const val TAG = "SwiftChat.Call"
         const val CALL_TYPE = "default"
+        /** Server sozlamasi bilan bir xil (CallRepositoryImpl.RING_TIMEOUT_MS). */
+        const val RING_TIMEOUT_MS = 15_000L
+        /** Server signalini kutish uchun qo'shimcha vaqt. */
+        const val TIMEOUT_GRACE_MS = 2_000L
     }
 }

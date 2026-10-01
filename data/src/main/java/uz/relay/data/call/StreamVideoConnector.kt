@@ -82,10 +82,15 @@ class StreamVideoConnector @Inject constructor(
                 apiKey = BuildConfig.STREAM_API_KEY,
                 user = User(id = userId, name = name),
                 token = StreamVideo.devToken(userId),
-                loggingLevel = LoggingLevel(priority = if (BuildConfig.DEBUG) Priority.DEBUG else Priority.ERROR),
+                // DEBUG darajasida SDK har health-check, SFU paket va WebRTC hodisasini yozardi (daqiqasiga minglab
+                // qator) — logcat to'lib, ilova sezilarli sekinlashardi. WARN — faqat muammolar.
+                loggingLevel = LoggingLevel(priority = if (BuildConfig.DEBUG) Priority.WARN else Priority.ERROR),
                 appName = APP_NAME
             ).build()
-        }.onSuccess { _connectedUserId.value = userId }
+        }.onSuccess {
+            _connectedUserId.value = userId
+            Log.i(TAG, "Stream Video connected as $userId")
+        }
             .onFailure { Log.e(TAG, "Stream Video client could not be built", it) }
     }
 
@@ -93,6 +98,7 @@ class StreamVideoConnector @Inject constructor(
         StreamVideo.instanceOrNull()?.let {
             it.logOut()
             StreamVideo.removeClient()
+            Log.i(TAG, "Stream Video disconnected")
         }
         _connectedUserId.value = null
     }

@@ -26,11 +26,15 @@ interface CallContract {
 
     sealed interface SideEffect {
         data class ShowError(val error: AppError) : SideEffect
+        /** 15 s ichida javob bo'lmadi. */
+        object NoAnswer : SideEffect
     }
 
     data class UiState(
         /** Video qo'ng'iroqmi (aks holda faqat ovoz — kamera o'chiq, faqat mikrofon ruxsati so'raladi). */
         val isVideo: Boolean = true,
+        /** Guruh video chati — jiringlash ekrani yo'q, darhol xona ko'rinadi. */
+        val isGroup: Boolean = false,
         /** Stream client yo'q (API key yo'q yoki hali ulanmagan) — qo'ng'iroq ko'rsatilmaydi. */
         val unavailable: Boolean = false
     )

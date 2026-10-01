@@ -1,4 +1,16 @@
 <resources>
     <string name="calls_unavailable">Qoʻngʻiroqlar hozircha ishlamayapti</string>
     <string name="call_failed">Qoʻngʻiroqni boshlab boʻlmadi</string>
+    <string name="call_no_answer">Javob yoʻq</string>
+    <string name="call_camera">Kamera</string>
+    <string name="call_flip">Almashtirish</string>
+    <string name="call_microphone">Mikrofon</string>
+    <string name="call_speaker">Karnay</string>
+    <string name="call_end">Tugatish</string>
+    <string name="call_connecting">Ulanmoqda…</string>
+    <string name="call_group_title">Video chat</string>
+    <plurals name="call_participants">
+        <item quantity="one">%d ishtirokchi</item>
+        <item quantity="other">%d ishtirokchi</item>
+    </plurals>
 </resources>

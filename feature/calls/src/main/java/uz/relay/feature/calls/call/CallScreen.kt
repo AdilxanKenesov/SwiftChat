@@ -19,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -32,10 +33,14 @@ import io.getstream.video.android.compose.ui.components.call.activecall.AudioCal
 import io.getstream.video.android.compose.ui.components.call.activecall.CallContent
 import io.getstream.video.android.compose.ui.components.call.ringing.RingingCallContent
 import io.getstream.video.android.core.Call
+import io.getstream.video.android.core.call.state.CallAction
+import io.getstream.video.android.core.pip.PictureInPictureConfiguration
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
 import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import uz.relay.feature.calls.R
+import uz.relay.feature.calls.call.components.CallControls
+import uz.relay.feature.calls.call.components.CallTopBar
 
 /**
  * Qo'ng'iroq ekrani. Stream'ning tayyor Compose komponentlari ishlatiladi (`VideoTheme` ichida bo'lishi shart):
@@ -46,9 +51,9 @@ import uz.relay.feature.calls.R
  * Ochiladi: shaxsiy chat sarlavhasidagi 📞/🎥 (chiquvchi) yoki ilova darajasidagi kiruvchi qo'ng'iroq (MainViewModel).
  */
 @Composable
-internal fun CallScreen(callId: String, video: Boolean?) {
+internal fun CallScreen(callId: String, video: Boolean?, chatId: String?, group: Boolean) {
     val viewModel = hiltViewModel<CallViewModel, CallViewModel.Factory>(
-        creationCallback = { factory -> factory.create(callId, video) }
+        creationCallback = { factory -> factory.create(callId, video, chatId, group) }
     )
     val uiState by viewModel.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -57,6 +62,7 @@ internal fun CallScreen(callId: String, video: Boolean?) {
     viewModel.collectSideEffect { sideEffect ->
         when (sideEffect) {
             is CallContract.SideEffect.ShowError -> snackbarHostState.showSnackbar(context.getString(R.string.call_failed))
+            CallContract.SideEffect.NoAnswer -> snackbarHostState.showSnackbar(context.getString(R.string.call_no_answer))
         }
     }
 
@@ -75,7 +81,17 @@ internal fun CallScreen(callId: String, video: Boolean?) {
         } else {
             CallPermissions(isVideo = uiState.isVideo)
             VideoTheme {
-                CallContentHost(call = call, isVideo = uiState.isVideo, onEventDispatcher = viewModel::onEventDispatcher)
+                if (uiState.isGroup) {
+                    // Guruh xonasi: jiringlash bosqichi yo'q — darhol to'liq ekranli xona.
+                    FullScreenVideoCall(
+                        call = call,
+                        group = true,
+                        onBack = { viewModel.onEventDispatcher(CallContract.Intent.OnBack) },
+                        onCallAction = { viewModel.onEventDispatcher(CallContract.Intent.OnCallAction(it)) }
+                    )
+                } else {
+                    CallContentHost(call = call, isVideo = uiState.isVideo, onEventDispatcher = viewModel::onEventDispatcher)
+                }
             }
         }
         SwiftSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.TopCenter))
@@ -88,7 +104,7 @@ internal fun CallScreen(callId: String, video: Boolean?) {
  */
 @Composable
 private fun CallContentHost(call: Call, isVideo: Boolean, onEventDispatcher: (CallContract.Intent) -> Unit) {
-    val onCallAction: (io.getstream.video.android.core.call.state.CallAction) -> Unit =
+    val onCallAction: (CallAction) -> Unit =
         { onEventDispatcher(CallContract.Intent.OnCallAction(it)) }
     val onBack = { onEventDispatcher(CallContract.Intent.OnBack) }
 
@@ -99,16 +115,75 @@ private fun CallContentHost(call: Call, isVideo: Boolean, onEventDispatcher: (Ca
         onCallAction = onCallAction,
         onAcceptedContent = {
             if (isVideo) {
-                CallContent(call = call, onBackPressed = onBack, onCallAction = onCallAction)
+                FullScreenVideoCall(call = call, group = false, onBack = onBack, onCallAction = onCallAction)
             } else {
                 val micOn by call.microphone.isEnabled.collectAsState()
-                AudioCallContent(call = call, isMicrophoneEnabled = micOn, onCallAction = onCallAction, onBackPressed = onBack)
+                AudioCallContent(
+                    call = call,
+                    isMicrophoneEnabled = micOn,
+                    onCallAction = onCallAction,
+                    onBackPressed = onBack,
+                    controlsContent = {
+                        CallControls(
+                            call = call,
+                            isVideo = false,
+                            onCallAction = onCallAction,
+                            modifier = Modifier.align(Alignment.BottomCenter)
+                        )
+                    }
+                )
             }
         },
         onRejectedContent = { LaunchedEffect(Unit) { onEventDispatcher(CallContract.Intent.OnFinished) } },
-        onNoAnswerContent = { LaunchedEffect(Unit) { onEventDispatcher(CallContract.Intent.OnFinished) } }
+        onNoAnswerContent = { LaunchedEffect(Unit) { onEventDispatcher(CallContract.Intent.OnFinished) } },
+        // Qo'ng'iroqdan chiqilgach holat `Idle` bo'ladi — Stream bu yerda hech narsa chizmaydi (qora ekran).
+        // Ekranni yopishni asosan ViewModel qiladi; bu zaxira, signal kechiksa ham foydalanuvchi qolib ketmasin.
+        onIdle = { LaunchedEffect(Unit) { onEventDispatcher(CallContract.Intent.OnFinished) } }
     )
 }
+
+/**
+ * Video qo'ng'iroq butun ekranda (Telegram'dagidek): suhbatdosh kamerasi status bar va navigation bar ostigacha
+ * cho'ziladi, mening kameram kichik suzuvchi oynada. Stream'ning `CallContent`i tepa panel va tugmalarni videodan
+ * TASHQARIGA (Scaffold top/bottom bar) qo'yadi — video o'rtada qisilib qolardi. Shuning uchun uning slot'lari bo'sh
+ * qoldiriladi, ism/davomiylik va tugmalar esa video USTIGA qo'yiladi. Yorug' videoda oq matn/ikonka ko'rinsin
+ * deb, ularning ortida yengil qora gradient bor.
+ *
+ * PiP hozircha o'chiq: yoqiq bo'lsa `CallContent` "orqaga"da PiP'ga o'tmoqchi bo'ladi, manifest'da PiP yo'qligi
+ * uchun xato bilan qo'ng'iroqdan chiqib ketardi (qora ekran). PiP alohida bosqichda manifest bilan birga yoqiladi.
+ */
+@Composable
+private fun FullScreenVideoCall(call: Call, group: Boolean, onBack: () -> Unit, onCallAction: (CallAction) -> Unit) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        CallContent(
+            call = call,
+            modifier = Modifier.fillMaxSize(),
+            onBackPressed = onBack,
+            onCallAction = onCallAction,
+            appBarContent = {},
+            controlsContent = {},
+            pictureInPictureConfiguration = PictureInPictureConfiguration(enable = false)
+        )
+        CallTopBar(
+            call = call,
+            group = group,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .background(Brush.verticalGradient(listOf(Scrim, Color.Transparent)))
+        )
+        CallControls(
+            call = call,
+            isVideo = true,
+            onCallAction = onCallAction,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .background(Brush.verticalGradient(listOf(Color.Transparent, Scrim)))
+        )
+    }
+}
+
+/** Video ustidagi matn/tugmalar ortidagi soya. */
+private val Scrim = Color.Black.copy(alpha = 0.55f)
 
 /**
  * Ruxsatlar ekran ochilishi bilan so'raladi — chiquvchi qo'ng'iroqda suhbatdosh qabul qilishi bilan SDK darhol
