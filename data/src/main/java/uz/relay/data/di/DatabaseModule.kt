@@ -28,6 +28,8 @@ object DatabaseModule {
             // Ishlab chiqish bosqichida: sxema o'zgarsa baza tozalanadi. Bu xavfsiz, chunki hamma
             // ma'lumot serverda bor — keyingi sync uni qayta yuklaydi.
             .fallbackToDestructiveMigration(dropAllTables = true)
+            // Eskiroq build yangi baza ustiga o'rnatilsa (versiya pasaysa) ham yiqilmasin — baza qayta yaratiladi.
+            .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
             .build()
 
     @Provides
