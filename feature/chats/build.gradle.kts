@@ -60,8 +60,6 @@ dependencies {
     implementation(libs.orbit.core)
     implementation(libs.orbit.viewmodel)
     implementation(libs.orbit.compose)
-    // Paging — uzun ro'yxatni sahifalab ko'rsatish.
-    implementation(libs.androidx.paging.compose)
 
     // Faqat debug: Android Studio preview va Layout Inspector.
     debugImplementation(libs.androidx.compose.ui.tooling)

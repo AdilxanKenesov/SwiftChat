@@ -119,8 +119,7 @@ dependencies {
     implementation(libs.orbit.viewmodel)
     implementation(libs.orbit.compose)
 
-    // Paging va Coil (rasm yuklash; App'dagi umumiy ImageLoader token bilan ishlaydi).
-    implementation(libs.androidx.paging.compose)
+    // Coil (rasm yuklash; App'dagi umumiy ImageLoader token bilan ishlaydi).
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
 

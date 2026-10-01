@@ -31,6 +31,11 @@ android {
     buildFeatures {
         compose = true
     }
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
 }
 
 dependencies {
@@ -67,6 +72,10 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
+    // ViewModel testlari: Orbit test DSL, repository fake'lari (domain testFixtures) va Robolectric (Context, Stream SDK klasslari).
+    testImplementation(libs.orbit.test)
+    testImplementation(testFixtures(project(":domain")))
+    testImplementation(libs.robolectric)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
 }

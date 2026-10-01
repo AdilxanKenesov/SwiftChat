@@ -171,7 +171,6 @@ class ChatViewModel @AssistedInject constructor(
         if (result is AppResult.Error) showError(result.error)
     }
 
-    /** Rasm/video — to'liq ekranli ko'ruvchiga o'tiladi; fayl — yuklab olinib, tashqi ilovada ochiladi. */
     /**
      * Qo'ng'iroq Stream Video orqali (Relay'da qo'ng'iroq yo'q). Yaratilgach qo'ng'iroq ekrani ochiladi — u yerda
      * suhbatdosh javob berguncha "chiquvchi qo'ng'iroq" ko'rinadi. Faqat shaxsiy chatda (peer bor).
@@ -218,6 +217,7 @@ class ChatViewModel @AssistedInject constructor(
         }
     }
 
+    /** Rasm/video — to'liq ekranli ko'ruvchiga o'tiladi; fayl — yuklab olinib, tashqi ilovada ochiladi. */
     private fun openMedia(message: Message) = intent {
         val media = message.media.firstOrNull() ?: return@intent
         when (message.type) {

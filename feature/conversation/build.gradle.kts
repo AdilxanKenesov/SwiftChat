@@ -62,8 +62,6 @@ dependencies {
     implementation(libs.orbit.core)
     implementation(libs.orbit.viewmodel)
     implementation(libs.orbit.compose)
-    // Paging — uzun ro'yxatni sahifalab ko'rsatish.
-    implementation(libs.androidx.paging.compose)
 
     // Media: rasm bubble'lari/ko'ruvchi (Coil) va video ijrosi (Media3). DataSource'ning o'zi (token bilan)
     // data modulida yaratiladi va Hilt orqali keladi — bu yerda faqat interfeyslar.

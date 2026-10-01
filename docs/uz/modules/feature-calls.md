@@ -235,13 +235,9 @@ Fayllar sonini tekshirish: `find feature/calls/src/main -name '*.kt'` **9** ni q
 
 ## 7. Testlar
 
-`:feature:calls`da **hali avtomatik testlar yo'q**. `CallViewModel` to'g'ridan-to'g'ri Stream SDK obyektlariga bog'liq, ular uchun Stream test dublyori kerak. Bu hali amalga oshirilmagan.
+| Test klassi | Turi | Nimani tekshiradi |
+|---|---|---|
+| `CallViewModelTest` | Robolectric + Orbit Test (4) | Stream client bo'lmasa ekran "ishlamayapti" holatida; istalgan harakat ekranni yopadi va qo'ng'iroq yozuvi yuborilmaydi; guruh qo'ng'irog'i doim video; audio qo'ng'iroq audio bo'lib qoladi |
+| `CallBackgroundResTest` | JVM (3) | `NONE`/`BLUR` rasmsiz; har bir rasmli fon o'z drawable'iga ega; rasmsiz fonda `imageRes()` xato beradi |
 
-Boshqa joylardagi tegishli qamrov:
-
-| Soha | Testlar |
-|---|---|
-| Qo'ng'iroq yozuvi matn formati (`CallLogFormat`) | `domain`: `CallLogFormatTest` (format, parse, guruh yozuvlari) |
-| Chatdan qo'ng'iroq boshlash | `conversation`: `ChatViewModelTest` (shaxsiy qo'ng'iroq, yangi guruh qo'ng'irog'i "started" yuboradi, qo'shilish yubormaydi) |
-| Chatdagi qo'ng'iroq UI'i (pufakchalar, banner, sarlavha tugmalari) | `conversation`: `CallUiTest`, `CallUiScreenshotTest` |
-| Token server | `server/stream-token/test/index.test.mjs` (7 ta test) |
+Jonli Stream `Call` bilan ishlaydigan qismlar (qabul qilish, jiringlash taymeri, chiqish, qo'ng'iroq yozuvi matni, qo'l ko'tarish, ekran ulashish) Stream test dublyorini talab qiladi va real qurilmada tekshiriladi. Qo'ng'iroq yozuvi formatining o'zi `:domain`dagi `CallLogFormatTest` bilan qamrab olingan.

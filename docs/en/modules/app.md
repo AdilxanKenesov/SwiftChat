@@ -216,7 +216,7 @@ File count check: `find app/src/main -name '*.kt'` returns **4**.
 
 | Test | Type | Notes |
 |---|---|---|
-| `app/src/test/.../ExampleUnitTest.kt` | JVM | template stub |
+| `app/src/test/.../navigation/BackStackApplyTest.kt` | JVM (10 tests) | every `AppNavigationParam` command on the back stack: single-top, replace, back never empties the stack, `BackTo` (inclusive / missing key), `BackToOrTo`, `ResetTo` |
 | `app/src/androidTest/.../ExampleInstrumentedTest.kt` | instrumented | template stub |
 
-The app shell is exercised indirectly through feature tests and CI builds. A dedicated test for `AppNavHost.apply()` is not implemented yet. It is a pure function, so it is easy to test.
+The rest of the app shell is exercised through feature tests and CI builds.

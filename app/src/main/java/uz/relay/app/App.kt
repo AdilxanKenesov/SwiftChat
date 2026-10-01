@@ -37,11 +37,11 @@ class App : Application(), Configuration.Provider, SingletonImageLoader.Factory 
     @Inject
     lateinit var realtimeCoordinator: RealtimeCoordinator
 
-    /** Yuborilmagan xabarlar navbatini (outbox) WorkManager'ga qo'yadi. */
     /** Stream Video (qo'ng'iroqlar): login'da ulanadi, logout'da uziladi. */
     @Inject
     lateinit var streamVideoConnector: StreamVideoConnector
 
+    /** Yuborilmagan xabarlar navbatini (outbox) WorkManager'ga qo'yadi. */
     @Inject
     lateinit var outboxScheduler: OutboxScheduler
 

@@ -477,7 +477,7 @@ Every file of every module, with its responsibility and connections, is listed i
 |---|---|
 | Debug APK | `./gradlew assembleDebug` |
 | Signed release APK | `./gradlew assembleRelease` |
-| Unit, ViewModel & Compose UI tests (211) | `./gradlew testDebugUnitTest :domain:test` |
+| Unit, ViewModel & Compose UI tests (227) | `./gradlew testDebugUnitTest :domain:test` |
 | Screenshot tests (19 goldens) | `./gradlew verifyRoborazziDebug` · update goldens: `recordRoborazziDebug` |
 | Lint | `./gradlew lintDebug` |
 | Token server tests | `node --test server/stream-token/test/index.test.mjs` |
@@ -486,7 +486,7 @@ Every file of every module, with its responsibility and connections, is listed i
 
 - **CI** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs on every PR and push to `develop`: build → tests →
   screenshots → token-server tests → lint. On success the debug APK is attached to the run.
-- **Tests** — 211 JVM tests: business rules, mappers, error handling, every ViewModel (with fake repositories), Compose UI
+- **Tests** — 227 JVM tests: business rules, mappers, error handling, every ViewModel (with fake repositories), Compose UI
   behaviour (Robolectric) and 19 screenshot goldens (light & dark).
 - **Branches** — features in `feature/*`, fixes in `bug/*`, PRs into `develop`; `master` is updated by the owner.
 

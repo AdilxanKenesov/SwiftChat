@@ -22,9 +22,6 @@ dependencies {
     // `api`: AppResult/AppError domain'ning ochiq API'sida — domain'ni ulagan modul ularni ham ko'radi.
     api(project(":core:common"))
 
-    // Paging common — Android'siz PagingData turi (toza Kotlin).
-    api(libs.androidx.paging.common)
-
     // Sof Kotlin modul — testlar oddiy JUnit bilan, Android'siz va tez ishlaydi.
     testImplementation(libs.junit)
     // Fake'lar va MainDispatcherRule uchun (testFixtures'ni ulagan modul testlariga ham o'tadi).

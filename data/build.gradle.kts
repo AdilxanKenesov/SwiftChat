@@ -69,14 +69,11 @@ dependencies {
     // Room — lokal baza (offline-first, UI uchun yagona haqiqat manbai); ksp DAO kodini generatsiya qiladi.
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
-    implementation(libs.androidx.room.paging)
     ksp(libs.androidx.room.compiler)
 
     // DataStore — sozlamalar va sessiya; Tink — tokenlarni shifrlab saqlash.
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.tink.android)
-    // Paging — Room'dan sahifalab o'qish.
-    implementation(libs.androidx.paging.runtime)
 
     // WorkManager — outbox'ni fonda, internet qaytganda yuborish; hilt-work — worker'larga inject.
     implementation(libs.androidx.work.runtime.ktx)

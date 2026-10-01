@@ -53,7 +53,7 @@ import uz.relay.feature.auth.util.messageRes
 /**
  * Telefon raqamini kiritish ekrani (stateful qism).
  *
- * Splash sessiya topmasa shu ekranni ochadi; "Kod olish" muvaffaqiyatli bo'lsa OTP ekraniga o'tiladi.
+ * Sessiya bo'lmasa ilova shu ekrandan boshlanadi (MainViewModel.startKey); "Kod olish" muvaffaqiyatli bo'lsa OTP ekraniga o'tiladi.
  * Bu composable faqat ViewModel'ga ulanadi: state'ni yig'adi, SideEffect'larni (snackbar, havola ochish)
  * bajaradi va chizishni stateless [PhoneScreenContent] ga topshiradi.
  */
