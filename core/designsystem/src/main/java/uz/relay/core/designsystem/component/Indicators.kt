@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -30,7 +29,10 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -40,25 +42,38 @@ import uz.relay.core.designsystem.theme.SwiftChatTheme
 import uz.relay.core.designsystem.theme.SwiftTheme
 
 /**
- * O'qilmaganlar soni belgisi (to'liq yumaloq). [muted] chat uchun kulrang — ovozsiz chat diqqatni
- * tortmasligi kerak. 99 dan katta son "99+" bo'ladi, aks holda belgi kengayib ketadi.
+ * O'qilmaganlar soni belgisi. [muted] chat uchun kulrang — ovozsiz chat diqqatni tortmasligi kerak.
+ * 99 dan katta son "99+" bo'ladi, aks holda belgi kengayib ketadi.
+ *
+ * Shakl: bitta raqam — aniq KVADRAT o'lcham ([size]×[size]), ya'ni to'g'ri doira; ikki va undan ko'p
+ * raqam — o'sha balandlikdagi pill. Avvalgi "minimal o'lcham + gorizontal padding" usulida bitta raqamda en
+ * balandlikdan 1–2dp katta chiqib, doira ovalga aylanardi.
+ *
+ * Raqam vertikal markazda: shriftning qo'shimcha yuqori/pastki bo'shlig'i (includeFontPadding) o'chirilgan va
+ * qator balandligi markazga tekislangan — aks holda raqam doira ichida pastga siljib ko'rinadi.
  */
 @Composable
 fun CountBadge(count: Int, modifier: Modifier = Modifier, muted: Boolean = false, size: Dp = 22.dp) {
     val colors = SwiftTheme.colors
+    val label = if (count > 99) "99+" else count.toString()
+    val shapeModifier = if (label.length == 1) Modifier.size(size) else Modifier.height(size).widthIn(min = size)
     Box(
         modifier = modifier
-            .heightIn(min = size)
-            .widthIn(min = size)
+            .then(shapeModifier)
             .background(if (muted) colors.muted else colors.primary, CircleShape)
-            .padding(horizontal = 7.dp),
+            .padding(horizontal = if (label.length == 1) 0.dp else size * 0.28f),
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = if (count > 99) "99+" else count.toString(),
+            text = label,
             color = if (muted) colors.onMuted else colors.onPrimary,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold
+            fontSize = if (size < 22.dp) 11.sp else 12.sp,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            style = TextStyle(
+                platformStyle = PlatformTextStyle(includeFontPadding = false),
+                lineHeightStyle = LineHeightStyle(alignment = LineHeightStyle.Alignment.Center, trim = LineHeightStyle.Trim.Both)
+            )
         )
     }
 }
