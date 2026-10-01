@@ -90,7 +90,7 @@ internal fun ProfileSetupScreen(viewModel: ProfileSetupViewModel = hiltViewModel
  * Preview'larda "to'g'ri" va "band" holatlarini ViewModel'siz ko'rsatish uchun ajratilgan.
  */
 @Composable
-private fun ProfileSetupScreenContent(
+internal fun ProfileSetupScreenContent(
     uiState: ProfileSetupContract.UiState,
     onEventDispatcher: (ProfileSetupContract.Intent) -> Unit
 ) {

@@ -13,4 +13,12 @@
         <item quantity="one">%d ishtirokchi</item>
         <item quantity="other">%d ishtirokchi</item>
     </plurals>
+    <string name="call_more">Koʻproq</string>
+    <string name="call_raise_hand">Qoʻl koʻtarish</string>
+    <string name="call_lower_hand">Qoʻlni tushirish</string>
+    <string name="call_share_screen">Ekranni ulashish</string>
+    <string name="call_stop_share">Toʻxtatish</string>
+    <string name="call_background">Orqa fon</string>
+    <string name="call_bg_none">Yoʻq</string>
+    <string name="call_bg_blur">Xira</string>
 </resources>

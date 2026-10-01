@@ -110,7 +110,7 @@ internal fun GroupCreateScreen(addToChatId: String?) {
  * Qadamga qarab [PickStep] yoki [NameStep] ko'rsatiladi; FAB esa ular ustida pastki o'ng burchakda turadi.
  */
 @Composable
-private fun GroupCreateContent(
+internal fun GroupCreateContent(
     uiState: GroupCreateContract.UiState,
     onEventDispatcher: (GroupCreateContract.Intent) -> Unit
 ) {

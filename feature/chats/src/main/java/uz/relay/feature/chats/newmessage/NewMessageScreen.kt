@@ -83,7 +83,7 @@ internal fun NewMessageScreen(viewModel: NewMessageViewModel = hiltViewModel()) 
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun NewMessageContent(
+internal fun NewMessageContent(
     uiState: NewMessageContract.UiState,
     onEventDispatcher: (NewMessageContract.Intent) -> Unit
 ) {

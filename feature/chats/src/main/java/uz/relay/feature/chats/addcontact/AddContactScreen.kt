@@ -70,7 +70,7 @@ internal fun AddContactScreen(viewModel: AddContactViewModel = hiltViewModel()) 
 
 /** Qidiruv qatori (qidiruv ekranidagi bilan bir xil) va natijalar: har qatorda "Qo'shish" yoki ✓. */
 @Composable
-private fun AddContactContent(
+internal fun AddContactContent(
     uiState: AddContactContract.UiState,
     onEventDispatcher: (AddContactContract.Intent) -> Unit
 ) {

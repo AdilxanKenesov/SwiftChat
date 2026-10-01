@@ -98,7 +98,7 @@ internal fun ChatsScreen(viewModel: ChatsViewModel = hiltViewModel()) {
  * istalgan holatni (ro'yxat, offline, skeleton, bo'sh) ko'rsatish va UI test yozish oson.
  */
 @Composable
-private fun ChatsScreenContent(
+internal fun ChatsScreenContent(
     uiState: ChatsContract.UiState,
     onEventDispatcher: (ChatsContract.Intent) -> Unit
 ) {

@@ -37,6 +37,12 @@ android {
             optimization {
                 enable = false
             }
+            // Faqat haqiqiy telefonlar protsessorlari. ML Kit (qo'ng'iroqdagi orqa fon) va WebRTC native
+            // kutubxonalari har bir ABI uchun ~20–35 MB — x86/x86_64 (faqat emulyatorlar) APK'ni ikki baravar
+            // kattalashtirardi. Debug'da cheklov yo'q: emulyatorda ham ishlasin.
+            ndk {
+                abiFilters += listOf("arm64-v8a", "armeabi-v7a")
+            }
         }
     }
     // Java 11 — barcha modullarda bir xil.

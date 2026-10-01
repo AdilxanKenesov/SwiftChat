@@ -103,7 +103,7 @@ internal fun OtpScreen(phone: String) {
  * ViewModel'siz bo'lgani uchun har bir holat (kiritish, xato, muddati o'tgan, bloklangan) Preview'da ko'rinadi.
  */
 @Composable
-private fun OtpScreenContent(
+internal fun OtpScreenContent(
     uiState: OtpContract.UiState,
     shakeEvents: Flow<Unit>,
     onEventDispatcher: (OtpContract.Intent) -> Unit
