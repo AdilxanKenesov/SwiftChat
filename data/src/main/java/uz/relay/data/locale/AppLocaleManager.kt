@@ -14,6 +14,7 @@ import uz.relay.domain.model.AppLanguage
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
+import androidx.core.content.edit
 
 /**
  * Ilova ichidagi til tanlovi ("per-app language"), qo'shimcha kutubxonasiz.
@@ -42,7 +43,7 @@ class AppLocaleManager @Inject constructor(
             context.getSystemService(LocaleManager::class.java).applicationLocales = LocaleList.forLanguageTags(language.tag)
         } else {
             // commit: Activity darhol qayta yaratiladi va wrap() yangi qiymatni o'qishi kerak.
-            prefs(context).edit().putString(KEY_LANGUAGE, language.tag).commit()
+            prefs(context).edit(commit = true) { putString(KEY_LANGUAGE, language.tag) }
         }
         _language.value = language
     }
