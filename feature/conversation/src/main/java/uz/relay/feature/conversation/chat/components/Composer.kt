@@ -22,9 +22,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -63,6 +68,21 @@ fun Composer(
     val colors = SwiftTheme.colors
     val isEditing = mode is ChatContract.ComposerMode.Edit
     val canSend = text.isNotBlank()
+    val focusRequester = remember { FocusRequester() }
+    val keyboard = LocalSoftwareKeyboardController.current
+    // Javob yoki tahrir boshlanganda (menyudan yoki xabarni surib) darhol yozishga tayyor: fokus + klaviatura.
+    // Kalit — rejim klassi va xabar: bir xil xabarga qayta surilsa ham qayta ishlamaydi.
+    val modeMessageId = when (mode) {
+        is ChatContract.ComposerMode.Reply -> mode.message.clientMessageId
+        is ChatContract.ComposerMode.Edit -> mode.message.clientMessageId
+        ChatContract.ComposerMode.None -> null
+    }
+    LaunchedEffect(modeMessageId) {
+        if (modeMessageId != null) {
+            focusRequester.requestFocus()
+            keyboard?.show()
+        }
+    }
 
     Column(modifier = modifier.background(colors.bg)) {
         if (mode !is ChatContract.ComposerMode.None) {
@@ -97,6 +117,7 @@ fun Composer(
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 modifier = Modifier
                     .weight(1f)
+                    .focusRequester(focusRequester)
                     .heightIn(min = 44.dp)
                     .background(colors.surface, RoundedCornerShape(22.dp))
                     .padding(horizontal = 16.dp, vertical = 11.dp),

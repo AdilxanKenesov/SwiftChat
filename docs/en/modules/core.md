@@ -167,6 +167,7 @@ Resources:
 | `uz/relay/core/designsystem/theme/Color.kt` | `SwiftColors`, `LightSwift`, `DarkSwift`, `Brand`, palettes | colour tokens | `Theme.kt`, all screens |
 | `uz/relay/core/designsystem/theme/Theme.kt` | `SwiftChatTheme`, `SwiftTheme`, locals | theme provider and Material mapping | `MainActivity`, previews, tests |
 | `uz/relay/core/designsystem/theme/Type.kt` | `FigtreeFontFamily`, `SwiftTypography`, `SwiftMaterialTypography` | typography scale | `Theme.kt` |
+| `uz/relay/core/designsystem/util/Haptics.kt` | `rememberGestureThresholdHaptic` | one light haptic tick when a gesture crosses its threshold | swipe to reply |
 | `uz/relay/core/designsystem/util/Presence.kt` | `formatPresence` | online / last-seen text | chat header, contacts, profiles |
 
 File count check: **13** files.

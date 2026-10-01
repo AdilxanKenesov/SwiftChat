@@ -34,6 +34,7 @@ import uz.relay.domain.model.MessageStatus
 import uz.relay.domain.model.MessageType
 import uz.relay.feature.conversation.R
 import uz.relay.feature.conversation.chat.ChatItem
+import uz.relay.feature.conversation.chat.canReply
 
 /**
  * Ro'yxatdagi bitta xabar qatori: bubble'ni chapga (kiruvchi) yoki o'ngga (chiquvchi) tekislaydi.
@@ -41,7 +42,7 @@ import uz.relay.feature.conversation.chat.ChatItem
  *  - chiquvchi: chapda 44dp bo'sh joy, xato bo'lsa bubble oldida qizil "qayta yuborish" tugmasi.
  *
  * Uzoq bosilganda bubble'ning ekrandagi joyi ([Rect]) ham beriladi — menyu o'sha joyda "ko'tarilgan" bubble'ni
- * chizishi uchun.
+ * chizishi uchun. Qatorni chapga surish — Telegram'dagidek javob berish ([onSwipeReply], [SwipeToReplyBox]).
  *
  * Qaysi qatorda ism/avatar ko'rinishi bu yerda hisoblanmaydi — [ChatItem.Bubble] bayroqlari ViewModel'da tayyorlanadi.
  * `combinedClickable` (ExperimentalFoundationApi) bitta modifier'da oddiy bosish (media ochish) va uzoq bosishni (menyu) beradi.
@@ -61,7 +62,9 @@ fun MessageRow(
     onCancelUpload: () -> Unit = {},
     downloadProgress: Float? = null,
     /** Qo'ng'iroq yozuvi bosildi — shu turdagi (video/audio) qo'ng'iroqni qayta boshlash. */
-    onCallLogClick: (video: Boolean) -> Unit = {}
+    onCallLogClick: (video: Boolean) -> Unit = {},
+    /** Qator chapga surildi — shu xabarga javob. `null` — surish o'chiq (masalan, preview'da). */
+    onSwipeReply: (() -> Unit)? = null
 ) {
     val message = item.message
     val isOut = message.isMine
@@ -72,51 +75,58 @@ fun MessageRow(
     // Bubble'ning oxirgi o'lchangan joyi. State emas: u faqat uzoq bosilgan paytda o'qiladi, qayta chizish kerak emas.
     val bounds = remember { arrayOf(Rect.Zero) }
 
-    Row(
+    // Javob faqat serverga yetgan, o'chirilmagan oddiy xabarga (uzoq bosish menyusidagi "Javob berish" bilan bir xil qoida).
+    SwipeToReplyBox(
+        enabled = onSwipeReply != null && message.canReply(),
+        onReply = { onSwipeReply?.invoke() },
         modifier = modifier
-            .fillMaxWidth()
-            .padding(
-                top = 2.dp,
-                bottom = 2.dp,
-                start = if (isOut) 44.dp else 0.dp,
-                end = if (isOut) 0.dp else 44.dp
-            ),
-        horizontalArrangement = if (isOut) Arrangement.spacedBy(8.dp, Alignment.End) else Arrangement.spacedBy(6.dp),
-        verticalAlignment = Alignment.Bottom
     ) {
-        if (!isOut && isGroup) {
-            if (item.showAvatar) {
-                Avatar(name = names[message.senderId], colorSeed = message.senderId, size = 32.dp)
-            } else {
-                // Avatar yo'q qatorlarda ham bubble'lar bir chiziqda tursin.
-                Box(modifier = Modifier.size(32.dp))
-            }
-        }
-        if (isOut && message.status == MessageStatus.FAILED) {
-            RetryButton(onClick = onRetry, modifier = Modifier.padding(bottom = 2.dp))
-        }
-
-        MessageBubble(
-            message = message,
-            senderName = if (item.showSenderName) names[message.senderId] else null,
-            replied = item.replied,
-            repliedSenderName = item.replied?.let { names[it.senderId] },
-            onReplyClick = onReplyClick,
-            downloadProgress = downloadProgress,
-            onCancelUpload = onCancelUpload,
+        Row(
             modifier = Modifier
-                .onGloballyPositioned { bounds[0] = it.boundsInRoot() }
-                .clip(RoundedCornerShape(18.dp))
-                .combinedClickable(
-                    onClick = when {
-                        hasMedia -> onMediaClick
-                        callLog != null -> ({ onCallLogClick(callLog.video) })
-                        else -> ({})
-                    },
-                    // O'chirilgan xabar uchun menyu yo'q (spec: "no reply/menu").
-                    onLongClick = if (message.isDeleted) null else ({ onLongPress(bounds[0]) })
-                )
-        )
+                .fillMaxWidth()
+                .padding(
+                    top = 2.dp,
+                    bottom = 2.dp,
+                    start = if (isOut) 44.dp else 0.dp,
+                    end = if (isOut) 0.dp else 44.dp
+                ),
+            horizontalArrangement = if (isOut) Arrangement.spacedBy(8.dp, Alignment.End) else Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.Bottom
+        ) {
+            if (!isOut && isGroup) {
+                if (item.showAvatar) {
+                    Avatar(name = names[message.senderId], colorSeed = message.senderId, size = 32.dp)
+                } else {
+                    // Avatar yo'q qatorlarda ham bubble'lar bir chiziqda tursin.
+                    Box(modifier = Modifier.size(32.dp))
+                }
+            }
+            if (isOut && message.status == MessageStatus.FAILED) {
+                RetryButton(onClick = onRetry, modifier = Modifier.padding(bottom = 2.dp))
+            }
+
+            MessageBubble(
+                message = message,
+                senderName = if (item.showSenderName) names[message.senderId] else null,
+                replied = item.replied,
+                repliedSenderName = item.replied?.let { names[it.senderId] },
+                onReplyClick = onReplyClick,
+                downloadProgress = downloadProgress,
+                onCancelUpload = onCancelUpload,
+                modifier = Modifier
+                    .onGloballyPositioned { bounds[0] = it.boundsInRoot() }
+                    .clip(RoundedCornerShape(18.dp))
+                    .combinedClickable(
+                        onClick = when {
+                            hasMedia -> onMediaClick
+                            callLog != null -> ({ onCallLogClick(callLog.video) })
+                            else -> ({})
+                        },
+                        // O'chirilgan xabar uchun menyu yo'q (spec: "no reply/menu").
+                        onLongClick = if (message.isDeleted) null else ({ onLongPress(bounds[0]) })
+                    )
+            )
+        }
     }
 }
 

@@ -167,6 +167,7 @@ Resurslar:
 | `uz/relay/core/designsystem/theme/Color.kt` | `SwiftColors`, `LightSwift`, `DarkSwift`, `Brand`, palitralar | rang tokenlari | `Theme.kt`, barcha ekranlar |
 | `uz/relay/core/designsystem/theme/Theme.kt` | `SwiftChatTheme`, `SwiftTheme`, local'lar | tema provayderi va Material'ga moslash | `MainActivity`, preview'lar, testlar |
 | `uz/relay/core/designsystem/theme/Type.kt` | `FigtreeFontFamily`, `SwiftTypography`, `SwiftMaterialTypography` | tipografiya shkalasi | `Theme.kt` |
+| `uz/relay/core/designsystem/util/Haptics.kt` | `rememberGestureThresholdHaptic` | gesture chegarasidan o'tilganda bitta yengil titrash | surib javob berish |
 | `uz/relay/core/designsystem/util/Presence.kt` | `formatPresence` | online / oxirgi marta matni | chat sarlavhasi, kontaktlar, profillar |
 
 Fayllar sonini tekshirish: **13** ta fayl.

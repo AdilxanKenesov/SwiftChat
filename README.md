@@ -48,7 +48,7 @@ automatically when the connection returns.
 |---|---|
 | **Sign-in** | Phone number + one-time code delivered by a Telegram bot; Telegram account linking flow; profile setup (name, unique username) |
 | **Chats** | Direct and group chats; tabs (All / Direct / Groups); unread counters; typing indicator; online / last-seen presence; mute for 1 h / 8 h / 1 day / forever |
-| **Messages** | Text, photo, video and file messages; reply, edit (48 h window), delete; ✓ sent / ✓✓ delivered / read status; local search inside a chat |
+| **Messages** | Text, photo, video and file messages; reply (also by swiping a message left, Telegram-style), edit (48 h window), delete; ✓ sent / ✓✓ delivered / read status; local search inside a chat |
 | **Media** | Resumable chunked upload, streamed download with progress, full-screen viewer (zoom, video player), save to gallery with a progress notification |
 | **Groups** | Create, rename, add/remove members, admin roles, leave |
 | **Calls** (Stream Video) | 1:1 audio/video calls with ringing, group video chat (open room), picture-in-picture, emoji reactions, raise hand, screen sharing, background blur / virtual backgrounds, call history in the chat |
@@ -477,7 +477,7 @@ Every file of every module, with its responsibility and connections, is listed i
 |---|---|
 | Debug APK | `./gradlew assembleDebug` |
 | Signed release APK | `./gradlew assembleRelease` |
-| Unit, ViewModel & Compose UI tests (227) | `./gradlew testDebugUnitTest :domain:test` |
+| Unit, ViewModel & Compose UI tests (231) | `./gradlew testDebugUnitTest :domain:test` |
 | Screenshot tests (19 goldens) | `./gradlew verifyRoborazziDebug` · update goldens: `recordRoborazziDebug` |
 | Lint | `./gradlew lintDebug` |
 | Token server tests | `node --test server/stream-token/test/index.test.mjs` |
@@ -486,7 +486,7 @@ Every file of every module, with its responsibility and connections, is listed i
 
 - **CI** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs on every PR and push to `develop`: build → tests →
   screenshots → token-server tests → lint. On success the debug APK is attached to the run.
-- **Tests** — 227 JVM tests: business rules, mappers, error handling, every ViewModel (with fake repositories), Compose UI
+- **Tests** — 231 JVM tests: business rules, mappers, error handling, every ViewModel (with fake repositories), Compose UI
   behaviour (Robolectric) and 19 screenshot goldens (light & dark).
 - **Branches** — features in `feature/*`, fixes in `bug/*`, PRs into `develop`; `master` is updated by the owner.
 
