@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -13,10 +14,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -28,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import io.getstream.video.android.compose.pip.rememberIsInPipMode
 import io.getstream.video.android.compose.theme.VideoTheme
 import io.getstream.video.android.compose.ui.components.call.activecall.AudioCallContent
 import io.getstream.video.android.compose.ui.components.call.activecall.CallContent
@@ -79,11 +84,13 @@ internal fun CallScreen(callId: String, video: Boolean?, chatId: String?, group:
                 modifier = Modifier.align(Alignment.Center).padding(32.dp)
             )
         } else {
-            CallPermissions(isVideo = uiState.isVideo)
+            var permissionsSettled by remember { mutableStateOf(false) }
+            CallPermissions(isVideo = uiState.isVideo, onSettled = { permissionsSettled = true })
             VideoTheme {
                 if (uiState.isGroup) {
-                    // Guruh xonasi: jiringlash bosqichi yo'q — darhol to'liq ekranli xona.
-                    FullScreenVideoCall(
+                    // Guruh xonasi: jiringlash bosqichi yo'q — to'liq ekranli xona. Ruxsat dialogi tugaguncha
+                    // ko'rsatilmaydi: dialog activity'ni pauza qiladi, Stream esa pauzada PiP'ga o'tib ketardi.
+                    if (permissionsSettled) FullScreenVideoCall(
                         call = call,
                         group = true,
                         onBack = { viewModel.onEventDispatcher(CallContract.Intent.OnBack) },
@@ -149,11 +156,24 @@ private fun CallContentHost(call: Call, isVideo: Boolean, onEventDispatcher: (Ca
  * qoldiriladi, ism/davomiylik va tugmalar esa video USTIGA qo'yiladi. Yorug' videoda oq matn/ikonka ko'rinsin
  * deb, ularning ortida yengil qora gradient bor.
  *
- * PiP hozircha o'chiq: yoqiq bo'lsa `CallContent` "orqaga"da PiP'ga o'tmoqchi bo'ladi, manifest'da PiP yo'qligi
- * uchun xato bilan qo'ng'iroqdan chiqib ketardi (qora ekran). PiP alohida bosqichda manifest bilan birga yoqiladi.
+ * PiP (Picture-in-Picture): Home yoki "orqaga" bosilsa video kichik oynada davom etadi — buni `CallContent`ning
+ * o'zi qiladi (manifest'da `supportsPictureInPicture`). PiP o'chiq bo'lsa Stream fonga o'tganda kamera VA
+ * mikrofonni pauza qilardi — suhbatdosh meni eshitmay qolardi. Kichik oynada bizning panellar yashiriladi
+ * (bosib bo'lmaydi, joy ham yo'q). Qo'ng'iroq kichik oynada turganda tugasa, oynada chat ochilib qolmasin —
+ * ilova fonga o'tkaziladi (PiP oynasi yopiladi).
  */
 @Composable
 private fun FullScreenVideoCall(call: Call, group: Boolean, onBack: () -> Unit, onCallAction: (CallAction) -> Unit) {
+    val activity = LocalActivity.current
+    val inPip = rememberIsInPipMode()
+    DisposableEffect(Unit) {
+        onDispose {
+            if (activity != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && activity.isInPictureInPictureMode) {
+                activity.moveTaskToBack(false)
+            }
+        }
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         CallContent(
             call = call,
@@ -162,23 +182,25 @@ private fun FullScreenVideoCall(call: Call, group: Boolean, onBack: () -> Unit, 
             onCallAction = onCallAction,
             appBarContent = {},
             controlsContent = {},
-            pictureInPictureConfiguration = PictureInPictureConfiguration(enable = false)
+            pictureInPictureConfiguration = PictureInPictureConfiguration(enable = true)
         )
-        CallTopBar(
-            call = call,
-            group = group,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .background(Brush.verticalGradient(listOf(Scrim, Color.Transparent)))
-        )
-        CallControls(
-            call = call,
-            isVideo = true,
-            onCallAction = onCallAction,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .background(Brush.verticalGradient(listOf(Color.Transparent, Scrim)))
-        )
+        if (!inPip) {
+            CallTopBar(
+                call = call,
+                group = group,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .background(Brush.verticalGradient(listOf(Scrim, Color.Transparent)))
+            )
+            CallControls(
+                call = call,
+                isVideo = true,
+                onCallAction = onCallAction,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .background(Brush.verticalGradient(listOf(Color.Transparent, Scrim)))
+            )
+        }
     }
 }
 
@@ -188,10 +210,11 @@ private val Scrim = Color.Black.copy(alpha = 0.55f)
 /**
  * Ruxsatlar ekran ochilishi bilan so'raladi — chiquvchi qo'ng'iroqda suhbatdosh qabul qilishi bilan SDK darhol
  * ulanadi, o'shanda ruxsat allaqachon bo'lishi kerak. Audio qo'ng'iroqda faqat mikrofon (kamera so'ralmaydi).
- * Rad etilsa ham qo'ng'iroq davom etadi — faqat tegishli trek o'chiq bo'ladi.
+ * Rad etilsa ham qo'ng'iroq davom etadi — faqat tegishli trek o'chiq bo'ladi. [onSettled] — ruxsatlar bor yoki
+ * dialog yopildi (natijasidan qat'i nazar).
  */
 @Composable
-private fun CallPermissions(isVideo: Boolean) {
+private fun CallPermissions(isVideo: Boolean, onSettled: () -> Unit) {
     val context = LocalContext.current
     val permissions = buildList {
         add(Manifest.permission.RECORD_AUDIO)
@@ -199,9 +222,9 @@ private fun CallPermissions(isVideo: Boolean) {
         // Android 12+: bluetooth quloqchinga ovozni yo'naltirish uchun.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) add(Manifest.permission.BLUETOOTH_CONNECT)
     }
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { }
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { onSettled() }
     LaunchedEffect(isVideo) {
         val missing = permissions.filter { ContextCompat.checkSelfPermission(context, it) != PackageManager.PERMISSION_GRANTED }
-        if (missing.isNotEmpty()) launcher.launch(missing.toTypedArray())
+        if (missing.isNotEmpty()) launcher.launch(missing.toTypedArray()) else onSettled()
     }
 }
