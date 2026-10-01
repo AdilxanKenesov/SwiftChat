@@ -1,5 +1,6 @@
 package uz.relay.feature.calls.call
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -91,6 +92,7 @@ class CallViewModel @AssistedInject constructor(
     }
 
     private fun onCallAction(call: Call, action: CallAction) {
+        Log.i(TAG, "action=${action::class.simpleName} call=${call.id} ringing=${call.state.ringingState.value::class.simpleName}")
         when (action) {
             is AcceptCall -> intent {
                 val result = when (val accepted = call.accept()) {
@@ -170,6 +172,7 @@ class CallViewModel @AssistedInject constructor(
     ) {
         if (finished) return
         finished = true
+        Log.i(TAG, "finish call=${call.id} answered=${answeredAt != null} fallback=$fallback")
         withContext(Dispatchers.Main) { call.leave() }
         saveCallLog(fallback)
         directions.back()
@@ -198,6 +201,7 @@ class CallViewModel @AssistedInject constructor(
     }
 
     private companion object {
+        const val TAG = "SwiftChat.Call"
         const val CALL_TYPE = "default"
         /** Server sozlamasi bilan bir xil (CallRepositoryImpl.RING_TIMEOUT_MS). */
         const val RING_TIMEOUT_MS = 15_000L

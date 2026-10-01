@@ -1,6 +1,8 @@
 package uz.relay.app
 
 import android.app.Application
+import android.content.pm.ApplicationInfo
+import android.os.StrictMode
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import coil3.ImageLoader
@@ -59,11 +61,36 @@ class App : Application(), Configuration.Provider, SingletonImageLoader.Factory 
 
     override fun onCreate() {
         super.onCreate()
+        enableStrictModeInDebug()
         // Oldingi sessiyadan yuborilmay qolgan xabarlar bo'lsa — navbatga qo'yamiz.
         outboxScheduler.schedule()
         // WebSocket: login qilingan va ilova old planda bo'lganda o'zi ulanadi, fonda uziladi.
         realtimeCoordinator.start()
         // Qo'ng'iroqlar: Stream client Relay sessiyasiga bog'lanadi (API key bo'lmasa hech narsa qilmaydi).
         streamVideoConnector.start()
+    }
+
+    /**
+     * Faqat debug build'da: main thread'dagi disk/tarmoq ishlari va yopilmagan resurslar logcat'ga yoziladi
+     * (`StrictMode` tegi bilan). "Ilova qotib ishlayapti" kabi muammolarning manbasini topish uchun —
+     * ilovani to'xtatmaydi, faqat ogohlantiradi.
+     */
+    private fun enableStrictModeInDebug() {
+        if (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE == 0) return
+        StrictMode.setThreadPolicy(
+            StrictMode.ThreadPolicy.Builder()
+                .detectDiskReads()
+                .detectDiskWrites()
+                .detectNetwork()
+                .penaltyLog()
+                .build()
+        )
+        StrictMode.setVmPolicy(
+            StrictMode.VmPolicy.Builder()
+                .detectLeakedClosableObjects()
+                .detectLeakedSqlLiteObjects()
+                .penaltyLog()
+                .build()
+        )
     }
 }

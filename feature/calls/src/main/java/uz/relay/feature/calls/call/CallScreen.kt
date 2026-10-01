@@ -36,6 +36,8 @@ import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
 import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import uz.relay.feature.calls.R
+import uz.relay.feature.calls.call.components.CallControls
+import uz.relay.feature.calls.call.components.CallTopBar
 
 /**
  * Qo'ng'iroq ekrani. Stream'ning tayyor Compose komponentlari ishlatiladi (`VideoTheme` ichida bo'lishi shart):
@@ -100,10 +102,30 @@ private fun CallContentHost(call: Call, isVideo: Boolean, onEventDispatcher: (Ca
         onCallAction = onCallAction,
         onAcceptedContent = {
             if (isVideo) {
-                CallContent(call = call, onBackPressed = onBack, onCallAction = onCallAction)
+                // Tepada — ism va davomiylik (chiqish tugmasisiz), pastda — o'zimizning boshqaruv paneli.
+                CallContent(
+                    call = call,
+                    onBackPressed = onBack,
+                    onCallAction = onCallAction,
+                    appBarContent = { CallTopBar(call = it) },
+                    controlsContent = { CallControls(call = it, isVideo = true, onCallAction = onCallAction) }
+                )
             } else {
                 val micOn by call.microphone.isEnabled.collectAsState()
-                AudioCallContent(call = call, isMicrophoneEnabled = micOn, onCallAction = onCallAction, onBackPressed = onBack)
+                AudioCallContent(
+                    call = call,
+                    isMicrophoneEnabled = micOn,
+                    onCallAction = onCallAction,
+                    onBackPressed = onBack,
+                    controlsContent = {
+                        CallControls(
+                            call = call,
+                            isVideo = false,
+                            onCallAction = onCallAction,
+                            modifier = Modifier.align(Alignment.BottomCenter)
+                        )
+                    }
+                )
             }
         },
         onRejectedContent = { LaunchedEffect(Unit) { onEventDispatcher(CallContract.Intent.OnFinished) } },
