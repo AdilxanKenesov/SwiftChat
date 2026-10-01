@@ -8,7 +8,10 @@
     <string name="phone">Телефон</string>
     <string name="username">Имя пользователя</string>
     <string name="notifications">Уведомления</string>
-    <string name="dark_mode">Тёмная тема</string>
+    <string name="theme">Тема</string>
+    <string name="theme_system">Системная</string>
+    <string name="theme_light">Светлая</string>
+    <string name="theme_dark">Тёмная</string>
     <string name="language">Язык</string>
     <string name="section_account">Аккаунт</string>
     <string name="section_settings">Настройки</string>

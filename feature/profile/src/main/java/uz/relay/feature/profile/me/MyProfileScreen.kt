@@ -106,10 +106,10 @@ private fun MyProfileContent(
 ) {
     val colors = SwiftTheme.colors
     val me = uiState.me
-    val darkChecked = uiState.themeMode == ThemeMode.DARK
     // Dialog faqat ko'rinishga tegishli; burilishda yo'qolmasin.
     var showLogoutDialog by rememberSaveable { mutableStateOf(false) }
     var showLanguageSheet by rememberSaveable { mutableStateOf(false) }
+    var showThemeSheet by rememberSaveable { mutableStateOf(false) }
 
     val (status, statusColor) = when (uiState.connectionStatus) {
         ConnectionStatus.CONNECTED, ConnectionStatus.UPDATING -> stringResource(R.string.online) to colors.primary
@@ -165,16 +165,14 @@ private fun MyProfileContent(
                         onCheckedChange = { onEventDispatcher(MyProfileContract.Intent.OnNotificationsChange(it)) }
                     )
                 }
+                // Uch variant (tizim / kunduzgi / tungi) — switch yetmaydi, til kabi tanlash sheet'i.
                 SettingRow(
                     icon = DesignR.drawable.ic_moon,
                     tileColor = TileColors.DarkMode,
-                    label = stringResource(R.string.dark_mode),
-                    onClick = { onEventDispatcher(MyProfileContract.Intent.OnDarkModeChange(!darkChecked)) }
+                    label = stringResource(R.string.theme),
+                    onClick = { showThemeSheet = true }
                 ) {
-                    SwiftSwitch(
-                        checked = darkChecked,
-                        onCheckedChange = { onEventDispatcher(MyProfileContract.Intent.OnDarkModeChange(it)) }
-                    )
+                    Text(text = stringResource(uiState.themeMode.labelRes()), color = colors.text2, fontSize = 14.sp)
                 }
                 SettingRow(
                     icon = DesignR.drawable.ic_globe,
@@ -199,13 +197,30 @@ private fun MyProfileContent(
     }
 
     if (showLanguageSheet) {
-        LanguageSheet(
+        OptionSheet(
+            title = stringResource(R.string.language),
+            options = AppLanguage.entries,
             selected = uiState.language,
+            label = { it.labelRes() },
             onSelect = { language ->
                 showLanguageSheet = false
                 if (language != uiState.language) onEventDispatcher(MyProfileContract.Intent.OnLanguageChange(language))
             },
             onDismiss = { showLanguageSheet = false }
+        )
+    }
+
+    if (showThemeSheet) {
+        OptionSheet(
+            title = stringResource(R.string.theme),
+            options = ThemeMode.entries,
+            selected = uiState.themeMode,
+            label = { it.labelRes() },
+            onSelect = { mode ->
+                showThemeSheet = false
+                if (mode != uiState.themeMode) onEventDispatcher(MyProfileContract.Intent.OnThemeChange(mode))
+            },
+            onDismiss = { showThemeSheet = false }
         )
     }
 
@@ -233,10 +248,24 @@ private fun AppLanguage.labelRes(): Int = when (this) {
     AppLanguage.EN -> R.string.lang_en
 }
 
-/** Uchta til, tanlangani yonida ✓ (primary). */
+/** Tema nomi joriy tilda. */
+private fun ThemeMode.labelRes(): Int = when (this) {
+    ThemeMode.SYSTEM -> R.string.theme_system
+    ThemeMode.LIGHT -> R.string.theme_light
+    ThemeMode.DARK -> R.string.theme_dark
+}
+
+/** Bir nechta variantdan bittasini tanlash (til, tema): tanlangani yonida ✓ (primary). */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun LanguageSheet(selected: AppLanguage, onSelect: (AppLanguage) -> Unit, onDismiss: () -> Unit) {
+private fun <T> OptionSheet(
+    title: String,
+    options: List<T>,
+    selected: T,
+    label: (T) -> Int,
+    onSelect: (T) -> Unit,
+    onDismiss: () -> Unit
+) {
     val colors = SwiftTheme.colors
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -248,29 +277,29 @@ private fun LanguageSheet(selected: AppLanguage, onSelect: (AppLanguage) -> Unit
     ) {
         Column(modifier = Modifier.navigationBarsPadding().padding(bottom = 16.dp)) {
             Text(
-                text = stringResource(R.string.language),
+                text = title,
                 color = colors.text,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 8.dp)
             )
-            AppLanguage.entries.forEach { language ->
+            options.forEach { option ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp)
-                        .clickable { onSelect(language) }
+                        .clickable { onSelect(option) }
                         .padding(horizontal = 24.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = stringResource(language.labelRes()),
+                        text = stringResource(label(option)),
                         color = colors.text,
                         fontSize = 16.sp,
-                        fontWeight = if (language == selected) FontWeight.SemiBold else FontWeight.Medium,
+                        fontWeight = if (option == selected) FontWeight.SemiBold else FontWeight.Medium,
                         modifier = Modifier.weight(1f)
                     )
-                    if (language == selected) {
+                    if (option == selected) {
                         Icon(painter = painterResource(DesignR.drawable.ic_check), contentDescription = null, tint = colors.primary, modifier = Modifier.size(22.dp))
                     }
                 }
