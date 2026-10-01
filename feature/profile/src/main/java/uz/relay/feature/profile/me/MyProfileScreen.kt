@@ -100,7 +100,7 @@ internal fun MyProfileScreen(viewModel: MyProfileViewModel = hiltViewModel()) {
  * Til tanlash sheet'i va chiqish dialogi — vaqtinchalik ko'rinish holati, shuning uchun ViewModel'da emas.
  */
 @Composable
-private fun MyProfileContent(
+internal fun MyProfileContent(
     uiState: MyProfileContract.UiState,
     onEventDispatcher: (MyProfileContract.Intent) -> Unit
 ) {

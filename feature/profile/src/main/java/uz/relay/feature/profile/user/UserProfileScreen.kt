@@ -79,7 +79,7 @@ internal fun UserProfileScreen(userId: String) {
 
 /** Avatar · ism · holat, "Xabar" va "Ovozsiz qilish" kartalari, username va kontaktga qo'shish/o'chirish. */
 @Composable
-private fun UserProfileContent(
+internal fun UserProfileContent(
     userId: String,
     uiState: UserProfileContract.UiState,
     onEventDispatcher: (UserProfileContract.Intent) -> Unit

@@ -75,7 +75,7 @@ internal fun ChatSearchScreen(chatId: String) {
  * BasicTextField ishlatilgan — Material TextField'ning ramka/label'i dizayndagi "toza" sarlavha qatoriga to'g'ri kelmaydi.
  */
 @Composable
-private fun ChatSearchContent(
+internal fun ChatSearchContent(
     uiState: ChatSearchContract.UiState,
     onEventDispatcher: (ChatSearchContract.Intent) -> Unit
 ) {

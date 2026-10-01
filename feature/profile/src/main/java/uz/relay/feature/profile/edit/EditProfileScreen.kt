@@ -76,7 +76,7 @@ internal fun EditProfileScreen(viewModel: EditProfileViewModel = hiltViewModel()
 
 /** ProfileSetup bilan bir xil maydonlar va qoidalar, lekin orqaga tugmasi va "Saqlash" bilan. */
 @Composable
-private fun EditProfileContent(
+internal fun EditProfileContent(
     uiState: EditProfileContract.UiState,
     onEventDispatcher: (EditProfileContract.Intent) -> Unit
 ) {

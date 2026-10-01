@@ -109,7 +109,7 @@ internal fun GroupInfoScreen(chatId: String) {
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun GroupInfoContent(
+internal fun GroupInfoContent(
     uiState: GroupInfoContract.UiState,
     onEventDispatcher: (GroupInfoContract.Intent) -> Unit
 ) {

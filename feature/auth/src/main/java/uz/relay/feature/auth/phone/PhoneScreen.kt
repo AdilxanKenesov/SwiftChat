@@ -106,7 +106,7 @@ internal fun PhoneScreen(viewModel: PhoneViewModel = hiltViewModel()) {
  * ViewModel'siz bo'lgani uchun Preview'larda va UI testlarda to'g'ridan-to'g'ri ishlatiladi.
  */
 @Composable
-private fun PhoneScreenContent(
+internal fun PhoneScreenContent(
     uiState: PhoneContract.UiState,
     onEventDispatcher: (PhoneContract.Intent) -> Unit
 ) {

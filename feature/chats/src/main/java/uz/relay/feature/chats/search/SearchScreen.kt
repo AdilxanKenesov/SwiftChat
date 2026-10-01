@@ -96,7 +96,7 @@ internal fun SearchScreen(viewModel: SearchViewModel = hiltViewModel()) {
  * ishlatiladi. "Yangi guruh" doim ro'yxat boshida turadi — qidiruv bo'sh bo'lsa ham.
  */
 @Composable
-private fun SearchScreenContent(
+internal fun SearchScreenContent(
     uiState: SearchContract.UiState,
     onEventDispatcher: (SearchContract.Intent) -> Unit
 ) {

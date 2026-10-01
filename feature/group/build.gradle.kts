@@ -31,6 +31,12 @@ android {
     buildFeatures {
         compose = true
     }
+    // Compose UI testlari JVM'da (Robolectric) — resurslar (matnlar, ikonkalar) testga ham kirsin.
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
 }
 
 dependencies {
@@ -63,6 +69,11 @@ dependencies {
     // ViewModel testlari: Orbit test DSL va repository fake'lari (domain testFixtures).
     testImplementation(libs.orbit.test)
     testImplementation(testFixtures(project(":domain")))
+    // Compose UI testlari: emulyatorsiz, Robolectric ustida (JVM).
+    testImplementation(libs.robolectric)
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
 }

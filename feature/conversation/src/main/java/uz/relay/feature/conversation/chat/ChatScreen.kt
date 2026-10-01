@@ -129,7 +129,7 @@ internal fun ChatScreen(chatId: String, focusMessageId: String? = null) {
  * shu yerda `remember` ichida saqlanadi — bu faqat ko'rinishga tegishli.
  */
 @Composable
-private fun ChatScreenContent(
+internal fun ChatScreenContent(
     uiState: ChatContract.UiState,
     snackbarHostState: SnackbarHostState,
     onEventDispatcher: (ChatContract.Intent) -> Unit,
