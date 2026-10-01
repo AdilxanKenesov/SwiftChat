@@ -23,6 +23,7 @@ import uz.relay.domain.usecase.chat.ObserveChatUseCase
 import uz.relay.domain.usecase.chat.ObserveTypingUseCase
 import uz.relay.domain.usecase.group.ObserveMembersUseCase
 import uz.relay.domain.usecase.group.RefreshMembersUseCase
+import uz.relay.domain.usecase.call.StartCallUseCase
 import uz.relay.domain.usecase.media.CancelUploadUseCase
 import uz.relay.domain.usecase.media.DownloadMediaUseCase
 import uz.relay.domain.usecase.media.SendMediaMessageUseCase
@@ -70,6 +71,7 @@ class ChatViewModel @AssistedInject constructor(
     private val sendMediaMessage: SendMediaMessageUseCase,
     private val cancelUpload: CancelUploadUseCase,
     private val downloadMedia: DownloadMediaUseCase,
+    private val startCall: StartCallUseCase,
     private val directions: ChatContract.Directions
 ) : ViewModel(), ChatContract.ViewModel {
 
@@ -136,6 +138,7 @@ class ChatViewModel @AssistedInject constructor(
             is ChatContract.Intent.OnAttach -> sendMedia(intent)
             is ChatContract.Intent.OnCancelUpload -> intent { cancelUpload(intent.message.clientMessageId) }
             is ChatContract.Intent.OnMediaClick -> openMedia(intent.message)
+            is ChatContract.Intent.OnStartCall -> startCall(intent.video)
         }
     }
 
@@ -161,6 +164,22 @@ class ChatViewModel @AssistedInject constructor(
     }
 
     /** Rasm/video — to'liq ekranli ko'ruvchiga o'tiladi; fayl — yuklab olinib, tashqi ilovada ochiladi. */
+    /**
+     * Qo'ng'iroq Stream Video orqali (Relay'da qo'ng'iroq yo'q). Yaratilgach qo'ng'iroq ekrani ochiladi — u yerda
+     * suhbatdosh javob berguncha "chiquvchi qo'ng'iroq" ko'rinadi. Faqat shaxsiy chatda (peer bor).
+     */
+    private fun startCall(video: Boolean) = intent {
+        val peerUserId = state.chat?.peerUserId ?: return@intent
+        if (state.isStartingCall) return@intent
+        reduce { state.copy(isStartingCall = true) }
+        val result = startCall(peerUserId, video)
+        reduce { state.copy(isStartingCall = false) }
+        when (result) {
+            is AppResult.Success -> directions.navigateToCall(result.data, video)
+            is AppResult.Error -> showError(result.error)
+        }
+    }
+
     private fun openMedia(message: Message) = intent {
         val media = message.media.firstOrNull() ?: return@intent
         when (message.type) {

@@ -48,6 +48,8 @@ interface ChatContract {
         data class OnCancelUpload(val message: Message) : Intent
         /** Rasm/video — ko'ruvchi; fayl — yuklab olib, tizimdagi mos ilovada ochish. */
         data class OnMediaClick(val message: Message) : Intent
+        /** Sarlavhadagi 📞 (audio) yoki 🎥 (video) — suhbatdoshga qo'ng'iroq. */
+        data class OnStartCall(val video: Boolean) : Intent
     }
 
     /** Bir martalik hodisalar: Screen ularni `collectSideEffect` bilan tutib, Snackbar/Intent'ga aylantiradi. */
@@ -77,7 +79,9 @@ interface ChatContract {
         /** `clientMessageId → 0..1`: hozir yuklab olinayotgan fayllar. */
         val fileDownloads: Map<String, Float> = emptyMap(),
         /** Fayl tayyorlanmoqda (nusxalash/hash) — katta videoda bir necha soniya. */
-        val isPreparingMedia: Boolean = false
+        val isPreparingMedia: Boolean = false,
+        /** Qo'ng'iroq yaratilmoqda — tugma ikki marta bosilsa ikkinchi qo'ng'iroq boshlanmasin. */
+        val isStartingCall: Boolean = false
     ) {
         val isGroup: Boolean get() = chat?.type == ChatType.GROUP
         val canSend: Boolean get() = composerText.isNotBlank()
@@ -100,6 +104,7 @@ interface ChatContract {
         suspend fun navigateToGroupInfo(chatId: String)
         suspend fun navigateToUserProfile(userId: String)
         suspend fun navigateToMediaViewer(chatId: String, clientMessageId: String)
+        suspend fun navigateToCall(callId: String, video: Boolean)
     }
 }
 

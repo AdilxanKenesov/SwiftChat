@@ -21,6 +21,8 @@ import uz.relay.core.navigation.key.PhoneKey
 import uz.relay.domain.model.AuthState
 import uz.relay.domain.model.ThemeMode
 import uz.relay.domain.usecase.auth.ObserveAuthStateUseCase
+import uz.relay.domain.usecase.call.ObserveIncomingCallsUseCase
+import uz.relay.core.navigation.key.CallKey
 import uz.relay.domain.usecase.settings.ObserveThemeModeUseCase
 import javax.inject.Inject
 
@@ -41,6 +43,7 @@ import javax.inject.Inject
 class MainViewModel @Inject constructor(
     observeAuthState: ObserveAuthStateUseCase,
     observeThemeMode: ObserveThemeModeUseCase,
+    observeIncomingCalls: ObserveIncomingCallsUseCase,
     navigator: AppNavigator,
     val navigationHandler: AppNavigationHandler
 ) : ViewModel() {
@@ -70,6 +73,10 @@ class MainViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     init {
+        // Kiruvchi qo'ng'iroq istalgan ekranda bo'lsa ham qo'ng'iroq ekrani ochiladi (singleTop — ikki marta emas).
+        viewModelScope.launch {
+            observeIncomingCalls().collect { callId -> navigator.navigate(AppNavigationParam.To(CallKey(callId))) }
+        }
         viewModelScope.launch {
             observeAuthState()
                 .drop(1)

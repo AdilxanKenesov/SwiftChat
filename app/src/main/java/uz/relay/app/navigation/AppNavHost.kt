@@ -11,6 +11,7 @@ import androidx.navigation3.ui.NavDisplay
 import uz.relay.core.navigation.AppNavigationHandler
 import uz.relay.core.navigation.AppNavigationParam
 import uz.relay.feature.auth.authEntries
+import uz.relay.feature.calls.callsEntries
 import uz.relay.feature.chats.chatsEntries
 import uz.relay.feature.conversation.conversationEntries
 import uz.relay.feature.group.groupEntries
@@ -45,6 +46,7 @@ fun AppNavHost(navigationHandler: AppNavigationHandler, startKey: NavKey) {
             conversationEntries()
             groupEntries()
             profileEntries()
+            callsEntries()
         }
     )
 }

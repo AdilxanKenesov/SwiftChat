@@ -87,4 +87,8 @@
     <string name="error_edit_window">Срок редактирования истёк (48 часов)</string>
     <string name="error_forbidden">Нет прав на это действие</string>
     <string name="error_unknown">Что-то пошло не так. Повторите попытку</string>
+    <string name="audio_call">Аудиозвонок</string>
+    <string name="video_call">Видеозвонок</string>
+    <string name="error_calls_unavailable">Звонки сейчас недоступны</string>
+    <string name="error_call_failed">Не удалось начать звонок</string>
 </resources>

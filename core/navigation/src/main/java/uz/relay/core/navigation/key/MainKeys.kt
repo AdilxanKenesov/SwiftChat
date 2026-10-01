@@ -55,3 +55,10 @@ data object NewMessageKey : NavKey
 /** Username bo'yicha topib, qurilmadagi kontaktlarga qo'shish. */
 @Serializable
 data object AddContactKey : NavKey
+
+/**
+ * Qo'ng'iroq ekrani (chiquvchi, kiruvchi yoki faol). [video] — chiquvchi qo'ng'iroqda men tanlagan tur;
+ * kiruvchida `null` (turi qo'ng'iroq sozlamasidan o'qiladi).
+ */
+@Serializable
+data class CallKey(val callId: String, val video: Boolean? = null) : NavKey

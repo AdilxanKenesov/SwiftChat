@@ -27,6 +27,9 @@ object DatabaseModule {
         Room.databaseBuilder(context, RelayDatabase::class.java, "relay.db")
             // Ishlab chiqish bosqichida: sxema o'zgarsa baza tozalanadi. Bu xavfsiz, chunki hamma
             // ma'lumot serverda bor — keyingi sync uni qayta yuklaydi.
+            // Downgrade (eskiroq build yangi baza ustiga) ham shu bilan qamrab olinadi. DIQQAT: alohida
+            // fallbackToDestructiveMigrationOnDowngrade() QO'SHILMASIN — u requireMigration = true qilib, upgrade'da
+            // destructive migration'ni o'chirib qo'yadi ("A migration from 5 to 6 was required" crash'i shundan bo'lgan).
             .fallbackToDestructiveMigration(dropAllTables = true)
             .build()
 

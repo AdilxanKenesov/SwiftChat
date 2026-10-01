@@ -102,4 +102,8 @@
     <string name="error_edit_window">Tahrirlash muddati tugagan (48 soat)</string>
     <string name="error_forbidden">Bu amalga ruxsat yoʻq</string>
     <string name="error_unknown">Nimadir xato ketdi. Qayta urining</string>
+    <string name="audio_call">Audio qoʻngʻiroq</string>
+    <string name="video_call">Video qoʻngʻiroq</string>
+    <string name="error_calls_unavailable">Qoʻngʻiroqlar hozircha ishlamayapti</string>
+    <string name="error_call_failed">Qoʻngʻiroqni boshlab boʻlmadi</string>
 </resources>

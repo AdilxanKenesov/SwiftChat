@@ -13,3 +13,6 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Claude Code uchun Stream Agent Skills (getstream skills --claude) — har kishi o'zi o'rnatadi, repoga kirmaydi
+/.claude/skills/

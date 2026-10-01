@@ -63,6 +63,12 @@ object ErrorCodes {
     const val SHA256_MISMATCH = "SHA256_MISMATCH"
     const val MEDIA_NOT_READY = "MEDIA_NOT_READY"
 
+    // Qo'ng'iroqlar (klient kodlari — Stream Video xatolari shularga aylantiriladi)
+    /** Qo'ng'iroq xizmatiga ulanmagan (API key yo'q yoki hali ulanmoqda). */
+    const val CALLS_UNAVAILABLE = "CALLS_UNAVAILABLE"
+    /** Qo'ng'iroqni yaratib/jiringlatib bo'lmadi. */
+    const val CALL_FAILED = "CALL_FAILED"
+
     /** Klient kodi: yuboriladigan fayl qurilmadan yo'qolgan (o'chirilgan) — qayta urinish befoyda. */
     const val MEDIA_FILE_MISSING = "MEDIA_FILE_MISSING"
 }

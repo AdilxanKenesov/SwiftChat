@@ -2,6 +2,7 @@ package uz.relay.feature.conversation.chat
 
 import uz.relay.core.navigation.AppNavigationParam
 import uz.relay.core.navigation.AppNavigator
+import uz.relay.core.navigation.key.CallKey
 import uz.relay.core.navigation.key.GroupInfoKey
 import uz.relay.core.navigation.key.MediaViewerKey
 import uz.relay.core.navigation.key.UserProfileKey
@@ -24,4 +25,7 @@ internal class ChatDirectionsImpl @Inject constructor(
 
     override suspend fun navigateToMediaViewer(chatId: String, clientMessageId: String) =
         navigator.navigate(AppNavigationParam.To(MediaViewerKey(chatId, clientMessageId)))
+
+    override suspend fun navigateToCall(callId: String, video: Boolean) =
+        navigator.navigate(AppNavigationParam.To(CallKey(callId, video)))
 }

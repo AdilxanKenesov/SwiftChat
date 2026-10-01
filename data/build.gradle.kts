@@ -1,3 +1,5 @@
+import java.util.Properties
+
 // Gradle plugin'lari: modul turi va kod generatsiya vositalari.
 plugins {
     // Android kutubxona moduli — app moduliga qo'shiladi.
@@ -26,6 +28,8 @@ android {
         // Server manzillari BuildConfig orqali (kodga qattiq yozilmaydi, build turiga qarab almashtirish oson).
         buildConfigField("String", "BASE_URL", "\"https://relay.zokirov-mob-dev.uz/\"")
         buildConfigField("String", "WS_URL", "\"wss://relay.zokirov-mob-dev.uz/v1/ws\"")
+        // Stream Video API key — local.properties'dan (git'ga kirmaydi). Bu ochiq kalit; secret ilovaga hech qachon qo'yilmaydi.
+        buildConfigField("String", "STREAM_API_KEY", "\"${localProperty("STREAM_API_KEY")}\"")
     }
     // Java 11 — barcha modullarda bir xil.
     compileOptions {
@@ -84,6 +88,9 @@ dependencies {
     implementation(libs.coil.network.okhttp)
     implementation(libs.media3.datasource.okhttp)
 
+    // Stream Video: qo'ng'iroqlar uchun client (ulanish/uzish) va CallRepository implementatsiyasi.
+    implementation(libs.stream.video.compose)
+
     // Firebase Cloud Messaging — push (data-only); play-services — Task'ni coroutine'da kutish.
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
@@ -95,4 +102,12 @@ dependencies {
     testImplementation(libs.turbine)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
+}
+
+/** local.properties'dan qiymat o'qiydi (yo'q bo'lsa bo'sh satr — qo'ng'iroqlar shunchaki o'chiq bo'ladi). */
+fun localProperty(key: String): String {
+    val file = rootProject.file("local.properties")
+    if (!file.exists()) return ""
+    val props = Properties().apply { file.inputStream().use { load(it) } }
+    return props.getProperty(key).orEmpty()
 }
