@@ -29,7 +29,12 @@
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.SwiftChat.Starting"
-            android:windowSoftInputMode="adjustResize">
+            android:windowSoftInputMode="adjustResize"
+            android:supportsPictureInPicture="true"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation">
+            <!-- PiP: video qo'ng'iroqda Home/orqaga bosilsa video kichik oynada davom etadi. configChanges —
+                 PiP'ga kirish/chiqishda (oyna o'lchami o'zgaradi) activity qayta yaratilmasin, aks holda video
+                 renderer'lar uzilib qolardi. Compose o'lcham/burilish o'zgarishini o'zi qayta chizadi. -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
