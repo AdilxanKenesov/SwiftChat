@@ -54,6 +54,7 @@ import uz.relay.core.designsystem.theme.Brand
 import uz.relay.feature.calls.R
 import uz.relay.feature.calls.call.components.CallControls
 import uz.relay.feature.calls.call.components.CallExtras
+import uz.relay.feature.calls.call.components.CallVideoContent
 import uz.relay.feature.calls.call.components.CallTopBar
 import uz.relay.feature.calls.call.components.RaisedHandsChip
 
@@ -192,7 +193,10 @@ private fun FullScreenVideoCall(
         }
     }
     val screenSharing by call.screenShare.isEnabled.collectAsState()
-    val screenShare = rememberScreenShareLauncher(onResult = { onEventDispatcher(CallContract.Intent.OnStartScreenShare(it)) })
+    val screenShare = rememberScreenShareLauncher(
+        onPrepare = { onEventDispatcher(CallContract.Intent.OnScreenSharePrepare) },
+        onResult = { onEventDispatcher(CallContract.Intent.OnStartScreenShare(it)) }
+    )
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Ekran ulashish ruxsati oynasi ochilganda PiP vaqtincha o'chadi (izoh — rememberScreenShareLauncher'da).
@@ -205,6 +209,8 @@ private fun FullScreenVideoCall(
                 onCallAction = onCallAction,
                 appBarContent = {},
                 controlsContent = {},
+                // Video qismi o'zimizniki: reaksiya/suzuvchi kamera panel ostida, ekran ulashishda kameralar ko'rinadi.
+                videoContent = { CallVideoContent(call = it) },
                 pictureInPictureConfiguration = PictureInPictureConfiguration(enable = !screenShare.pipPaused)
             )
         }
@@ -253,14 +259,15 @@ private class ScreenShareLauncher(val pipPaused: Boolean, val launch: () -> Unit
  *     `onResume`da qayta yoqib ulgursin.
  */
 @Composable
-private fun rememberScreenShareLauncher(onResult: (Intent) -> Unit): ScreenShareLauncher {
+private fun rememberScreenShareLauncher(onPrepare: () -> Unit, onResult: (Intent?) -> Unit): ScreenShareLauncher {
     val context = LocalContext.current
     var pipPaused by remember { mutableStateOf(false) }
     var pendingLaunch by remember { mutableStateOf(false) }
     var resumePip by remember { mutableStateOf(0) }
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         val data = result.data
-        if (result.resultCode == Activity.RESULT_OK && data != null) onResult(data)
+        // Rad etilsa ham chaqiriladi (null) — kamera/mikrofon oynadan oldingi holatiga qaytsin.
+        onResult(data.takeIf { result.resultCode == Activity.RESULT_OK })
         resumePip++
     }
     LaunchedEffect(pendingLaunch) {
@@ -277,6 +284,7 @@ private fun rememberScreenShareLauncher(onResult: (Intent) -> Unit): ScreenShare
         }
     }
     return ScreenShareLauncher(pipPaused = pipPaused, launch = {
+        onPrepare()
         pipPaused = true
         pendingLaunch = true
     })

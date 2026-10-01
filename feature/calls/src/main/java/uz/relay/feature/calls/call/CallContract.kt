@@ -26,8 +26,13 @@ interface CallContract {
         data class OnSendReaction(val emoji: String) : Intent
         /** Qo'l ko'tarish / tushirish (navbat so'rash) — boshqalarda tepada "✋ Ism" ko'rinadi. */
         object OnToggleHand : Intent
-        /** Tizim "ekranni yozib olish" ruxsatini berdi — [data] shu ruxsat natijasi (MediaProjection). */
-        data class OnStartScreenShare(val data: android.content.Intent) : Intent
+        /** Ekran ulashish ruxsati oynasi ochilmoqda — kamera/mikrofon holati eslab qolinadi. */
+        object OnScreenSharePrepare : Intent
+        /**
+         * Ruxsat oynasi yopildi: [data] — ruxsat natijasi (MediaProjection), rad etilsa `null`. Har ikki holatda
+         * kamera va mikrofon oynadan oldingi holatiga qaytariladi.
+         */
+        data class OnStartScreenShare(val data: android.content.Intent?) : Intent
         object OnStopScreenShare : Intent
         /** Kamera orqa foni: yo'q, xiralashtirish yoki tayyor rasm. */
         data class OnSelectBackground(val background: CallBackground) : Intent

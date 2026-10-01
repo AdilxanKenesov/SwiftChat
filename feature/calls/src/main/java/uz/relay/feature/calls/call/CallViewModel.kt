@@ -26,8 +26,11 @@ import io.getstream.video.android.filters.video.VirtualBackgroundVideoFilter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.orbitmvi.orbit.syntax.Syntax
 import org.orbitmvi.orbit.viewmodel.orbitContainer
@@ -75,6 +78,12 @@ class CallViewModel @AssistedInject constructor(
 
     private val isVideo: Boolean = group || (video ?: (call?.isVideoEnabled() ?: true))
 
+    /**
+     * Ekran ulashish ruxsati oynasidan oldingi (kamera, mikrofon) holati. Oyna activity'ni pauza qiladi, Stream esa
+     * pauzada kamera/mikrofonni o'chiradi — ulashish boshlangach suhbatdoshlar mening kameramni ko'rmay qolardi.
+     */
+    private var mediaBeforeShare: Pair<Boolean, Boolean>? = null
+
     /** Ekran bir marta yopilsin (bir nechta "tugadi" signali kelishi mumkin). */
     private var finished = false
 
@@ -90,6 +99,7 @@ class CallViewModel @AssistedInject constructor(
                 observeHands(call)
                 if (group) {
                     joinGroup(call)
+                    watchAloneInGroup(call)
                 } else {
                     observeEnd(call)
                     watchRingTimeout(call)
@@ -119,9 +129,16 @@ class CallViewModel @AssistedInject constructor(
             }
             CallContract.Intent.OnToggleHand -> toggleHand(call)
             // MediaProjection va video trek SDK ichida main thread'da yaratiladi.
+            CallContract.Intent.OnScreenSharePrepare -> {
+                mediaBeforeShare = call.camera.isEnabled.value to call.microphone.isEnabled.value
+            }
             is CallContract.Intent.OnStartScreenShare -> intent {
-                withContext(Dispatchers.Main) { call.startScreenSharing(intent.data) }
-                Log.i(TAG, "screen share started call=${call.id}")
+                val data = intent.data
+                withContext(Dispatchers.Main) {
+                    restoreMediaAfterShareDialog(call)
+                    if (data != null) call.startScreenSharing(data)
+                }
+                if (data != null) Log.i(TAG, "screen share started call=${call.id}")
             }
             CallContract.Intent.OnStopScreenShare -> intent { withContext(Dispatchers.Main) { call.stopScreenSharing() } }
             is CallContract.Intent.OnSelectBackground -> selectBackground(call, intent.background)
@@ -246,6 +263,31 @@ class CallViewModel @AssistedInject constructor(
         }
     }
 
+    private fun restoreMediaAfterShareDialog(call: Call) {
+        val (cameraOn, micOn) = mediaBeforeShare ?: return
+        mediaBeforeShare = null
+        call.camera.setEnabled(cameraOn)
+        call.microphone.setEnabled(micOn)
+    }
+
+    /**
+     * Guruh xonasida yolg'iz qolsam (hech kim kirmadi yoki hamma chiqib ketdi) va 30 daqiqa ichida hech kim
+     * qo'shilmasa — xona avtomatik yopiladi. Aks holda unutilgan telefon soatlab kamera/mikrofonni yoqib,
+     * batareya va trafikni yeb o'tirardi. Kimdir qo'shilsa taymer bekor bo'ladi (`collectLatest`).
+     */
+    private fun watchAloneInGroup(call: Call) = intent {
+        call.state.remoteParticipants
+            .map { it.isEmpty() }
+            .distinctUntilChanged()
+            .collectLatest { alone ->
+                if (alone) {
+                    delay(GROUP_ALONE_TIMEOUT_MS)
+                    Log.i(TAG, "group call alone timeout call=${call.id}")
+                    finish(call)
+                }
+            }
+    }
+
     private fun toggleHand(call: Call) = intent {
         val raised = !state.myHandRaised
         reduce { state.copy(myHandRaised = raised) }
@@ -352,6 +394,8 @@ class CallViewModel @AssistedInject constructor(
         const val CALL_TYPE = "default"
         const val REACTION_TYPE = "reaction"
         const val HAND_EVENT = "raise_hand"
+        /** Guruh xonasida yolg'iz qolish chegarasi. */
+        const val GROUP_ALONE_TIMEOUT_MS = 30 * 60 * 1000L
         /** Server sozlamasi bilan bir xil (CallRepositoryImpl.RING_TIMEOUT_MS). */
         const val RING_TIMEOUT_MS = 15_000L
         /** Server signalini kutish uchun qo'shimcha vaqt. */
