@@ -62,6 +62,9 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
+    // ViewModel testlari: Orbit test DSL va repository fake'lari (domain testFixtures).
+    testImplementation(libs.orbit.test)
+    testImplementation(testFixtures(project(":domain")))
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
 }

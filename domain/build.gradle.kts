@@ -4,6 +4,8 @@ plugins {
     // framework'siz yoziladi va oddiy JUnit bilan tez test qilinadi. Feature'lar data'ga emas, faqat domain'ga
     // bog'lanadi (clean architecture).
     id("java-library")
+    // Repository fake'lari (src/testFixtures) — feature modullar testlarida `testFixtures(project(":domain"))` bilan.
+    `java-test-fixtures`
     alias(libs.plugins.jetbrains.kotlin.jvm)
 }
 java {
@@ -25,4 +27,7 @@ dependencies {
 
     // Sof Kotlin modul — testlar oddiy JUnit bilan, Android'siz va tez ishlaydi.
     testImplementation(libs.junit)
+    // Fake'lar va MainDispatcherRule uchun (testFixtures'ni ulagan modul testlariga ham o'tadi).
+    testFixturesApi(libs.junit)
+    testFixturesApi(libs.kotlinx.coroutines.test)
 }
