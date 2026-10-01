@@ -32,6 +32,7 @@ firebaseBom = "34.19.0"
 googleServices = "4.5.0"
 turbine = "1.2.1"
 robolectric = "4.17"
+roborazzi = "1.76.0"
 tink = "1.23.0"
 jetbrainsKotlinJvm = "2.4.10"
 
@@ -124,6 +125,9 @@ javax-inject = { group = "javax.inject", name = "javax.inject", version = "1" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
+roborazzi = { group = "io.github.takahirom.roborazzi", name = "roborazzi", version.ref = "roborazzi" }
+roborazzi-compose = { group = "io.github.takahirom.roborazzi", name = "roborazzi-compose", version.ref = "roborazzi" }
+roborazzi-junit-rule = { group = "io.github.takahirom.roborazzi", name = "roborazzi-junit-rule", version.ref = "roborazzi" }
 
 # Gradle plugin'lari
 [plugins]
@@ -135,3 +139,4 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
 jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "jetbrainsKotlinJvm" }
+roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }
