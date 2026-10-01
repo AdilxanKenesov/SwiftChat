@@ -1,6 +1,9 @@
 package uz.relay.feature.calls.call.components
 
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.height
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -51,70 +54,213 @@ import uz.relay.feature.calls.R
 /** Qo'ng'iroq ekrani har doim qorong'i (Telegram kabi) — temadan qat'i nazar oq ikonka/matn. */
 private val ButtonOn = Color.White.copy(alpha = 0.18f)
 private val HangUpRed = Color(0xFFE53935)
+/** "Ko'proq" paneli va qo'l chip'i foni — video ustida ham o'qiladigan yarim shaffof qora. */
+private val PanelColor = Color(0xCC1C1C1E)
 
 /**
  * Faol qo'ng'iroqning pastki boshqaruv paneli. Stream'ning standart `ControlActions`i o'rniga — u ba'zi
  * qurilmalarda ko'rinmay qolgan, qizil "chiqish" tugmasi esa tepadagi panelga tushib qolgan edi. Bu yerda tugmalar
  * aniq joyda: pastda, navigation bar ustida, ostida nomi bilan.
  *
- *  - Video: Kamera · Almashtirish · Mikrofon · Tugatish
+ *  - Video: Kamera · Almashtirish · Mikrofon · Ko'proq · Tugatish ("Ko'proq" — [extras] berilganda)
  *  - Audio: Mikrofon · Karnay · Tugatish
  *
  * Holat (yoqiq/o'chiq) to'g'ridan-to'g'ri `call.camera/microphone/speaker` StateFlow'laridan — tugma bosilganda
  * Stream o'zgartiradi va bu yerga qaytib keladi. Amallar ViewModel orqali ([onCallAction]) — tugatishda tarix yozilsin.
  */
+/**
+ * Video qo'ng'iroqdagi qo'shimcha amallar ("Ko'proq" paneli): reaksiyalar, qo'l ko'tarish, ekranni ulashish.
+ * Holat ViewModel'da (qo'l) yoki Stream'da (ekran ulashish) — bu yerga faqat qiymat va callback'lar keladi.
+ */
+internal class CallExtras(
+    val handRaised: Boolean,
+    val screenSharing: Boolean,
+    val onReaction: (String) -> Unit,
+    val onToggleHand: () -> Unit,
+    val onToggleScreenShare: () -> Unit
+)
+
 @Composable
-internal fun CallControls(call: Call, isVideo: Boolean, onCallAction: (CallAction) -> Unit, modifier: Modifier = Modifier) {
+internal fun CallControls(
+    call: Call,
+    isVideo: Boolean,
+    onCallAction: (CallAction) -> Unit,
+    modifier: Modifier = Modifier,
+    extras: CallExtras? = null
+) {
     val cameraOn by call.camera.isEnabled.collectAsState()
     val micOn by call.microphone.isEnabled.collectAsState()
     val speakerOn by call.speaker.isEnabled.collectAsState()
+    // Panel ochiqligi — faqat UI holati (ekran burilsa yopilsa ham zarari yo'q).
+    var moreOpen by remember { mutableStateOf(false) }
 
-    Row(
+    Column(
         modifier = modifier
             .fillMaxWidth()
             .navigationBarsPadding()
             .padding(start = 12.dp, end = 12.dp, top = 16.dp, bottom = 28.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.Top
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        if (isVideo) {
+        if (extras != null) {
+            AnimatedVisibility(visible = moreOpen) {
+                MorePanel(extras = extras, onDone = { moreOpen = false })
+            }
+        }
+        // Har bir tugma teng kenglikda (weight) — 5 ta tugma tor ekranda ham sig'sin, nomlar ustma-ust tushmasin.
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+            val cell = Modifier.weight(1f)
+            if (isVideo) {
+                ControlButton(
+                    icon = if (cameraOn) DesignR.drawable.ic_video else DesignR.drawable.ic_video_off,
+                    label = stringResource(R.string.call_camera),
+                    on = cameraOn,
+                    onClick = { onCallAction(ToggleCamera(!cameraOn)) },
+                    modifier = cell
+                )
+                ControlButton(
+                    icon = DesignR.drawable.ic_switch_camera,
+                    label = stringResource(R.string.call_flip),
+                    on = true,
+                    enabled = cameraOn,
+                    onClick = { onCallAction(FlipCamera) },
+                    modifier = cell
+                )
+            }
             ControlButton(
-                icon = if (cameraOn) DesignR.drawable.ic_video else DesignR.drawable.ic_video_off,
-                label = stringResource(R.string.call_camera),
-                on = cameraOn,
-                onClick = { onCallAction(ToggleCamera(!cameraOn)) }
+                icon = if (micOn) DesignR.drawable.ic_mic else DesignR.drawable.ic_mic_off,
+                label = stringResource(R.string.call_microphone),
+                on = micOn,
+                onClick = { onCallAction(ToggleMicrophone(!micOn)) },
+                modifier = cell
             )
+            if (!isVideo) {
+                ControlButton(
+                    icon = if (speakerOn) DesignR.drawable.ic_volume else DesignR.drawable.ic_volume_x,
+                    label = stringResource(R.string.call_speaker),
+                    on = speakerOn,
+                    onClick = { onCallAction(ToggleSpeakerphone(!speakerOn)) },
+                    modifier = cell
+                )
+            }
+            if (extras != null) {
+                ControlButton(
+                    icon = DesignR.drawable.ic_more_horizontal,
+                    label = stringResource(R.string.call_more),
+                    // Ochiq panel — teskari rang (tugma "bosilgan" ko'rinsin).
+                    on = !moreOpen,
+                    onClick = { moreOpen = !moreOpen },
+                    modifier = cell
+                )
+            }
             ControlButton(
-                icon = DesignR.drawable.ic_switch_camera,
-                label = stringResource(R.string.call_flip),
+                icon = DesignR.drawable.ic_call_end,
+                label = stringResource(R.string.call_end),
                 on = true,
-                enabled = cameraOn,
-                onClick = { onCallAction(FlipCamera) }
+                size = 64.dp,
+                background = HangUpRed,
+                onClick = { onCallAction(LeaveCall) },
+                modifier = cell
             )
         }
-        ControlButton(
-            icon = if (micOn) DesignR.drawable.ic_mic else DesignR.drawable.ic_mic_off,
-            label = stringResource(R.string.call_microphone),
-            on = micOn,
-            onClick = { onCallAction(ToggleMicrophone(!micOn)) }
-        )
-        if (!isVideo) {
-            ControlButton(
-                icon = if (speakerOn) DesignR.drawable.ic_volume else DesignR.drawable.ic_volume_x,
-                label = stringResource(R.string.call_speaker),
-                on = speakerOn,
-                onClick = { onCallAction(ToggleSpeakerphone(!speakerOn)) }
-            )
-        }
-        ControlButton(
-            icon = DesignR.drawable.ic_call_end,
-            label = stringResource(R.string.call_end),
-            on = true,
-            size = 64.dp,
-            background = HangUpRed,
-            onClick = { onCallAction(LeaveCall) }
-        )
     }
+}
+
+/** Reaksiyalar (emoji teginilsa — yuboriladi va panel yopiladi). */
+private val Reactions = listOf("👍", "❤️", "😂", "😮", "👏", "🎉")
+
+/**
+ * "Ko'proq" paneli: tepada emoji qatori, ostida ikki pill tugma — qo'l ko'tarish va ekranni ulashish.
+ * Yoqiq holatdagi tugma oq fonda (boshqa tugmalardagi "teskari rang" qoidasi kabi).
+ */
+@Composable
+private fun MorePanel(extras: CallExtras, onDone: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(PanelColor)
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+            Reactions.forEach { emoji ->
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(ButtonOn)
+                        .clickable {
+                            extras.onReaction(emoji)
+                            onDone()
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(text = emoji, fontSize = 22.sp)
+                }
+            }
+        }
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            PillButton(
+                icon = DesignR.drawable.ic_hand,
+                label = stringResource(if (extras.handRaised) R.string.call_lower_hand else R.string.call_raise_hand),
+                active = extras.handRaised,
+                onClick = {
+                    extras.onToggleHand()
+                    onDone()
+                },
+                modifier = Modifier.weight(1f)
+            )
+            PillButton(
+                icon = DesignR.drawable.ic_screen_share,
+                label = stringResource(if (extras.screenSharing) R.string.call_stop_share else R.string.call_share_screen),
+                active = extras.screenSharing,
+                onClick = {
+                    extras.onToggleScreenShare()
+                    onDone()
+                },
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun PillButton(@DrawableRes icon: Int, label: String, active: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val content = if (active) Color.Black else Color.White
+    Row(
+        modifier = modifier
+            .height(44.dp)
+            .clip(RoundedCornerShape(22.dp))
+            .background(if (active) Color.White else ButtonOn)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(painter = painterResource(icon), contentDescription = null, tint = content, modifier = Modifier.size(18.dp))
+        Text(text = label, color = content, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    }
+}
+
+/**
+ * Qo'l ko'targanlar — tepadagi sarlavha ostida: "✋ Ali, Malika". Bo'sh bo'lsa hech narsa chizilmaydi.
+ */
+@Composable
+internal fun RaisedHandsChip(names: Collection<String>, modifier: Modifier = Modifier) {
+    if (names.isEmpty()) return
+    Text(
+        text = "✋ " + names.joinToString(", "),
+        color = Color.White,
+        fontSize = 14.sp,
+        fontWeight = FontWeight.SemiBold,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(PanelColor)
+            .padding(horizontal = 14.dp, vertical = 7.dp)
+    )
 }
 
 /**
@@ -129,9 +275,10 @@ private fun ControlButton(
     onClick: () -> Unit,
     size: Dp = 56.dp,
     background: Color? = null,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    modifier: Modifier = Modifier
 ) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Box(
             modifier = Modifier
                 .size(size)
@@ -151,7 +298,7 @@ private fun ControlButton(
                 modifier = Modifier.size(26.dp)
             )
         }
-        Text(text = label, color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp)
+        Text(text = label, color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 

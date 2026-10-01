@@ -6,6 +6,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.getstream.android.video.generated.models.CustomVideoEvent
 import io.getstream.result.Result
 import io.getstream.video.android.compose.ui.components.call.controls.actions.DefaultOnCallActionHandler
 import io.getstream.video.android.core.Call
@@ -20,6 +21,7 @@ import io.getstream.video.android.core.model.RejectReason
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.orbitmvi.orbit.syntax.Syntax
@@ -79,6 +81,7 @@ class CallViewModel @AssistedInject constructor(
         ) {
             if (call != null) {
                 observeCallClosed(call)
+                observeHands(call)
                 if (group) {
                     joinGroup(call)
                 } else {
@@ -104,6 +107,17 @@ class CallViewModel @AssistedInject constructor(
             CallContract.Intent.OnBack -> onCallAction(call, backAction(call))
             // Slot'lar: rad etildi yoki server 15 s'da javobsiz deb tugatdi.
             CallContract.Intent.OnFinished -> intent { finish(call, outcomeFromRinging(call)) }
+            is CallContract.Intent.OnSendReaction -> intent {
+                val result = call.sendReaction(type = REACTION_TYPE, emoji = intent.emoji)
+                if (result is Result.Failure) Log.w(TAG, "reaction failed: ${result.value.message}")
+            }
+            CallContract.Intent.OnToggleHand -> toggleHand(call)
+            // MediaProjection va video trek SDK ichida main thread'da yaratiladi.
+            is CallContract.Intent.OnStartScreenShare -> intent {
+                withContext(Dispatchers.Main) { call.startScreenSharing(intent.data) }
+                Log.i(TAG, "screen share started call=${call.id}")
+            }
+            CallContract.Intent.OnStopScreenShare -> intent { withContext(Dispatchers.Main) { call.stopScreenSharing() } }
         }
     }
 
@@ -199,6 +213,43 @@ class CallViewModel @AssistedInject constructor(
     }
 
     /**
+     * Qo'l ko'tarish Stream'da tayyor holat sifatida yo'q (":raise-hand:" reaksiyasi bir lahzalik) — shuning uchun
+     * qo'ng'iroq ichidagi custom event: `{type: raise_hand, raised: true/false}`. Hamma ishtirokchiga WebSocket orqali
+     * boradi. O'zimning event'im e'tiborsiz qoldiriladi (holat [toggleHand]da darhol yangilanadi). Qo'l ko'targan
+     * odam qo'ng'iroqdan chiqsa, ro'yxatdan o'chiriladi.
+     */
+    private fun observeHands(call: Call) {
+        val myId = StreamVideo.instanceOrNull()?.userId
+        intent {
+            call.events.filterIsInstance<CustomVideoEvent>().collect { event ->
+                if (event.custom["type"] != HAND_EVENT || event.user.id == myId) return@collect
+                val raised = event.custom["raised"] == true
+                reduce {
+                    val hands = if (raised) state.raisedHands + (event.user.id to (event.user.name ?: event.user.id))
+                    else state.raisedHands - event.user.id
+                    state.copy(raisedHands = hands)
+                }
+            }
+        }
+        intent {
+            call.state.remoteParticipants.collect { remotes ->
+                val present = remotes.map { it.userId.value }.toSet()
+                reduce { state.copy(raisedHands = state.raisedHands.filterKeys { it in present }) }
+            }
+        }
+    }
+
+    private fun toggleHand(call: Call) = intent {
+        val raised = !state.myHandRaised
+        reduce { state.copy(myHandRaised = raised) }
+        val result = call.sendCustomEvent(mapOf("type" to HAND_EVENT, "raised" to raised))
+        if (result is Result.Failure) {
+            Log.w(TAG, "raise hand failed: ${result.value.message}")
+            reduce { state.copy(myHandRaised = !raised) }
+        }
+    }
+
+    /**
      * Zaxira taymer: server 15 s'da qo'ng'iroqni o'zi tugatadi (RingSettings), lekin uning signali kechiksa yoki
      * kelmasa ham chiquvchi qo'ng'iroq ekranda osilib qolmasin — biroz kutib, hali javob yo'q bo'lsa bekor qilamiz.
      */
@@ -276,6 +327,8 @@ class CallViewModel @AssistedInject constructor(
     private companion object {
         const val TAG = "SwiftChat.Call"
         const val CALL_TYPE = "default"
+        const val REACTION_TYPE = "reaction"
+        const val HAND_EVENT = "raise_hand"
         /** Server sozlamasi bilan bir xil (CallRepositoryImpl.RING_TIMEOUT_MS). */
         const val RING_TIMEOUT_MS = 15_000L
         /** Server signalini kutish uchun qo'shimcha vaqt. */

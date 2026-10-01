@@ -22,6 +22,13 @@ interface CallContract {
         object OnBack : Intent
         /** Rad etildi yoki javob berilmadi — ekran yopiladi. */
         object OnFinished : Intent
+        /** Emoji reaksiya — hamma ekranida mening plitkamda bir lahza chiqadi. */
+        data class OnSendReaction(val emoji: String) : Intent
+        /** Qo'l ko'tarish / tushirish (navbat so'rash) — boshqalarda tepada "✋ Ism" ko'rinadi. */
+        object OnToggleHand : Intent
+        /** Tizim "ekranni yozib olish" ruxsatini berdi — [data] shu ruxsat natijasi (MediaProjection). */
+        data class OnStartScreenShare(val data: android.content.Intent) : Intent
+        object OnStopScreenShare : Intent
     }
 
     sealed interface SideEffect {
@@ -36,7 +43,11 @@ interface CallContract {
         /** Guruh video chati — jiringlash ekrani yo'q, darhol xona ko'rinadi. */
         val isGroup: Boolean = false,
         /** Stream client yo'q (API key yo'q yoki hali ulanmagan) — qo'ng'iroq ko'rsatilmaydi. */
-        val unavailable: Boolean = false
+        val unavailable: Boolean = false,
+        /** Qo'l ko'targan boshqa ishtirokchilar: `userId → ism` (ko'targan tartibida). */
+        val raisedHands: Map<String, String> = emptyMap(),
+        /** Men qo'l ko'targanmanmi. */
+        val myHandRaised: Boolean = false
     )
 
     interface Directions {
