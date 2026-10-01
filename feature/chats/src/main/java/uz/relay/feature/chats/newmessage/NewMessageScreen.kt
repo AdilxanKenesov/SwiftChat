@@ -32,7 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -62,12 +62,12 @@ import uz.relay.feature.chats.util.messageRes
 internal fun NewMessageScreen(viewModel: NewMessageViewModel = hiltViewModel()) {
     val uiState by viewModel.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
-    val context = LocalContext.current
+    val resources = LocalResources.current
 
     viewModel.collectSideEffect { sideEffect ->
         when (sideEffect) {
             is NewMessageContract.SideEffect.ShowError ->
-                snackbarHostState.showSnackbar(context.getString(sideEffect.error.messageRes()))
+                snackbarHostState.showSnackbar(resources.getString(sideEffect.error.messageRes()))
         }
     }
 
@@ -88,7 +88,7 @@ internal fun NewMessageContent(
     onEventDispatcher: (NewMessageContract.Intent) -> Unit
 ) {
     val colors = SwiftTheme.colors
-    val resources = LocalContext.current.resources
+    val resources = LocalResources.current
     var removeTarget by remember { mutableStateOf<User?>(null) }
 
     Column(

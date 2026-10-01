@@ -23,6 +23,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -31,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -54,8 +56,8 @@ import uz.relay.core.designsystem.theme.Brand
 import uz.relay.feature.calls.R
 import uz.relay.feature.calls.call.components.CallControls
 import uz.relay.feature.calls.call.components.CallExtras
-import uz.relay.feature.calls.call.components.CallVideoContent
 import uz.relay.feature.calls.call.components.CallTopBar
+import uz.relay.feature.calls.call.components.CallVideoContent
 import uz.relay.feature.calls.call.components.RaisedHandsChip
 
 /**
@@ -73,12 +75,12 @@ internal fun CallScreen(callId: String, video: Boolean?, chatId: String?, group:
     )
     val uiState by viewModel.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
-    val context = LocalContext.current
+    val resources = LocalResources.current
 
     viewModel.collectSideEffect { sideEffect ->
         when (sideEffect) {
-            is CallContract.SideEffect.ShowError -> snackbarHostState.showSnackbar(context.getString(R.string.call_failed))
-            CallContract.SideEffect.NoAnswer -> snackbarHostState.showSnackbar(context.getString(R.string.call_no_answer))
+            is CallContract.SideEffect.ShowError -> snackbarHostState.showSnackbar(resources.getString(R.string.call_failed))
+            CallContract.SideEffect.NoAnswer -> snackbarHostState.showSnackbar(resources.getString(R.string.call_no_answer))
         }
     }
 
@@ -187,7 +189,7 @@ private fun FullScreenVideoCall(
     val inPip = rememberIsInPipMode()
     DisposableEffect(Unit) {
         onDispose {
-            if (activity != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && activity.isInPictureInPictureMode) {
+            if (activity != null && activity.isInPictureInPictureMode) {
                 activity.moveTaskToBack(false)
             }
         }
@@ -263,7 +265,7 @@ private fun rememberScreenShareLauncher(onPrepare: () -> Unit, onResult: (Intent
     val context = LocalContext.current
     var pipPaused by remember { mutableStateOf(false) }
     var pendingLaunch by remember { mutableStateOf(false) }
-    var resumePip by remember { mutableStateOf(0) }
+    var resumePip by remember { mutableIntStateOf(0) }
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         val data = result.data
         // Rad etilsa ham chaqiriladi (null) — kamera/mikrofon oynadan oldingi holatiga qaytsin.

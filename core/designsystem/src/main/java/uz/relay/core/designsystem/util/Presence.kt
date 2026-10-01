@@ -3,7 +3,6 @@ package uz.relay.core.designsystem.util
 import android.content.res.Resources
 import uz.relay.core.designsystem.R
 import java.time.Instant
-import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -32,7 +31,7 @@ fun formatPresence(
     val minutes = (now - lastSeenAt) / 60_000
     val seen = Instant.ofEpochMilli(lastSeenAt).atZone(zone)
     // Kunlar farqi kalendar sanasi bo'yicha: 23:50 da ko'rilgan va hozir 00:10 bo'lsa — "kecha".
-    val daysAgo = ChronoUnit.DAYS.between(seen.toLocalDate(), LocalDate.ofInstant(Instant.ofEpochMilli(now), zone))
+    val daysAgo = ChronoUnit.DAYS.between(seen.toLocalDate(), Instant.ofEpochMilli(now).atZone(zone).toLocalDate())
     val relative = when {
         minutes < 1 -> resources.getString(R.string.presence_just_now)
         minutes < 60 -> resources.getQuantityString(R.plurals.presence_minutes_ago, minutes.toInt(), minutes.toInt())

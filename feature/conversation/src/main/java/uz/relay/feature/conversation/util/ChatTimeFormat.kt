@@ -3,7 +3,6 @@ package uz.relay.feature.conversation.util
 import android.content.res.Resources
 import uz.relay.feature.conversation.R
 import java.time.Instant
-import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
@@ -32,7 +31,7 @@ fun formatDateSeparator(
     zone: ZoneId = ZoneId.systemDefault()
 ): String {
     val date = Instant.ofEpochMilli(dayStart).atZone(zone).toLocalDate()
-    val today = LocalDate.ofInstant(Instant.ofEpochMilli(now), zone)
+    val today = Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
     val month = resources.getString(monthRes(date.monthValue))
     return when {
         date == today -> resources.getString(R.string.today)

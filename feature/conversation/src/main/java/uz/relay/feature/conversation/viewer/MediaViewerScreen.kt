@@ -2,11 +2,9 @@ package uz.relay.feature.conversation.viewer
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
-import uz.relay.core.designsystem.component.SwiftSnackbarHost
-import android.os.Build
 import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -58,6 +56,7 @@ import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -66,6 +65,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -74,10 +74,12 @@ import androidx.media3.ui.compose.state.rememberMuteButtonState
 import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
 import androidx.media3.ui.compose.state.rememberProgressStateWithTickInterval
 import coil3.compose.AsyncImage
+import java.io.File
 import kotlinx.coroutines.flow.distinctUntilChanged
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
 import uz.relay.core.designsystem.R as DesignR
+import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import uz.relay.domain.model.MediaKind
 import uz.relay.feature.conversation.R
 import uz.relay.feature.conversation.chat.components.MediaPreview
@@ -87,7 +89,6 @@ import uz.relay.feature.conversation.util.formatDateSeparator
 import uz.relay.feature.conversation.util.formatDuration
 import uz.relay.feature.conversation.util.formatMessageTime
 import uz.relay.feature.conversation.util.messageRes
-import java.io.File
 
 /** Spec: ko'ruvchi temadan qat'i nazar doim qora; panellar qora 55%, seek chizig'i #A59DFF. */
 private val ChromeBackground = Color.Black.copy(alpha = 0.55f)
@@ -113,13 +114,13 @@ internal fun MediaViewerScreen(chatId: String, clientMessageId: String) {
     )
     val uiState by viewModel.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
-    val context = LocalContext.current
+    val resources = LocalResources.current
 
     viewModel.collectSideEffect { sideEffect ->
         when (sideEffect) {
-            MediaViewerContract.SideEffect.Saved -> snackbarHostState.showSnackbar(context.getString(R.string.saving_to_gallery))
+            MediaViewerContract.SideEffect.Saved -> snackbarHostState.showSnackbar(resources.getString(R.string.saving_to_gallery))
             is MediaViewerContract.SideEffect.ShowError ->
-                snackbarHostState.showSnackbar(context.getString(sideEffect.error.messageRes()))
+                snackbarHostState.showSnackbar(resources.getString(sideEffect.error.messageRes()))
         }
     }
 
@@ -220,7 +221,7 @@ private fun BoxScope.ViewerContent(
 @Composable
 private fun TopBar(item: ViewerItem, senderName: String, onBack: () -> Unit, onSave: () -> Unit) {
     val context = LocalContext.current
-    val resources = context.resources
+    val resources = LocalResources.current
     val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { onSave() }
     val requestSave = {
         val needsPermission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&

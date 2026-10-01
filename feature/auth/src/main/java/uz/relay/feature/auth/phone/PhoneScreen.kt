@@ -1,6 +1,5 @@
 package uz.relay.feature.auth.phone
 
-import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import androidx.compose.foundation.background
@@ -24,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -39,6 +39,7 @@ import org.orbitmvi.orbit.compose.collectSideEffect
 import uz.relay.core.designsystem.R as DesignR
 import uz.relay.core.designsystem.component.BrandTile
 import uz.relay.core.designsystem.component.SwiftPrimaryButton
+import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import uz.relay.core.designsystem.component.SwiftTextField
 import uz.relay.core.designsystem.theme.SwiftChatTheme
 import uz.relay.core.designsystem.theme.SwiftTheme
@@ -61,18 +62,19 @@ internal fun PhoneScreen(viewModel: PhoneViewModel = hiltViewModel()) {
     val uiState by viewModel.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
+    val resources = LocalResources.current
 
     // collectSideEffect lifecycle'ga bog'langan (repeatOnLifecycle STARTED) - fonda hodisa yo'qolmaydi va UI yo'qligida ishlamaydi.
     viewModel.collectSideEffect { sideEffect ->
         when (sideEffect) {
             is PhoneContract.SideEffect.ShowError ->
-                snackbarHostState.showSnackbar(context.getString(sideEffect.error.messageRes()))
+                snackbarHostState.showSnackbar(resources.getString(sideEffect.error.messageRes()))
 
             is PhoneContract.SideEffect.OpenUrl -> try {
                 context.startActivity(Intent(Intent.ACTION_VIEW, sideEffect.url.toUri()))
             // Qurilmada havolani ochadigan ilova bo'lmasligi mumkin.
             } catch (_: ActivityNotFoundException) {
-                snackbarHostState.showSnackbar(context.getString(R.string.error_unknown))
+                snackbarHostState.showSnackbar(resources.getString(R.string.error_unknown))
             }
         }
     }
