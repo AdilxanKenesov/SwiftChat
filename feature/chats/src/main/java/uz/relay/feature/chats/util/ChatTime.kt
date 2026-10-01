@@ -4,7 +4,6 @@ import android.content.res.Resources
 import uz.relay.feature.chats.R
 import java.time.DayOfWeek
 import java.time.Instant
-import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -30,7 +29,7 @@ fun formatChatTime(
 ): String {
     val dateTime = Instant.ofEpochMilli(epochMillis).atZone(zone)
     val date = dateTime.toLocalDate()
-    val today = LocalDate.ofInstant(Instant.ofEpochMilli(now), zone)
+    val today = Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
     val daysAgo = ChronoUnit.DAYS.between(date, today)
 
     return when {
@@ -61,6 +60,6 @@ fun formatMuteUntil(
     zone: ZoneId = ZoneId.systemDefault()
 ): String {
     val dateTime = Instant.ofEpochMilli(epochMillis).atZone(zone)
-    val today = LocalDate.ofInstant(Instant.ofEpochMilli(now), zone)
+    val today = Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
     return if (dateTime.toLocalDate() == today) TIME.format(dateTime) else DAY_MONTH_TIME.format(dateTime)
 }

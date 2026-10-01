@@ -9,9 +9,9 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import android.util.Base64
 import android.webkit.MimeTypeMap
+import androidx.core.graphics.scale
+import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.withContext
-import uz.relay.core.common.dispatcher.AppDispatchers
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -21,6 +21,8 @@ import java.security.MessageDigest
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.max
+import kotlinx.coroutines.withContext
+import uz.relay.core.common.dispatcher.AppDispatchers
 
 /**
  * Yuborishga tayyor fayl: nusxa, hash va serverga e'lon qilinadigan meta.
@@ -69,7 +71,7 @@ class MediaPreparer @Inject constructor(
      * @throws MediaTooLargeException fayl server chegarasidan katta.
      */
     suspend fun prepare(uri: String, asFile: Boolean, clientMessageId: String): PreparedMedia = withContext(dispatchers.io) {
-        val source = Uri.parse(uri)
+        val source = uri.toUri()
         val resolver = context.contentResolver
         val displayName = queryDisplayName(source) ?: "file"
         // MIME: avval provider'dan, bo'lmasa kengaytmadan, oxirida umumiy binary tur.
@@ -194,7 +196,7 @@ class MediaPreparer @Inject constructor(
         val longest = max(width, height)
         if (longest <= maxSide) return this
         val ratio = maxSide.toFloat() / longest
-        return Bitmap.createScaledBitmap(this, (width * ratio).toInt().coerceAtLeast(1), (height * ratio).toInt().coerceAtLeast(1), true)
+        return scale((width * ratio).toInt().coerceAtLeast(1), (height * ratio).toInt().coerceAtLeast(1))
     }
 
     /** BitmapFactory uchun 2 ning darajasi bo'lgan eng katta inSampleSize (natija [target] dan kichik bo'lmasin). */

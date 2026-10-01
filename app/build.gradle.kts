@@ -37,6 +37,12 @@ android {
             optimization {
                 enable = false
             }
+            // Faqat haqiqiy telefonlar protsessorlari. ML Kit (qo'ng'iroqdagi orqa fon) va WebRTC native
+            // kutubxonalari har bir ABI uchun ~20–35 MB — x86/x86_64 (faqat emulyatorlar) APK'ni ikki baravar
+            // kattalashtirardi. Debug'da cheklov yo'q: emulyatorda ham ishlasin.
+            ndk {
+                abiFilters += listOf("arm64-v8a", "armeabi-v7a")
+            }
         }
     }
     // Java 11 — barcha modullarda bir xil.
@@ -116,4 +122,14 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     // Faqat debug: Android Studio preview va Layout Inspector.
     debugImplementation(libs.androidx.compose.ui.tooling)
+}
+
+// Ilova ichida til almashtiriladi (uz/ru/en). AAB'da Play tillarni telefon tiliga qarab kesib tashlasa, boshqa tilga
+// o'tib bo'lmay qolardi — shuning uchun barcha tillar har bir o'rnatishda bo'ladi (matnlar hajmi juda kichik).
+android {
+    bundle {
+        language {
+            enableSplit = false
+        }
+    }
 }

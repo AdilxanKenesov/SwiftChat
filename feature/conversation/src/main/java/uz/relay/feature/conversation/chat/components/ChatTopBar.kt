@@ -1,6 +1,5 @@
 package uz.relay.feature.conversation.chat.components
 
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,8 +17,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -28,10 +28,10 @@ import androidx.compose.ui.unit.sp
 import uz.relay.core.designsystem.R as DesignR
 import uz.relay.core.designsystem.component.Avatar
 import uz.relay.core.designsystem.theme.SwiftTheme
+import uz.relay.core.designsystem.util.formatPresence
 import uz.relay.domain.model.ChatSummary
 import uz.relay.domain.model.ChatType
 import uz.relay.feature.conversation.R
-import uz.relay.core.designsystem.util.formatPresence
 
 /**
  * 64dp sarlavha: orqaga · avatar 40 · ism (17/700) + holat (13) · "ko'proq".
@@ -57,7 +57,7 @@ fun ChatTopBar(
     onVideoCall: (() -> Unit)? = null
 ) {
     val colors = SwiftTheme.colors
-    val resources = LocalContext.current.resources
+    val resources = LocalResources.current
     val isGroup = chat?.type == ChatType.GROUP
 
     val typingText = typingUserIds.firstOrNull()?.let { userId ->

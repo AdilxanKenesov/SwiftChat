@@ -1,6 +1,5 @@
 package uz.relay.feature.profile.edit
 
-import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,7 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -42,6 +41,7 @@ import org.orbitmvi.orbit.compose.collectSideEffect
 import uz.relay.core.designsystem.R as DesignR
 import uz.relay.core.designsystem.component.Avatar
 import uz.relay.core.designsystem.component.SwiftPrimaryButton
+import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import uz.relay.core.designsystem.component.SwiftTextField
 import uz.relay.core.designsystem.theme.SwiftChatTheme
 import uz.relay.core.designsystem.theme.SwiftTheme
@@ -56,12 +56,12 @@ import uz.relay.feature.profile.util.messageRes
 internal fun EditProfileScreen(viewModel: EditProfileViewModel = hiltViewModel()) {
     val uiState by viewModel.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
-    val context = LocalContext.current
+    val resources = LocalResources.current
 
     viewModel.collectSideEffect { sideEffect ->
         when (sideEffect) {
             is EditProfileContract.SideEffect.ShowError ->
-                snackbarHostState.showSnackbar(context.getString(sideEffect.error.messageRes()))
+                snackbarHostState.showSnackbar(resources.getString(sideEffect.error.messageRes()))
         }
     }
 
@@ -76,7 +76,7 @@ internal fun EditProfileScreen(viewModel: EditProfileViewModel = hiltViewModel()
 
 /** ProfileSetup bilan bir xil maydonlar va qoidalar, lekin orqaga tugmasi va "Saqlash" bilan. */
 @Composable
-private fun EditProfileContent(
+internal fun EditProfileContent(
     uiState: EditProfileContract.UiState,
     onEventDispatcher: (EditProfileContract.Intent) -> Unit
 ) {

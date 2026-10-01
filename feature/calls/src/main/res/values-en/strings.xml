@@ -15,4 +15,12 @@
         <item quantity="one">%d participant</item>
         <item quantity="other">%d participants</item>
     </plurals>
+    <string name="call_more">More</string>
+    <string name="call_raise_hand">Raise hand</string>
+    <string name="call_lower_hand">Lower hand</string>
+    <string name="call_share_screen">Share screen</string>
+    <string name="call_stop_share">Stop sharing</string>
+    <string name="call_background">Background</string>
+    <string name="call_bg_none">None</string>
+    <string name="call_bg_blur">Blur</string>
 </resources>

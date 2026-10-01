@@ -1,9 +1,5 @@
 package uz.relay.feature.group.info
 
-import uz.relay.core.designsystem.component.SwiftDialog
-import uz.relay.core.designsystem.component.SwiftInputDialog
-import uz.relay.core.designsystem.component.SwiftSnackbarHost
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -42,8 +38,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -56,6 +53,9 @@ import org.orbitmvi.orbit.compose.collectSideEffect
 import uz.relay.core.designsystem.R as DesignR
 import uz.relay.core.designsystem.component.Avatar
 import uz.relay.core.designsystem.component.BrandTile
+import uz.relay.core.designsystem.component.SwiftDialog
+import uz.relay.core.designsystem.component.SwiftInputDialog
+import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import uz.relay.core.designsystem.component.avatarColor
 import uz.relay.core.designsystem.theme.SwiftChatTheme
 import uz.relay.core.designsystem.theme.SwiftTheme
@@ -85,12 +85,12 @@ internal fun GroupInfoScreen(chatId: String) {
     )
     val uiState by viewModel.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
-    val context = LocalContext.current
+    val resources = LocalResources.current
 
     viewModel.collectSideEffect { sideEffect ->
         when (sideEffect) {
             is GroupInfoContract.SideEffect.ShowError ->
-                snackbarHostState.showSnackbar(context.getString(sideEffect.error.messageRes()))
+                snackbarHostState.showSnackbar(resources.getString(sideEffect.error.messageRes()))
         }
     }
 
@@ -109,12 +109,12 @@ internal fun GroupInfoScreen(chatId: String) {
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun GroupInfoContent(
+internal fun GroupInfoContent(
     uiState: GroupInfoContract.UiState,
     onEventDispatcher: (GroupInfoContract.Intent) -> Unit
 ) {
     val colors = SwiftTheme.colors
-    val resources = LocalContext.current.resources
+    val resources = LocalResources.current
     val chat = uiState.chat
 
     // Dialog va sheet holatlari — faqat ko'rinishga tegishli, shuning uchun UI'da saqlanadi.

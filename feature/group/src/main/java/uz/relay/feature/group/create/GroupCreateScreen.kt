@@ -1,8 +1,5 @@
 package uz.relay.feature.group.create
 
-import androidx.compose.ui.text.style.TextAlign
-import uz.relay.core.designsystem.component.SwiftSnackbarHost
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -42,14 +39,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -60,6 +59,7 @@ import org.orbitmvi.orbit.compose.collectSideEffect
 import uz.relay.core.designsystem.R as DesignR
 import uz.relay.core.designsystem.component.Avatar
 import uz.relay.core.designsystem.component.SwiftFab
+import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import uz.relay.core.designsystem.component.SwiftTextField
 import uz.relay.core.designsystem.theme.Brand
 import uz.relay.core.designsystem.theme.FigtreeFontFamily
@@ -87,12 +87,12 @@ internal fun GroupCreateScreen(addToChatId: String?) {
     )
     val uiState by viewModel.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
-    val context = LocalContext.current
+    val resources = LocalResources.current
 
     viewModel.collectSideEffect { sideEffect ->
         when (sideEffect) {
             is GroupCreateContract.SideEffect.ShowError ->
-                snackbarHostState.showSnackbar(context.getString(sideEffect.error.messageRes()))
+                snackbarHostState.showSnackbar(resources.getString(sideEffect.error.messageRes()))
         }
     }
 
@@ -110,7 +110,7 @@ internal fun GroupCreateScreen(addToChatId: String?) {
  * Qadamga qarab [PickStep] yoki [NameStep] ko'rsatiladi; FAB esa ular ustida pastki o'ng burchakda turadi.
  */
 @Composable
-private fun GroupCreateContent(
+internal fun GroupCreateContent(
     uiState: GroupCreateContract.UiState,
     onEventDispatcher: (GroupCreateContract.Intent) -> Unit
 ) {
@@ -196,7 +196,7 @@ private fun TopBar(title: String, subtitle: String, onBack: () -> Unit) {
 @Composable
 private fun PickStep(uiState: GroupCreateContract.UiState, onEventDispatcher: (GroupCreateContract.Intent) -> Unit) {
     val colors = SwiftTheme.colors
-    val resources = LocalContext.current.resources
+    val resources = LocalResources.current
 
     // FlowRow: chip'lar qatorga sig'masa keyingi qatorga o'tadi — gorizontal scroll'siz hammasi ko'rinadi.
     if (uiState.selected.isNotEmpty()) {
@@ -252,7 +252,7 @@ private fun PickStep(uiState: GroupCreateContract.UiState, onEventDispatcher: (G
 @Composable
 private fun NameStep(uiState: GroupCreateContract.UiState, onEventDispatcher: (GroupCreateContract.Intent) -> Unit) {
     val colors = SwiftTheme.colors
-    val resources = LocalContext.current.resources
+    val resources = LocalResources.current
 
     Row(
         modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 24.dp),

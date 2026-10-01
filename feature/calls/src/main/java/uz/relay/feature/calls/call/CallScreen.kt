@@ -1,7 +1,10 @@
 package uz.relay.feature.calls.call
 
 import android.Manifest
+import android.app.Activity
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.projection.MediaProjectionManager
 import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
@@ -9,6 +12,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.SnackbarHostState
@@ -18,6 +22,8 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -26,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -33,6 +40,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import io.getstream.video.android.compose.pip.rememberIsInPipMode
+import io.getstream.video.android.compose.theme.StreamColors
 import io.getstream.video.android.compose.theme.VideoTheme
 import io.getstream.video.android.compose.ui.components.call.activecall.AudioCallContent
 import io.getstream.video.android.compose.ui.components.call.activecall.CallContent
@@ -40,12 +48,17 @@ import io.getstream.video.android.compose.ui.components.call.ringing.RingingCall
 import io.getstream.video.android.core.Call
 import io.getstream.video.android.core.call.state.CallAction
 import io.getstream.video.android.core.pip.PictureInPictureConfiguration
+import kotlinx.coroutines.delay
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
 import uz.relay.core.designsystem.component.SwiftSnackbarHost
+import uz.relay.core.designsystem.theme.Brand
 import uz.relay.feature.calls.R
 import uz.relay.feature.calls.call.components.CallControls
+import uz.relay.feature.calls.call.components.CallExtras
 import uz.relay.feature.calls.call.components.CallTopBar
+import uz.relay.feature.calls.call.components.CallVideoContent
+import uz.relay.feature.calls.call.components.RaisedHandsChip
 
 /**
  * Qo'ng'iroq ekrani. Stream'ning tayyor Compose komponentlari ishlatiladi (`VideoTheme` ichida bo'lishi shart):
@@ -62,12 +75,12 @@ internal fun CallScreen(callId: String, video: Boolean?, chatId: String?, group:
     )
     val uiState by viewModel.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
-    val context = LocalContext.current
+    val resources = LocalResources.current
 
     viewModel.collectSideEffect { sideEffect ->
         when (sideEffect) {
-            is CallContract.SideEffect.ShowError -> snackbarHostState.showSnackbar(context.getString(R.string.call_failed))
-            CallContract.SideEffect.NoAnswer -> snackbarHostState.showSnackbar(context.getString(R.string.call_no_answer))
+            is CallContract.SideEffect.ShowError -> snackbarHostState.showSnackbar(resources.getString(R.string.call_failed))
+            CallContract.SideEffect.NoAnswer -> snackbarHostState.showSnackbar(resources.getString(R.string.call_no_answer))
         }
     }
 
@@ -86,18 +99,19 @@ internal fun CallScreen(callId: String, video: Boolean?, chatId: String?, group:
         } else {
             var permissionsSettled by remember { mutableStateOf(false) }
             CallPermissions(isVideo = uiState.isVideo, onSettled = { permissionsSettled = true })
-            VideoTheme {
+            // Gapirayotgan odam ramkasi Stream'da `brandPrimary` rangida — ilova brend rangiga moslanadi.
+            VideoTheme(colors = StreamColors.defaultColors().copy(brandPrimary = Brand)) {
                 if (uiState.isGroup) {
                     // Guruh xonasi: jiringlash bosqichi yo'q — to'liq ekranli xona. Ruxsat dialogi tugaguncha
                     // ko'rsatilmaydi: dialog activity'ni pauza qiladi, Stream esa pauzada PiP'ga o'tib ketardi.
                     if (permissionsSettled) FullScreenVideoCall(
                         call = call,
                         group = true,
-                        onBack = { viewModel.onEventDispatcher(CallContract.Intent.OnBack) },
-                        onCallAction = { viewModel.onEventDispatcher(CallContract.Intent.OnCallAction(it)) }
+                        uiState = uiState,
+                        onEventDispatcher = viewModel::onEventDispatcher
                     )
                 } else {
-                    CallContentHost(call = call, isVideo = uiState.isVideo, onEventDispatcher = viewModel::onEventDispatcher)
+                    CallContentHost(call = call, uiState = uiState, onEventDispatcher = viewModel::onEventDispatcher)
                 }
             }
         }
@@ -110,7 +124,8 @@ internal fun CallScreen(callId: String, video: Boolean?, chatId: String?, group:
  * u slot ko'rinishi bilan bir marta ishlaydi).
  */
 @Composable
-private fun CallContentHost(call: Call, isVideo: Boolean, onEventDispatcher: (CallContract.Intent) -> Unit) {
+private fun CallContentHost(call: Call, uiState: CallContract.UiState, onEventDispatcher: (CallContract.Intent) -> Unit) {
+    val isVideo = uiState.isVideo
     val onCallAction: (CallAction) -> Unit =
         { onEventDispatcher(CallContract.Intent.OnCallAction(it)) }
     val onBack = { onEventDispatcher(CallContract.Intent.OnBack) }
@@ -122,7 +137,7 @@ private fun CallContentHost(call: Call, isVideo: Boolean, onEventDispatcher: (Ca
         onCallAction = onCallAction,
         onAcceptedContent = {
             if (isVideo) {
-                FullScreenVideoCall(call = call, group = false, onBack = onBack, onCallAction = onCallAction)
+                FullScreenVideoCall(call = call, group = false, uiState = uiState, onEventDispatcher = onEventDispatcher)
             } else {
                 val micOn by call.microphone.isEnabled.collectAsState()
                 AudioCallContent(
@@ -163,46 +178,121 @@ private fun CallContentHost(call: Call, isVideo: Boolean, onEventDispatcher: (Ca
  * ilova fonga o'tkaziladi (PiP oynasi yopiladi).
  */
 @Composable
-private fun FullScreenVideoCall(call: Call, group: Boolean, onBack: () -> Unit, onCallAction: (CallAction) -> Unit) {
+private fun FullScreenVideoCall(
+    call: Call,
+    group: Boolean,
+    uiState: CallContract.UiState,
+    onEventDispatcher: (CallContract.Intent) -> Unit
+) {
+    val onCallAction: (CallAction) -> Unit = { onEventDispatcher(CallContract.Intent.OnCallAction(it)) }
     val activity = LocalActivity.current
     val inPip = rememberIsInPipMode()
     DisposableEffect(Unit) {
         onDispose {
-            if (activity != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && activity.isInPictureInPictureMode) {
+            if (activity != null && activity.isInPictureInPictureMode) {
                 activity.moveTaskToBack(false)
             }
         }
     }
+    val screenSharing by call.screenShare.isEnabled.collectAsState()
+    val screenShare = rememberScreenShareLauncher(
+        onPrepare = { onEventDispatcher(CallContract.Intent.OnScreenSharePrepare) },
+        onResult = { onEventDispatcher(CallContract.Intent.OnStartScreenShare(it)) }
+    )
 
     Box(modifier = Modifier.fillMaxSize()) {
-        CallContent(
-            call = call,
-            modifier = Modifier.fillMaxSize(),
-            onBackPressed = onBack,
-            onCallAction = onCallAction,
-            appBarContent = {},
-            controlsContent = {},
-            pictureInPictureConfiguration = PictureInPictureConfiguration(enable = true)
-        )
-        if (!inPip) {
-            CallTopBar(
+        // Ekran ulashish ruxsati oynasi ochilganda PiP vaqtincha o'chadi (izoh — rememberScreenShareLauncher'da).
+        // Stream PiP sozlamasini birinchi chizilishda eslab qoladi, shuning uchun `key` bilan qayta yaratiladi.
+        key(screenShare.pipPaused) {
+            CallContent(
                 call = call,
-                group = group,
+                modifier = Modifier.fillMaxSize(),
+                onBackPressed = { onEventDispatcher(CallContract.Intent.OnBack) },
+                onCallAction = onCallAction,
+                appBarContent = {},
+                controlsContent = {},
+                // Video qismi o'zimizniki: reaksiya/suzuvchi kamera panel ostida, ekran ulashishda kameralar ko'rinadi.
+                videoContent = { CallVideoContent(call = it) },
+                pictureInPictureConfiguration = PictureInPictureConfiguration(enable = !screenShare.pipPaused)
+            )
+        }
+        if (!inPip) {
+            Column(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .background(Brush.verticalGradient(listOf(Scrim, Color.Transparent)))
-            )
+                    .background(Brush.verticalGradient(listOf(Scrim, Color.Transparent))),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                CallTopBar(call = call, group = group)
+                RaisedHandsChip(names = uiState.raisedHands.values)
+            }
             CallControls(
                 call = call,
                 isVideo = true,
                 onCallAction = onCallAction,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .background(Brush.verticalGradient(listOf(Color.Transparent, Scrim)))
+                    .background(Brush.verticalGradient(listOf(Color.Transparent, Scrim))),
+                extras = CallExtras(
+                    handRaised = uiState.myHandRaised,
+                    screenSharing = screenSharing,
+                    onReaction = { onEventDispatcher(CallContract.Intent.OnSendReaction(it)) },
+                    onToggleHand = { onEventDispatcher(CallContract.Intent.OnToggleHand) },
+                    onToggleScreenShare = {
+                        if (screenSharing) onEventDispatcher(CallContract.Intent.OnStopScreenShare) else screenShare.launch()
+                    },
+                    background = uiState.background,
+                    onBackground = { onEventDispatcher(CallContract.Intent.OnSelectBackground(it)) }
+                )
             )
         }
     }
 }
+
+/** Ekran ulashish ruxsatini so'rash holati: [launch] — tizim oynasini ochish, [pipPaused] — shu payt PiP o'chiq. */
+private class ScreenShareLauncher(val pipPaused: Boolean, val launch: () -> Unit)
+
+/**
+ * Tizimning "ekranni yozib olish" ruxsat oynasi (MediaProjection). Muammo: oyna activity'ni pauza qiladi, Stream esa
+ * pauzada PiP'ga o'tadi — oyna o'rniga qo'ng'iroq kichrayib qolardi. Shuning uchun:
+ *  1) avval PiP o'chiriladi ([pipPaused] = true) va `CallContent` yangi sozlama bilan qayta chiziladi;
+ *  2) shundan KEYIN (LaunchedEffect — yangi sozlama ulangach) oyna ochiladi;
+ *  3) natija kelgach biroz kutib PiP qayta yoqiladi — Stream o'chiq PiP'da pauzada to'xtatgan kamera/mikrofonni
+ *     `onResume`da qayta yoqib ulgursin.
+ */
+@Composable
+private fun rememberScreenShareLauncher(onPrepare: () -> Unit, onResult: (Intent?) -> Unit): ScreenShareLauncher {
+    val context = LocalContext.current
+    var pipPaused by remember { mutableStateOf(false) }
+    var pendingLaunch by remember { mutableStateOf(false) }
+    var resumePip by remember { mutableIntStateOf(0) }
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        val data = result.data
+        // Rad etilsa ham chaqiriladi (null) — kamera/mikrofon oynadan oldingi holatiga qaytsin.
+        onResult(data.takeIf { result.resultCode == Activity.RESULT_OK })
+        resumePip++
+    }
+    LaunchedEffect(pendingLaunch) {
+        if (pendingLaunch) {
+            pendingLaunch = false
+            val manager = context.getSystemService(MediaProjectionManager::class.java)
+            launcher.launch(manager.createScreenCaptureIntent())
+        }
+    }
+    LaunchedEffect(resumePip) {
+        if (resumePip > 0) {
+            delay(PIP_RESUME_DELAY_MS)
+            pipPaused = false
+        }
+    }
+    return ScreenShareLauncher(pipPaused = pipPaused, launch = {
+        onPrepare()
+        pipPaused = true
+        pendingLaunch = true
+    })
+}
+
+private const val PIP_RESUME_DELAY_MS = 700L
 
 /** Video ustidagi matn/tugmalar ortidagi soya. */
 private val Scrim = Color.Black.copy(alpha = 0.55f)

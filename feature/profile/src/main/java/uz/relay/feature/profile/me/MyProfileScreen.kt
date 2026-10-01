@@ -1,6 +1,5 @@
 package uz.relay.feature.profile.me
 
-import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -19,14 +18,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.BottomSheetDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,7 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -49,6 +48,9 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
 import uz.relay.core.designsystem.R as DesignR
+import uz.relay.core.designsystem.component.SwiftDialog
+import uz.relay.core.designsystem.component.SwiftSnackbarHost
+import uz.relay.core.designsystem.component.SwiftSwitch
 import uz.relay.core.designsystem.theme.SwiftChatTheme
 import uz.relay.core.designsystem.theme.SwiftTheme
 import uz.relay.domain.model.AppLanguage
@@ -56,15 +58,13 @@ import uz.relay.domain.model.ConnectionStatus
 import uz.relay.domain.model.ThemeMode
 import uz.relay.domain.model.User
 import uz.relay.feature.profile.R
+import uz.relay.feature.profile.components.DangerRow
 import uz.relay.feature.profile.components.InfoRow
 import uz.relay.feature.profile.components.ProfileCard
 import uz.relay.feature.profile.components.ProfileHeader
 import uz.relay.feature.profile.components.ProfileTopBar
-import uz.relay.feature.profile.components.SettingRow
-import uz.relay.core.designsystem.component.SwiftSwitch
-import uz.relay.core.designsystem.component.SwiftDialog
-import uz.relay.feature.profile.components.DangerRow
 import uz.relay.feature.profile.components.SectionLabel
+import uz.relay.feature.profile.components.SettingRow
 import uz.relay.feature.profile.components.TileColors
 import uz.relay.feature.profile.util.formatPhone
 import uz.relay.feature.profile.util.messageRes
@@ -77,12 +77,12 @@ import uz.relay.feature.profile.util.messageRes
 internal fun MyProfileScreen(viewModel: MyProfileViewModel = hiltViewModel()) {
     val uiState by viewModel.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
-    val context = LocalContext.current
+    val resources = LocalResources.current
 
     viewModel.collectSideEffect { sideEffect ->
         when (sideEffect) {
             is MyProfileContract.SideEffect.ShowError ->
-                snackbarHostState.showSnackbar(context.getString(sideEffect.error.messageRes()))
+                snackbarHostState.showSnackbar(resources.getString(sideEffect.error.messageRes()))
         }
     }
 
@@ -100,7 +100,7 @@ internal fun MyProfileScreen(viewModel: MyProfileViewModel = hiltViewModel()) {
  * Til tanlash sheet'i va chiqish dialogi — vaqtinchalik ko'rinish holati, shuning uchun ViewModel'da emas.
  */
 @Composable
-private fun MyProfileContent(
+internal fun MyProfileContent(
     uiState: MyProfileContract.UiState,
     onEventDispatcher: (MyProfileContract.Intent) -> Unit
 ) {

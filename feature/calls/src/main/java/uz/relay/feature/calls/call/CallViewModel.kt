@@ -1,11 +1,14 @@
 package uz.relay.feature.calls.call
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import io.getstream.android.video.generated.models.CustomVideoEvent
 import io.getstream.result.Result
 import io.getstream.video.android.compose.ui.components.call.controls.actions.DefaultOnCallActionHandler
 import io.getstream.video.android.core.Call
@@ -17,10 +20,17 @@ import io.getstream.video.android.core.call.state.CancelCall
 import io.getstream.video.android.core.call.state.DeclineCall
 import io.getstream.video.android.core.call.state.LeaveCall
 import io.getstream.video.android.core.model.RejectReason
+import io.getstream.video.android.filters.video.BlurIntensity
+import io.getstream.video.android.filters.video.BlurredBackgroundVideoFilter
+import io.getstream.video.android.filters.video.VirtualBackgroundVideoFilter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.orbitmvi.orbit.syntax.Syntax
 import org.orbitmvi.orbit.viewmodel.orbitContainer
@@ -48,6 +58,7 @@ class CallViewModel @AssistedInject constructor(
     @Assisted video: Boolean?,
     @Assisted("chatId") private val chatId: String?,
     @Assisted("group") private val group: Boolean,
+    @ApplicationContext private val context: Context,
     private val sendTextMessage: SendTextMessageUseCase,
     private val directions: CallContract.Directions
 ) : ViewModel(), CallContract.ViewModel {
@@ -67,6 +78,12 @@ class CallViewModel @AssistedInject constructor(
 
     private val isVideo: Boolean = group || (video ?: (call?.isVideoEnabled() ?: true))
 
+    /**
+     * Ekran ulashish ruxsati oynasidan oldingi (kamera, mikrofon) holati. Oyna activity'ni pauza qiladi, Stream esa
+     * pauzada kamera/mikrofonni o'chiradi — ulashish boshlangach suhbatdoshlar mening kameramni ko'rmay qolardi.
+     */
+    private var mediaBeforeShare: Pair<Boolean, Boolean>? = null
+
     /** Ekran bir marta yopilsin (bir nechta "tugadi" signali kelishi mumkin). */
     private var finished = false
 
@@ -79,8 +96,10 @@ class CallViewModel @AssistedInject constructor(
         ) {
             if (call != null) {
                 observeCallClosed(call)
+                observeHands(call)
                 if (group) {
                     joinGroup(call)
+                    watchAloneInGroup(call)
                 } else {
                     observeEnd(call)
                     watchRingTimeout(call)
@@ -104,6 +123,25 @@ class CallViewModel @AssistedInject constructor(
             CallContract.Intent.OnBack -> onCallAction(call, backAction(call))
             // Slot'lar: rad etildi yoki server 15 s'da javobsiz deb tugatdi.
             CallContract.Intent.OnFinished -> intent { finish(call, outcomeFromRinging(call)) }
+            is CallContract.Intent.OnSendReaction -> intent {
+                val result = call.sendReaction(type = REACTION_TYPE, emoji = intent.emoji)
+                if (result is Result.Failure) Log.w(TAG, "reaction failed: ${result.value.message}")
+            }
+            CallContract.Intent.OnToggleHand -> toggleHand(call)
+            // MediaProjection va video trek SDK ichida main thread'da yaratiladi.
+            CallContract.Intent.OnScreenSharePrepare -> {
+                mediaBeforeShare = call.camera.isEnabled.value to call.microphone.isEnabled.value
+            }
+            is CallContract.Intent.OnStartScreenShare -> intent {
+                val data = intent.data
+                withContext(Dispatchers.Main) {
+                    restoreMediaAfterShareDialog(call)
+                    if (data != null) call.startScreenSharing(data)
+                }
+                if (data != null) Log.i(TAG, "screen share started call=${call.id}")
+            }
+            CallContract.Intent.OnStopScreenShare -> intent { withContext(Dispatchers.Main) { call.stopScreenSharing() } }
+            is CallContract.Intent.OnSelectBackground -> selectBackground(call, intent.background)
         }
     }
 
@@ -199,6 +237,84 @@ class CallViewModel @AssistedInject constructor(
     }
 
     /**
+     * Qo'l ko'tarish Stream'da tayyor holat sifatida yo'q (":raise-hand:" reaksiyasi bir lahzalik) — shuning uchun
+     * qo'ng'iroq ichidagi custom event: `{type: raise_hand, raised: true/false}`. Hamma ishtirokchiga WebSocket orqali
+     * boradi. O'zimning event'im e'tiborsiz qoldiriladi (holat [toggleHand]da darhol yangilanadi). Qo'l ko'targan
+     * odam qo'ng'iroqdan chiqsa, ro'yxatdan o'chiriladi.
+     */
+    private fun observeHands(call: Call) {
+        val myId = StreamVideo.instanceOrNull()?.userId
+        intent {
+            call.events.filterIsInstance<CustomVideoEvent>().collect { event ->
+                if (event.custom["type"] != HAND_EVENT || event.user.id == myId) return@collect
+                val raised = event.custom["raised"] == true
+                reduce {
+                    val hands = if (raised) state.raisedHands + (event.user.id to (event.user.name ?: event.user.id))
+                    else state.raisedHands - event.user.id
+                    state.copy(raisedHands = hands)
+                }
+            }
+        }
+        intent {
+            call.state.remoteParticipants.collect { remotes ->
+                val present = remotes.map { it.userId.value }.toSet()
+                reduce { state.copy(raisedHands = state.raisedHands.filterKeys { it in present }) }
+            }
+        }
+    }
+
+    private fun restoreMediaAfterShareDialog(call: Call) {
+        val (cameraOn, micOn) = mediaBeforeShare ?: return
+        mediaBeforeShare = null
+        call.camera.setEnabled(cameraOn)
+        call.microphone.setEnabled(micOn)
+    }
+
+    /**
+     * Guruh xonasida yolg'iz qolsam (hech kim kirmadi yoki hamma chiqib ketdi) va 30 daqiqa ichida hech kim
+     * qo'shilmasa — xona avtomatik yopiladi. Aks holda unutilgan telefon soatlab kamera/mikrofonni yoqib,
+     * batareya va trafikni yeb o'tirardi. Kimdir qo'shilsa taymer bekor bo'ladi (`collectLatest`).
+     */
+    private fun watchAloneInGroup(call: Call) = intent {
+        call.state.remoteParticipants
+            .map { it.isEmpty() }
+            .distinctUntilChanged()
+            .collectLatest { alone ->
+                if (alone) {
+                    delay(GROUP_ALONE_TIMEOUT_MS)
+                    Log.i(TAG, "group call alone timeout call=${call.id}")
+                    finish(call)
+                }
+            }
+    }
+
+    private fun toggleHand(call: Call) = intent {
+        val raised = !state.myHandRaised
+        reduce { state.copy(myHandRaised = raised) }
+        val result = call.sendCustomEvent(mapOf("type" to HAND_EVENT, "raised" to raised))
+        if (result is Result.Failure) {
+            Log.w(TAG, "raise hand failed: ${result.value.message}")
+            reduce { state.copy(myHandRaised = !raised) }
+        }
+    }
+
+    /**
+     * Orqa fon Stream'ning video filtri orqali: har bir kamera kadrida ML Kit odamni fondan ajratadi va fonni
+     * xiralashtiradi yoki rasm bilan almashtiradi. Filtr faqat MENING kamerimga qo'llanadi — boshqalar natijani
+     * tayyor video sifatida ko'radi. Qayta ishlash protsessorga og'ir, shuning uchun standart holat — filtrsiz.
+     */
+    private fun selectBackground(call: Call, background: CallBackground) = intent {
+        val filter = when (background) {
+            CallBackground.NONE -> null
+            CallBackground.BLUR -> BlurredBackgroundVideoFilter(BlurIntensity.MEDIUM)
+            else -> VirtualBackgroundVideoFilter(context, background.imageRes())
+        }
+        withContext(Dispatchers.Main) { call.videoFilter = filter }
+        reduce { state.copy(background = background) }
+        Log.i(TAG, "background=$background call=${call.id}")
+    }
+
+    /**
      * Zaxira taymer: server 15 s'da qo'ng'iroqni o'zi tugatadi (RingSettings), lekin uning signali kechiksa yoki
      * kelmasa ham chiquvchi qo'ng'iroq ekranda osilib qolmasin — biroz kutib, hali javob yo'q bo'lsa bekor qilamiz.
      */
@@ -276,6 +392,10 @@ class CallViewModel @AssistedInject constructor(
     private companion object {
         const val TAG = "SwiftChat.Call"
         const val CALL_TYPE = "default"
+        const val REACTION_TYPE = "reaction"
+        const val HAND_EVENT = "raise_hand"
+        /** Guruh xonasida yolg'iz qolish chegarasi. */
+        const val GROUP_ALONE_TIMEOUT_MS = 30 * 60 * 1000L
         /** Server sozlamasi bilan bir xil (CallRepositoryImpl.RING_TIMEOUT_MS). */
         const val RING_TIMEOUT_MS = 15_000L
         /** Server signalini kutish uchun qo'shimcha vaqt. */

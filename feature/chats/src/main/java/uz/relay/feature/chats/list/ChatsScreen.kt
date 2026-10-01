@@ -1,6 +1,5 @@
 package uz.relay.feature.chats.list
 
-import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,13 +18,13 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -37,6 +36,7 @@ import uz.relay.core.designsystem.R as DesignR
 import uz.relay.core.designsystem.component.OfflineBanner
 import uz.relay.core.designsystem.component.SkeletonChatRow
 import uz.relay.core.designsystem.component.SwiftFab
+import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import uz.relay.core.designsystem.theme.SwiftChatTheme
 import uz.relay.core.designsystem.theme.SwiftTheme
 import uz.relay.domain.model.ChatSummary
@@ -63,14 +63,14 @@ import uz.relay.feature.chats.util.messageRes
 internal fun ChatsScreen(viewModel: ChatsViewModel = hiltViewModel()) {
     val uiState by viewModel.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
-    val context = LocalContext.current
+    val resources = LocalResources.current
 
     viewModel.collectSideEffect { sideEffect ->
         when (sideEffect) {
             is ChatsContract.SideEffect.ShowError -> {
                 val result = snackbarHostState.showSnackbar(
-                    message = context.getString(sideEffect.error.messageRes()),
-                    actionLabel = context.getString(R.string.retry),
+                    message = resources.getString(sideEffect.error.messageRes()),
+                    actionLabel = resources.getString(R.string.retry),
                     duration = SnackbarDuration.Long
                 )
                 if (result == SnackbarResult.ActionPerformed) {
@@ -79,7 +79,7 @@ internal fun ChatsScreen(viewModel: ChatsViewModel = hiltViewModel()) {
             }
 
             is ChatsContract.SideEffect.ShowActionError ->
-                snackbarHostState.showSnackbar(context.getString(sideEffect.error.messageRes()))
+                snackbarHostState.showSnackbar(resources.getString(sideEffect.error.messageRes()))
         }
     }
 
@@ -98,7 +98,7 @@ internal fun ChatsScreen(viewModel: ChatsViewModel = hiltViewModel()) {
  * istalgan holatni (ro'yxat, offline, skeleton, bo'sh) ko'rsatish va UI test yozish oson.
  */
 @Composable
-private fun ChatsScreenContent(
+internal fun ChatsScreenContent(
     uiState: ChatsContract.UiState,
     onEventDispatcher: (ChatsContract.Intent) -> Unit
 ) {

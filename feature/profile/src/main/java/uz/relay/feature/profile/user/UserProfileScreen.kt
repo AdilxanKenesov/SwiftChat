@@ -1,12 +1,5 @@
 package uz.relay.feature.profile.user
 
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import uz.relay.core.designsystem.component.SwiftDialog
-import uz.relay.feature.profile.components.DangerRow
-import uz.relay.feature.profile.components.SettingRow
-import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,10 +15,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -33,16 +29,20 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
 import uz.relay.core.designsystem.R as DesignR
+import uz.relay.core.designsystem.component.SwiftDialog
+import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import uz.relay.core.designsystem.theme.SwiftChatTheme
 import uz.relay.core.designsystem.theme.SwiftTheme
 import uz.relay.core.designsystem.util.formatPresence
 import uz.relay.domain.model.User
 import uz.relay.feature.profile.R
+import uz.relay.feature.profile.components.DangerRow
 import uz.relay.feature.profile.components.InfoRow
 import uz.relay.feature.profile.components.ProfileActionCard
 import uz.relay.feature.profile.components.ProfileCard
 import uz.relay.feature.profile.components.ProfileHeader
 import uz.relay.feature.profile.components.ProfileTopBar
+import uz.relay.feature.profile.components.SettingRow
 import uz.relay.feature.profile.components.TileColors
 import uz.relay.feature.profile.util.messageRes
 
@@ -57,14 +57,14 @@ internal fun UserProfileScreen(userId: String) {
     )
     val uiState by viewModel.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
-    val context = LocalContext.current
+    val resources = LocalResources.current
 
     viewModel.collectSideEffect { sideEffect ->
         when (sideEffect) {
             is UserProfileContract.SideEffect.ShowError ->
-                snackbarHostState.showSnackbar(context.getString(sideEffect.error.messageRes()))
+                snackbarHostState.showSnackbar(resources.getString(sideEffect.error.messageRes()))
             UserProfileContract.SideEffect.ContactAdded ->
-                snackbarHostState.showSnackbar(context.getString(R.string.contact_added))
+                snackbarHostState.showSnackbar(resources.getString(R.string.contact_added))
         }
     }
 
@@ -79,13 +79,13 @@ internal fun UserProfileScreen(userId: String) {
 
 /** Avatar · ism · holat, "Xabar" va "Ovozsiz qilish" kartalari, username va kontaktga qo'shish/o'chirish. */
 @Composable
-private fun UserProfileContent(
+internal fun UserProfileContent(
     userId: String,
     uiState: UserProfileContract.UiState,
     onEventDispatcher: (UserProfileContract.Intent) -> Unit
 ) {
     val colors = SwiftTheme.colors
-    val resources = LocalContext.current.resources
+    val resources = LocalResources.current
     val user = uiState.user
     var confirmRemoveContact by rememberSaveable { mutableStateOf(false) }
     val status = user?.let { formatPresence(it.online, it.lastSeenAt, resources) }.orEmpty()

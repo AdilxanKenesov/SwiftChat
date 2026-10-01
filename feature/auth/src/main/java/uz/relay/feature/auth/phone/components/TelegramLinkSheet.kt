@@ -77,7 +77,7 @@ fun TelegramLinkSheet(
 
 /** Sheet ichidagi stateless kontent; Preview'larda ModalBottomSheet'siz ko'rsatish uchun alohida ajratilgan. */
 @Composable
-private fun TelegramLinkSheetContent(
+internal fun TelegramLinkSheetContent(
     phone: String,
     loading: Boolean,
     onOpenBot: () -> Unit,

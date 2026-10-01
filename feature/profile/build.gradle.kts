@@ -8,6 +8,8 @@ plugins {
     alias(libs.plugins.ksp)
     // Hilt — dependency injection.
     alias(libs.plugins.hilt)
+    // Screenshot testlari: `recordRoborazziDebug` (golden yozish) / `verifyRoborazziDebug` (solishtirish).
+    alias(libs.plugins.roborazzi)
 }
 
 // Android sozlamalari: namespace, SDK versiyalari, Java versiyasi.
@@ -30,6 +32,12 @@ android {
     }
     buildFeatures {
         compose = true
+    }
+    // Compose UI testlari JVM'da (Robolectric) — resurslar (matnlar, ikonkalar) testga ham kirsin.
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
     }
 }
 
@@ -60,6 +68,17 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
+    // ViewModel testlari: Orbit test DSL va repository fake'lari (domain testFixtures).
+    testImplementation(libs.orbit.test)
+    testImplementation(testFixtures(project(":domain")))
+    // Compose UI testlari: emulyatorsiz, Robolectric ustida (JVM).
+    testImplementation(libs.robolectric)
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
+    testImplementation(libs.roborazzi.junit.rule)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
 }

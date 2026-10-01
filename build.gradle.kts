@@ -12,4 +12,6 @@ plugins {
     alias(libs.plugins.google.services) apply false
     // Toza Kotlin/JVM modullar (domain, core:common) uchun.
     alias(libs.plugins.jetbrains.kotlin.jvm) apply false
+    // Screenshot testlari (Robolectric ustida): golden rasmlarni yozish va solishtirish.
+    alias(libs.plugins.roborazzi) apply false
 }
