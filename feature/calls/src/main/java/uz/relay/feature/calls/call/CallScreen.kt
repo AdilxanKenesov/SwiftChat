@@ -19,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -32,6 +33,8 @@ import io.getstream.video.android.compose.ui.components.call.activecall.AudioCal
 import io.getstream.video.android.compose.ui.components.call.activecall.CallContent
 import io.getstream.video.android.compose.ui.components.call.ringing.RingingCallContent
 import io.getstream.video.android.core.Call
+import io.getstream.video.android.core.call.state.CallAction
+import io.getstream.video.android.core.pip.PictureInPictureConfiguration
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
 import uz.relay.core.designsystem.component.SwiftSnackbarHost
@@ -91,7 +94,7 @@ internal fun CallScreen(callId: String, video: Boolean?, chatId: String?) {
  */
 @Composable
 private fun CallContentHost(call: Call, isVideo: Boolean, onEventDispatcher: (CallContract.Intent) -> Unit) {
-    val onCallAction: (io.getstream.video.android.core.call.state.CallAction) -> Unit =
+    val onCallAction: (CallAction) -> Unit =
         { onEventDispatcher(CallContract.Intent.OnCallAction(it)) }
     val onBack = { onEventDispatcher(CallContract.Intent.OnBack) }
 
@@ -102,14 +105,7 @@ private fun CallContentHost(call: Call, isVideo: Boolean, onEventDispatcher: (Ca
         onCallAction = onCallAction,
         onAcceptedContent = {
             if (isVideo) {
-                // Tepada — ism va davomiylik (chiqish tugmasisiz), pastda — o'zimizning boshqaruv paneli.
-                CallContent(
-                    call = call,
-                    onBackPressed = onBack,
-                    onCallAction = onCallAction,
-                    appBarContent = { CallTopBar(call = it) },
-                    controlsContent = { CallControls(call = it, isVideo = true, onCallAction = onCallAction) }
-                )
+                FullScreenVideoCall(call = call, onBack = onBack, onCallAction = onCallAction)
             } else {
                 val micOn by call.microphone.isEnabled.collectAsState()
                 AudioCallContent(
@@ -135,6 +131,48 @@ private fun CallContentHost(call: Call, isVideo: Boolean, onEventDispatcher: (Ca
         onIdle = { LaunchedEffect(Unit) { onEventDispatcher(CallContract.Intent.OnFinished) } }
     )
 }
+
+/**
+ * Video qo'ng'iroq butun ekranda (Telegram'dagidek): suhbatdosh kamerasi status bar va navigation bar ostigacha
+ * cho'ziladi, mening kameram kichik suzuvchi oynada. Stream'ning `CallContent`i tepa panel va tugmalarni videodan
+ * TASHQARIGA (Scaffold top/bottom bar) qo'yadi — video o'rtada qisilib qolardi. Shuning uchun uning slot'lari bo'sh
+ * qoldiriladi, ism/davomiylik va tugmalar esa video USTIGA qo'yiladi. Yorug' videoda oq matn/ikonka ko'rinsin
+ * deb, ularning ortida yengil qora gradient bor.
+ *
+ * PiP hozircha o'chiq: yoqiq bo'lsa `CallContent` "orqaga"da PiP'ga o'tmoqchi bo'ladi, manifest'da PiP yo'qligi
+ * uchun xato bilan qo'ng'iroqdan chiqib ketardi (qora ekran). PiP alohida bosqichda manifest bilan birga yoqiladi.
+ */
+@Composable
+private fun FullScreenVideoCall(call: Call, onBack: () -> Unit, onCallAction: (CallAction) -> Unit) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        CallContent(
+            call = call,
+            modifier = Modifier.fillMaxSize(),
+            onBackPressed = onBack,
+            onCallAction = onCallAction,
+            appBarContent = {},
+            controlsContent = {},
+            pictureInPictureConfiguration = PictureInPictureConfiguration(enable = false)
+        )
+        CallTopBar(
+            call = call,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .background(Brush.verticalGradient(listOf(Scrim, Color.Transparent)))
+        )
+        CallControls(
+            call = call,
+            isVideo = true,
+            onCallAction = onCallAction,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .background(Brush.verticalGradient(listOf(Color.Transparent, Scrim)))
+        )
+    }
+}
+
+/** Video ustidagi matn/tugmalar ortidagi soya. */
+private val Scrim = Color.Black.copy(alpha = 0.55f)
 
 /**
  * Ruxsatlar ekran ochilishi bilan so'raladi — chiquvchi qo'ng'iroqda suhbatdosh qabul qilishi bilan SDK darhol
