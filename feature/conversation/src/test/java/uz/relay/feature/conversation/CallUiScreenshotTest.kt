@@ -9,6 +9,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.unit.dp
+import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
+import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureRoboImage
 import java.util.TimeZone
 import org.junit.Rule
@@ -39,7 +41,7 @@ class CallUiScreenshotTest {
         // Vaqt/sana matnlari vaqt zonasiga bog'liq — har qanday kompyuterda (CI'da ham) bir xil rasm chiqsin.
         TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tashkent"))
         compose.setContent { SwiftChatTheme(darkTheme = dark) { content() } }
-        compose.onRoot().captureRoboImage("src/test/screenshots/${name}_${if (dark) "dark" else "light"}.png")
+        compose.onRoot().captureRoboImage("src/test/screenshots/${name}_${if (dark) "dark" else "light"}.png", roborazziOptions = ScreenshotOptions)
     }
 
     /** Sarlavha (qo'ng'iroq tugmalari), video chat banneri va barcha turdagi qo'ng'iroq yozuvlari bitta rasmda. */
@@ -64,3 +66,10 @@ class CallUiScreenshotTest {
     @Test fun callUiLight() = snap("call_ui", dark = false) { CallUi() }
     @Test fun callUiDark() = snap("call_ui", dark = true) { CallUi() }
 }
+
+/**
+ * Turli OS'larda (Fedora'da yozilgan golden, CI'da Ubuntu) shrift chetlarining silliqlanishi bir necha pikselga farq
+ * qiladi. 1% gacha farq "bir xil" hisoblanadi — joylashuv, rang yoki matn o'zgarsa test baribir yiqiladi.
+ */
+@OptIn(ExperimentalRoborazziApi::class)
+private val ScreenshotOptions = RoborazziOptions(compareOptions = RoborazziOptions.CompareOptions(changeThreshold = 0.01f))

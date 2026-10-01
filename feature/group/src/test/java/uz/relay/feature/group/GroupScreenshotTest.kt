@@ -3,6 +3,8 @@ package uz.relay.feature.group
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
+import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
+import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureRoboImage
 import java.util.TimeZone
 import org.junit.Rule
@@ -30,7 +32,7 @@ class GroupScreenshotTest {
         // Vaqt/sana matnlari vaqt zonasiga bog'liq — har qanday kompyuterda (CI'da ham) bir xil rasm chiqsin.
         TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tashkent"))
         compose.setContent { SwiftChatTheme(darkTheme = dark) { content() } }
-        compose.onRoot().captureRoboImage("src/test/screenshots/${name}_${if (dark) "dark" else "light"}.png")
+        compose.onRoot().captureRoboImage("src/test/screenshots/${name}_${if (dark) "dark" else "light"}.png", roborazziOptions = ScreenshotOptions)
     }
 
     private val info = GroupInfoContract.UiState(
@@ -45,3 +47,10 @@ class GroupScreenshotTest {
     @Test fun groupInfoLight() = snap("group_info", dark = false) { GroupInfoContent(info) {} }
     @Test fun groupInfoDark() = snap("group_info", dark = true) { GroupInfoContent(info) {} }
 }
+
+/**
+ * Turli OS'larda (Fedora'da yozilgan golden, CI'da Ubuntu) shrift chetlarining silliqlanishi bir necha pikselga farq
+ * qiladi. 1% gacha farq "bir xil" hisoblanadi — joylashuv, rang yoki matn o'zgarsa test baribir yiqiladi.
+ */
+@OptIn(ExperimentalRoborazziApi::class)
+private val ScreenshotOptions = RoborazziOptions(compareOptions = RoborazziOptions.CompareOptions(changeThreshold = 0.01f))
