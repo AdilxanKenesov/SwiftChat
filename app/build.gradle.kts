@@ -1,3 +1,5 @@
+import java.util.Properties
+
 // Gradle plugin'lari: modul turi va kod generatsiya vositalari.
 plugins {
     // Android ilova (APK) moduli.
@@ -31,9 +33,25 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // Release imzosi: keystore va parollar local.properties'dan (yoki CI'da xuddi shu nomli environment
+    // o'zgaruvchilardan). Hech biri git'ga kirmaydi. Kalit topilmasa build yiqilmaydi — release imzosiz yig'iladi
+    // (masalan, CI'da yoki boshqa kompyuterda); faqat imzolangan APK/AAB Play'ga yuklanadi.
+    val releaseSigning = releaseSigningProperties()
+    if (releaseSigning != null) {
+        signingConfigs {
+            create("release") {
+                storeFile = rootProject.file(releaseSigning.getValue("RELEASE_STORE_FILE"))
+                storePassword = releaseSigning.getValue("RELEASE_STORE_PASSWORD")
+                keyAlias = releaseSigning.getValue("RELEASE_KEY_ALIAS")
+                keyPassword = releaseSigning.getValue("RELEASE_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         // Release'da kod qisqartirish/obfuskatsiya hozircha o'chiq.
         release {
+            signingConfig = signingConfigs.findByName("release")
             optimization {
                 enable = false
             }
@@ -132,4 +150,19 @@ android {
             enableSplit = false
         }
     }
+}
+
+/**
+ * Release imzolash uchun 4 ta qiymat: avval local.properties, bo'lmasa environment (CI uchun). Bittasi ham
+ * yetishmasa yoki keystore fayli yo'q bo'lsa — `null` (imzosiz release).
+ */
+fun releaseSigningProperties(): Map<String, String>? {
+    val keys = listOf("RELEASE_STORE_FILE", "RELEASE_STORE_PASSWORD", "RELEASE_KEY_ALIAS", "RELEASE_KEY_PASSWORD")
+    val local = Properties().apply {
+        rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+    }
+    val values = keys.associateWith { key -> local.getProperty(key)?.takeIf { it.isNotBlank() } ?: System.getenv(key) }
+    if (values.values.any { it.isNullOrBlank() }) return null
+    if (!rootProject.file(values.getValue("RELEASE_STORE_FILE")!!).exists()) return null
+    return values.mapValues { it.value!! }
 }

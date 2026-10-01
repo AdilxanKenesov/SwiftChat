@@ -21,3 +21,8 @@ local.properties
 /server/stream-token/.wrangler/
 /server/stream-token/node_modules/
 /server/stream-token/.dev.vars
+
+# Release keystore va parollar — hech qachon git'ga kirmaydi (parollar local.properties'da).
+/keystore/
+*.jks
+*.keystore
