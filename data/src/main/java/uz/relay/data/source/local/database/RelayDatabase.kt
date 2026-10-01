@@ -43,7 +43,9 @@ import uz.relay.data.source.local.database.entity.UserEntity
         UploadEntity::class,
         ContactEntity::class
     ],
-    version = 5,
+    // 6: qurilmalarda boshqa build qoldirgan, sxemasi farqli "v5" baza bor edi (identity hash mos emas → crash).
+    // Versiyani oshirish uni destructive migration bilan qayta yaratadi.
+    version = 6,
     exportSchema = false
 )
 @TypeConverters(MediaConverters::class)
