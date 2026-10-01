@@ -1,21 +1,26 @@
 package uz.relay.feature.calls.call.components
 
 import androidx.annotation.DrawableRes
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.layout.height
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -50,6 +56,8 @@ import kotlinx.coroutines.delay
 import uz.relay.core.designsystem.R as DesignR
 import uz.relay.domain.model.CallLogFormat
 import uz.relay.feature.calls.R
+import uz.relay.feature.calls.call.CallBackground
+import uz.relay.feature.calls.call.imageResOrNull
 
 /** Qo'ng'iroq ekrani har doim qorong'i (Telegram kabi) — temadan qat'i nazar oq ikonka/matn. */
 private val ButtonOn = Color.White.copy(alpha = 0.18f)
@@ -77,7 +85,9 @@ internal class CallExtras(
     val screenSharing: Boolean,
     val onReaction: (String) -> Unit,
     val onToggleHand: () -> Unit,
-    val onToggleScreenShare: () -> Unit
+    val onToggleScreenShare: () -> Unit,
+    val background: CallBackground,
+    val onBackground: (CallBackground) -> Unit
 )
 
 @Composable
@@ -200,6 +210,7 @@ private fun MorePanel(extras: CallExtras, onDone: () -> Unit) {
                 }
             }
         }
+        BackgroundRow(selected = extras.background, onSelect = extras.onBackground)
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             PillButton(
                 icon = DesignR.drawable.ic_hand,
@@ -221,6 +232,53 @@ private fun MorePanel(extras: CallExtras, onDone: () -> Unit) {
                 },
                 modifier = Modifier.weight(1f)
             )
+        }
+    }
+}
+
+/**
+ * "Orqa fon" qatori: Yo'q · Xira · tayyor rasmlar. Tanlangani oq halqa bilan ajratiladi. Panel yopilmaydi —
+ * natijani o'z videoingizda darhol ko'rib, boshqasini sinab ko'rish qulay.
+ */
+@Composable
+private fun BackgroundRow(selected: CallBackground, onSelect: (CallBackground) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(text = stringResource(R.string.call_background), color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp)
+        Row(
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            CallBackground.entries.forEach { background ->
+                val isSelected = background == selected
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .border(width = if (isSelected) 2.dp else 0.dp, color = if (isSelected) Color.White else Color.Transparent, shape = CircleShape)
+                        .padding(if (isSelected) 3.dp else 0.dp)
+                        .clip(CircleShape)
+                        .background(ButtonOn)
+                        .clickable { onSelect(background) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    val image = background.imageResOrNull()
+                    when {
+                        image != null -> Image(
+                            painter = painterResource(image),
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                        else -> Text(
+                            text = stringResource(if (background == CallBackground.BLUR) R.string.call_bg_blur else R.string.call_bg_none),
+                            color = Color.White,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1
+                        )
+                    }
+                }
+            }
         }
     }
 }

@@ -232,7 +232,9 @@ private fun FullScreenVideoCall(
                     onToggleHand = { onEventDispatcher(CallContract.Intent.OnToggleHand) },
                     onToggleScreenShare = {
                         if (screenSharing) onEventDispatcher(CallContract.Intent.OnStopScreenShare) else screenShare.launch()
-                    }
+                    },
+                    background = uiState.background,
+                    onBackground = { onEventDispatcher(CallContract.Intent.OnSelectBackground(it)) }
                 )
             )
         }

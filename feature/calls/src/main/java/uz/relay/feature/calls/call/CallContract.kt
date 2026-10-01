@@ -29,6 +29,8 @@ interface CallContract {
         /** Tizim "ekranni yozib olish" ruxsatini berdi — [data] shu ruxsat natijasi (MediaProjection). */
         data class OnStartScreenShare(val data: android.content.Intent) : Intent
         object OnStopScreenShare : Intent
+        /** Kamera orqa foni: yo'q, xiralashtirish yoki tayyor rasm. */
+        data class OnSelectBackground(val background: CallBackground) : Intent
     }
 
     sealed interface SideEffect {
@@ -47,10 +49,18 @@ interface CallContract {
         /** Qo'l ko'targan boshqa ishtirokchilar: `userId → ism` (ko'targan tartibida). */
         val raisedHands: Map<String, String> = emptyMap(),
         /** Men qo'l ko'targanmanmi. */
-        val myHandRaised: Boolean = false
+        val myHandRaised: Boolean = false,
+        /** Kameramning hozirgi orqa foni. */
+        val background: CallBackground = CallBackground.NONE
     )
 
     interface Directions {
         suspend fun back()
     }
 }
+
+/**
+ * Kamera orqa foni. Rasmli variantlar ilova ichidagi rasmlar (`res/drawable-nodpi/call_bg_*`): Stream filtri rasmni
+ * faqat resurs id'si bilan qabul qiladi, shuning uchun galereyadan tanlash imkoni yo'q.
+ */
+enum class CallBackground { NONE, BLUR, BRAND, SUNSET, NIGHT, NATURE }

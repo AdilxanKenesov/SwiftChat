@@ -57,6 +57,8 @@ dependencies {
 
     // Stream Video: qo'ng'iroq ekranlari (RingingCallContent, CallContent) va call holati. Faqat shu modul va data'da.
     implementation(libs.stream.video.compose)
+    // Orqa fonni xiralashtirish / rasm bilan almashtirish (ML Kit selfie segmentation ichida).
+    implementation(libs.stream.video.filters)
 
     // Faqat debug: Android Studio preview va Layout Inspector.
     debugImplementation(libs.androidx.compose.ui.tooling)

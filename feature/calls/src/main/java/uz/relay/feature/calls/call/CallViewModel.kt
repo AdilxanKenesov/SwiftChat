@@ -1,11 +1,13 @@
 package uz.relay.feature.calls.call
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.getstream.android.video.generated.models.CustomVideoEvent
 import io.getstream.result.Result
 import io.getstream.video.android.compose.ui.components.call.controls.actions.DefaultOnCallActionHandler
@@ -18,11 +20,14 @@ import io.getstream.video.android.core.call.state.CancelCall
 import io.getstream.video.android.core.call.state.DeclineCall
 import io.getstream.video.android.core.call.state.LeaveCall
 import io.getstream.video.android.core.model.RejectReason
+import io.getstream.video.android.filters.video.BlurIntensity
+import io.getstream.video.android.filters.video.BlurredBackgroundVideoFilter
+import io.getstream.video.android.filters.video.VirtualBackgroundVideoFilter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.orbitmvi.orbit.syntax.Syntax
 import org.orbitmvi.orbit.viewmodel.orbitContainer
@@ -50,6 +55,7 @@ class CallViewModel @AssistedInject constructor(
     @Assisted video: Boolean?,
     @Assisted("chatId") private val chatId: String?,
     @Assisted("group") private val group: Boolean,
+    @ApplicationContext private val context: Context,
     private val sendTextMessage: SendTextMessageUseCase,
     private val directions: CallContract.Directions
 ) : ViewModel(), CallContract.ViewModel {
@@ -118,6 +124,7 @@ class CallViewModel @AssistedInject constructor(
                 Log.i(TAG, "screen share started call=${call.id}")
             }
             CallContract.Intent.OnStopScreenShare -> intent { withContext(Dispatchers.Main) { call.stopScreenSharing() } }
+            is CallContract.Intent.OnSelectBackground -> selectBackground(call, intent.background)
         }
     }
 
@@ -247,6 +254,22 @@ class CallViewModel @AssistedInject constructor(
             Log.w(TAG, "raise hand failed: ${result.value.message}")
             reduce { state.copy(myHandRaised = !raised) }
         }
+    }
+
+    /**
+     * Orqa fon Stream'ning video filtri orqali: har bir kamera kadrida ML Kit odamni fondan ajratadi va fonni
+     * xiralashtiradi yoki rasm bilan almashtiradi. Filtr faqat MENING kamerimga qo'llanadi — boshqalar natijani
+     * tayyor video sifatida ko'radi. Qayta ishlash protsessorga og'ir, shuning uchun standart holat — filtrsiz.
+     */
+    private fun selectBackground(call: Call, background: CallBackground) = intent {
+        val filter = when (background) {
+            CallBackground.NONE -> null
+            CallBackground.BLUR -> BlurredBackgroundVideoFilter(BlurIntensity.MEDIUM)
+            else -> VirtualBackgroundVideoFilter(context, background.imageRes())
+        }
+        withContext(Dispatchers.Main) { call.videoFilter = filter }
+        reduce { state.copy(background = background) }
+        Log.i(TAG, "background=$background call=${call.id}")
     }
 
     /**
