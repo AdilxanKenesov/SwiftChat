@@ -92,8 +92,8 @@ internal fun SearchScreen(viewModel: SearchViewModel = hiltViewModel()) {
 }
 
 /**
- * Holatsiz UI: qidiruv paneli, progress chizig'i, "Yangi guruh" qatori va natijalar. Preview'da ViewModel'siz
- * ishlatiladi. "Yangi guruh" doim ro'yxat boshida turadi — qidiruv bo'sh bo'lsa ham.
+ * Holatsiz UI: qidiruv paneli, progress chizig'i va natijalar (avval mos chatlar, keyin odamlar). Preview va UI
+ * testlarida ViewModel'siz ishlatiladi.
  */
 @Composable
 internal fun SearchScreenContent(

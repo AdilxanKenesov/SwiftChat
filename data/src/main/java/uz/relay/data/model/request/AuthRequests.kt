@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
  * DTO'lar domain modellaridan alohida: server JSON shakli o'zgarsa, faqat data qatlami tegiladi.
  */
 
-/** `POST /v1/auth/otp` — ko'rsatilgan raqamga tasdiqlash kodini yuborishni so'rash. */
+/** `POST /v1/auth/otp/request` — ko'rsatilgan raqamga tasdiqlash kodini yuborishni so'rash. */
 @Serializable
 data class OtpRequest(
     val phone: String

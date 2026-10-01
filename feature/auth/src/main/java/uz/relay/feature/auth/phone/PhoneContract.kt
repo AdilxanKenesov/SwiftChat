@@ -11,7 +11,7 @@ import uz.relay.core.common.result.AppError
  * sifatida keladi - bu oqimni oldindan aytib bo'ladigan, test qilinadigan qiladi va ViewModel
  * konfiguratsiya o'zgarishida holatni saqlab qoladi. Contract hammasini bitta joyda guruhlaydi.
  *
- * Oqim: Splash (sessiya yo'q) -> shu ekran -> OTP ekrani.
+ * Oqim: sessiya yo'q (MainViewModel boshlang'ich ekran sifatida tanlaydi) -> shu ekran -> OTP ekrani.
  */
 interface PhoneContract {
 

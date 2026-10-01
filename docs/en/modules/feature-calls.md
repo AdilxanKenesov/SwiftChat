@@ -235,13 +235,9 @@ File count check: `find feature/calls/src/main -name '*.kt'` returns **9**.
 
 ## 7. Tests
 
-`:feature:calls` has **no automated tests yet**. `CallViewModel` depends directly on Stream SDK objects, which need a Stream test double. This is not implemented yet.
+| Test class | Type | What it checks |
+|---|---|---|
+| `CallViewModelTest` | Robolectric + Orbit Test (4) | Without a Stream client the screen is marked unavailable; any action closes it and no call log is written; group calls are always video; audio calls stay audio |
+| `CallBackgroundResTest` | JVM (3) | `NONE`/`BLUR` have no image; every image background maps to its own drawable; `imageRes()` on a non-image background fails |
 
-Related coverage elsewhere:
-
-| Area | Tests |
-|---|---|
-| Call log text format (`CallLogFormat`) | `domain`: `CallLogFormatTest` (format, parse, group logs) |
-| Starting calls from chat | `conversation`: `ChatViewModelTest` (direct call, new group call posts "started", joining does not) |
-| Call UI in chat (bubbles, banner, header buttons) | `conversation`: `CallUiTest`, `CallUiScreenshotTest` |
-| Token server | `server/stream-token/test/index.test.mjs` (7 tests) |
+Paths that drive a live Stream `Call` (accept, ring timeout, leave, call-log text, raise hand, screen share) need a Stream test double and are verified on real devices. The call-log text format itself is covered by `CallLogFormatTest` in `:domain`.

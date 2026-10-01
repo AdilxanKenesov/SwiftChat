@@ -42,8 +42,6 @@ class AppLocaleManager @Inject constructor(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             context.getSystemService(LocaleManager::class.java).applicationLocales = LocaleList.forLanguageTags(language.tag)
         } else {
-            // commit: Activity darhol qayta yaratiladi va wrap() yangi qiymatni o'qishi kerak.
-            prefs(context).edit(commit = true) { putString(KEY_LANGUAGE, language.tag) }
             // commit (apply emas): Activity darhol qayta yaratiladi va wrap() yangi qiymatni o'qishi kerak.
             prefs(context).edit(commit = true) { putString(KEY_LANGUAGE, language.tag) }
         }

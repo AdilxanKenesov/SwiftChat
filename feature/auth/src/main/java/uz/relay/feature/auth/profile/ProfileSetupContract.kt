@@ -8,7 +8,7 @@ import uz.relay.domain.model.ProfileRules
  * Yangi foydalanuvchi profilini (ism va username) to'ldirish ekranining Orbit MVI kontrakti.
  *
  * Contract Intent, UiState, SideEffect va Directions'ni bitta joyda guruhlaydi.
- * Oqim: OTP (yangi foydalanuvchi) yoki Splash (NEEDS_PROFILE) -> shu ekran -> Chats.
+ * Oqim: OTP (yangi foydalanuvchi) yoki ilova ishga tushganda NEEDS_PROFILE holati (MainViewModel.startKey) -> shu ekran -> Chats.
  */
 interface ProfileSetupContract {
 

@@ -17,6 +17,4 @@ internal class SearchDirectionsImpl @Inject constructor(
 
     /** Qidiruv o'rniga chat ochiladi: chatdan "orqaga" bosilsa qidiruvga emas, ro'yxatga qaytiladi. */
     override suspend fun navigateToChat(chatId: String) = navigator.navigate(AppNavigationParam.Replace(ChatKey(chatId)))
-
-    /** Guruh yaratish ekrani ustiga qo'yiladi — orqaga bosilsa qidiruvga qaytiladi. */
 }

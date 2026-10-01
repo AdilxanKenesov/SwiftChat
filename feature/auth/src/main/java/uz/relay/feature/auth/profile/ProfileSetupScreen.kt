@@ -55,7 +55,7 @@ import uz.relay.feature.auth.util.messageRes
 /**
  * Profil sozlash ekrani (stateful qism).
  *
- * OTP'dan keyin yangi foydalanuvchi yoki profili to'ldirilmagan sessiya bilan Splash shu ekranni ochadi;
+ * OTP'dan keyin yangi foydalanuvchi uchun, yoki ilova profili to'ldirilmagan sessiya bilan ochilganda (MainViewModel.startKey) ko'rsatiladi;
  * "Davom etish" muvaffaqiyatli bo'lsa Chats ekraniga o'tiladi. ViewModel'ga ulanadi, SideEffect'larni
  * snackbar orqali ko'rsatadi va chizishni stateless [ProfileSetupScreenContent] ga topshiradi.
  */

@@ -216,7 +216,7 @@ Fayllar sonini tekshirish: `find app/src/main -name '*.kt'` **4** ni qaytaradi.
 
 | Test | Turi | Izoh |
 |---|---|---|
-| `app/src/test/.../ExampleUnitTest.kt` | JVM | shablon (stub) |
+| `app/src/test/.../navigation/BackStackApplyTest.kt` | JVM (10 ta test) | har bir `AppNavigationParam` buyrug'ining back stack'ka ta'siri: single-top, replace, "orqaga" stekni hech qachon bo'shatmasligi, `BackTo` (inclusive / yo'q kalit), `BackToOrTo`, `ResetTo` |
 | `app/src/androidTest/.../ExampleInstrumentedTest.kt` | instrumented | shablon (stub) |
 
-Ilova qobig'i bilvosita — feature testlari va CI build'lari orqali tekshiriladi. `AppNavHost.apply()` uchun alohida test hali amalga oshirilmagan. U sof funksiya, shuning uchun uni test qilish oson.
+Ilova qobig'ining qolgan qismi feature testlari va CI build'lari orqali tekshiriladi.

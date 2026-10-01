@@ -7,8 +7,8 @@ import uz.relay.domain.model.User
 
 /**
  * Foydalanuvchi qidiruvi ekrani shartnomasi (Orbit MVI: Intent / UiState / SideEffect / Directions bir joyda).
- * Chatlar ro'yxatidagi qidiruv ikonkasi, FAB yoki "Yangi chat" tugmasidan ochiladi. Bu yerdan odam bilan
- * DIRECT chat ochiladi yoki "Yangi guruh" yaratish ekraniga o'tiladi.
+ * Chatlar ro'yxatidagi qidiruv ikonkasidan ochiladi. Bu yerda o'z chatlarim (nomi bo'yicha) va username bo'yicha
+ * odamlar qidiriladi; natijadan chat yoki odam bilan DIRECT chat ochiladi. Yangi guruh "Yangi xabar" ekranida.
  */
 interface SearchContract {
 
@@ -18,7 +18,7 @@ interface SearchContract {
     }
 
     /**
-     * Foydalanuvchi harakatlari: matn o'zgarishi, tozalash, orqaga, yangi guruh va natijadagi odamga bosish.
+     * Foydalanuvchi harakatlari: matn o'zgarishi, tozalash, orqaga, natijadagi chat yoki odamga bosish.
      */
     sealed interface Intent {
         data class OnQueryChange(val query: String) : Intent
