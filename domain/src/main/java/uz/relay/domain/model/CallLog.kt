@@ -11,11 +11,16 @@ enum class CallOutcome {
     /** Qo'ng'iroq qilingan odam rad etdi. */
     DECLINED,
     /** Qo'ng'iroq qilgan odam javobni kutmay bekor qildi. */
-    CANCELED
+    CANCELED,
+    /** Guruh video chati boshlandi (davomiylik yo'q — u tugaganda alohida yozuv keladi). */
+    STARTED
 }
 
-/** Chatdagi qo'ng'iroq yozuvi (Telegram'dagi "Chiquvchi qo'ng'iroq · 2:31" qatori). */
-data class CallLog(val video: Boolean, val outcome: CallOutcome, val durationSeconds: Long)
+/**
+ * Chatdagi qo'ng'iroq yozuvi (Telegram'dagi "Chiquvchi qo'ng'iroq · 2:31" qatori).
+ * [group] — guruh video chati: "boshlandi" ([CallOutcome.STARTED]) yoki "tugadi" ([CallOutcome.ANSWERED] + davomiylik).
+ */
+data class CallLog(val video: Boolean, val outcome: CallOutcome, val durationSeconds: Long, val group: Boolean = false)
 
 /**
  * Qo'ng'iroq tarixi chatda ODDIY MATNLI xabar sifatida saqlanadi: Relay'da "qo'ng'iroq" turidagi xabar yo'q, SYSTEM
@@ -26,11 +31,15 @@ data class CallLog(val video: Boolean, val outcome: CallOutcome, val durationSec
  *
  * Xabarni faqat qo'ng'iroq QILGAN tomon yuboradi — aks holda bitta qo'ng'iroq uchun ikkita yozuv bo'lardi.
  * Yo'nalish ("chiquvchi"/"kiruvchi") xabar kimniki ekanidan (isMine) aniqlanadi.
+ *
+ * Guruh video chati: `📞 Group call · video · started` (xonani ochgan odam yuboradi) va
+ * `📞 Group call · video · 12:34` (xonadan oxirgi chiqqan odam yuboradi).
  */
 object CallLogFormat {
 
     private const val PREFIX = "📞 Call · "
-    private val REGEX = Regex("""^📞 Call · (audio|video) · (missed|declined|canceled|(\d+):(\d{2})(?::(\d{2}))?)$""")
+    private const val GROUP_PREFIX = "📞 Group call · "
+    private val REGEX = Regex("""^📞 (Call|Group call) · (audio|video) · (started|missed|declined|canceled|(\d+):(\d{2})(?::(\d{2}))?)$""")
 
     fun format(log: CallLog): String {
         val kind = if (log.video) "video" else "audio"
@@ -39,25 +48,28 @@ object CallLogFormat {
             CallOutcome.MISSED -> "missed"
             CallOutcome.DECLINED -> "declined"
             CallOutcome.CANCELED -> "canceled"
+            CallOutcome.STARTED -> "started"
         }
-        return "$PREFIX$kind · $tail"
+        return "${if (log.group) GROUP_PREFIX else PREFIX}$kind · $tail"
     }
 
     /** Qo'ng'iroq yozuvi bo'lmasa `null` — oddiy matnli xabar. */
     fun parse(body: String?): CallLog? {
         val match = REGEX.matchEntire(body?.trim() ?: return null) ?: return null
-        val video = match.groupValues[1] == "video"
-        return when (val tail = match.groupValues[2]) {
-            "missed" -> CallLog(video, CallOutcome.MISSED, 0)
-            "declined" -> CallLog(video, CallOutcome.DECLINED, 0)
-            "canceled" -> CallLog(video, CallOutcome.CANCELED, 0)
+        val group = match.groupValues[1] == "Group call"
+        val video = match.groupValues[2] == "video"
+        return when (val tail = match.groupValues[3]) {
+            "started" -> CallLog(video, CallOutcome.STARTED, 0, group).takeIf { group }
+            "missed" -> CallLog(video, CallOutcome.MISSED, 0, group)
+            "declined" -> CallLog(video, CallOutcome.DECLINED, 0, group)
+            "canceled" -> CallLog(video, CallOutcome.CANCELED, 0, group)
             else -> {
-                // "m:ss" yoki "h:mm:ss" — guruhlar: 3 = birinchi son, 4 = ikkinchi, 5 = (bo'lsa) uchinchi.
-                val a = match.groupValues[3].toLong()
-                val b = match.groupValues[4].toLong()
-                val c = match.groupValues[5].takeIf { it.isNotEmpty() }?.toLong()
+                // "m:ss" yoki "h:mm:ss" — guruhlar: 4 = birinchi son, 5 = ikkinchi, 6 = (bo'lsa) uchinchi.
+                val a = match.groupValues[4].toLong()
+                val b = match.groupValues[5].toLong()
+                val c = match.groupValues[6].takeIf { it.isNotEmpty() }?.toLong()
                 val seconds = if (c != null) a * 3600 + b * 60 + c else a * 60 + b
-                CallLog(video, CallOutcome.ANSWERED, seconds).takeIf { tail.isNotEmpty() }
+                CallLog(video, CallOutcome.ANSWERED, seconds, group).takeIf { tail.isNotEmpty() }
             }
         }
     }

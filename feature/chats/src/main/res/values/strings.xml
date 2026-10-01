@@ -90,4 +90,6 @@
     <string name="call_no_answer">Javobsiz qoʻngʻiroq</string>
     <string name="call_declined">Rad etilgan qoʻngʻiroq</string>
     <string name="call_canceled">Bekor qilingan qoʻngʻiroq</string>
+    <string name="call_group_started">Video chat boshlandi</string>
+    <string name="call_group_ended">Video chat tugadi</string>
 </resources>

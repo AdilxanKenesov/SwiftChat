@@ -23,4 +23,17 @@ interface CallRepository {
      * FCM ulangach yopiq ilovada ham push orqali keladi.
      */
     fun observeIncomingCalls(): Flow<String>
+
+    /**
+     * Guruh video chati (Telegram'dagidek ochiq xona, hech kimga jiringlamaydi). Xona id'si guruhdan hisoblanadi —
+     * shuning uchun hamma a'zo bir xonaga tushadi, signaling server kerak emas. Xona hali yo'q bo'lsa [memberIds]
+     * bilan yaratiladi. Qiymat — xona (qo'ng'iroq) id'si: qo'ng'iroq ekrani shu id bilan ochiladi va o'zi qo'shiladi.
+     */
+    suspend fun prepareGroupCall(chatId: String, memberIds: List<String>): AppResult<String>
+
+    /**
+     * Guruh xonasida hozir nechta odam bor (0 — video chat yo'q). Chat sarlavhasi ostidagi "Qo'shilish" banneri
+     * uchun. Push yo'qligi sababli Stream event'lari bilan birga vaqti-vaqti bilan qayta so'raladi.
+     */
+    fun observeGroupCall(chatId: String): Flow<Int>
 }

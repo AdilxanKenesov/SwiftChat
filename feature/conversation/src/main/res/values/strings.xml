@@ -112,4 +112,12 @@
     <string name="call_no_answer">Javobsiz qoʻngʻiroq</string>
     <string name="call_declined">Rad etilgan qoʻngʻiroq</string>
     <string name="call_canceled">Bekor qilingan qoʻngʻiroq</string>
+    <string name="call_group_started">Video chat boshlandi</string>
+    <string name="call_group_ended">Video chat tugadi</string>
+    <string name="group_call_banner_title">Video chat</string>
+    <string name="group_call_join">Qoʻshilish</string>
+    <plurals name="group_call_participants">
+        <item quantity="one">%d ishtirokchi</item>
+        <item quantity="other">%d ishtirokchi</item>
+    </plurals>
 </resources>

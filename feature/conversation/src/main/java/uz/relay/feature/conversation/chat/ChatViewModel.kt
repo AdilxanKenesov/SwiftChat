@@ -12,6 +12,9 @@ import org.orbitmvi.orbit.syntax.Syntax
 import org.orbitmvi.orbit.viewmodel.orbitContainer
 import uz.relay.core.common.result.AppError
 import uz.relay.core.common.result.AppResult
+import uz.relay.domain.model.CallLog
+import uz.relay.domain.model.CallLogFormat
+import uz.relay.domain.model.CallOutcome
 import uz.relay.domain.model.ChatSummary
 import uz.relay.domain.model.ChatType
 import uz.relay.domain.model.DownloadState
@@ -23,6 +26,8 @@ import uz.relay.domain.usecase.chat.ObserveChatUseCase
 import uz.relay.domain.usecase.chat.ObserveTypingUseCase
 import uz.relay.domain.usecase.group.ObserveMembersUseCase
 import uz.relay.domain.usecase.group.RefreshMembersUseCase
+import uz.relay.domain.usecase.call.ObserveGroupCallUseCase
+import uz.relay.domain.usecase.call.PrepareGroupCallUseCase
 import uz.relay.domain.usecase.call.StartCallUseCase
 import uz.relay.domain.usecase.media.CancelUploadUseCase
 import uz.relay.domain.usecase.media.DownloadMediaUseCase
@@ -72,6 +77,8 @@ class ChatViewModel @AssistedInject constructor(
     private val cancelUpload: CancelUploadUseCase,
     private val downloadMedia: DownloadMediaUseCase,
     private val startCall: StartCallUseCase,
+    private val prepareGroupCall: PrepareGroupCallUseCase,
+    private val observeGroupCall: ObserveGroupCallUseCase,
     private val directions: ChatContract.Directions
 ) : ViewModel(), ChatContract.ViewModel {
 
@@ -139,6 +146,7 @@ class ChatViewModel @AssistedInject constructor(
             is ChatContract.Intent.OnCancelUpload -> intent { cancelUpload(intent.message.clientMessageId) }
             is ChatContract.Intent.OnMediaClick -> openMedia(intent.message)
             is ChatContract.Intent.OnStartCall -> startCall(intent.video)
+            ChatContract.Intent.OnGroupCall -> joinGroupCall()
         }
     }
 
@@ -177,6 +185,36 @@ class ChatViewModel @AssistedInject constructor(
         when (result) {
             is AppResult.Success -> directions.navigateToCall(result.data, video, chatId)
             is AppResult.Error -> showError(result.error)
+        }
+    }
+
+    /**
+     * Guruh video chati: xona tayyorlanadi (yo'q bo'lsa yaratiladi) va qo'ng'iroq ekrani ochiladi — u yerda xonaga
+     * qo'shilinadi. Xonada hech kim bo'lmasa men uni ochyapman — chatga "Video chat boshlandi" yozuvi ketadi
+     * (push yo'q, boshqa a'zolar shu xabar va banner orqali bilib qoladi).
+     */
+    private fun joinGroupCall() = intent {
+        if (!state.isGroup || state.isStartingCall) return@intent
+        val isNew = state.groupCallCount == 0
+        reduce { state.copy(isStartingCall = true) }
+        val result = prepareGroupCall(chatId, state.memberIds)
+        reduce { state.copy(isStartingCall = false) }
+        when (result) {
+            is AppResult.Success -> {
+                if (isNew) {
+                    val log = CallLog(video = true, outcome = CallOutcome.STARTED, durationSeconds = 0, group = true)
+                    sendTextMessage(chatId, CallLogFormat.format(log), replyToClientMessageId = null)
+                }
+                directions.navigateToGroupCall(result.data, chatId)
+            }
+            is AppResult.Error -> showError(result.error)
+        }
+    }
+
+    /** Guruh video chatidagi odamlar soni — sarlavha ostidagi banner uchun. Faqat guruhda, bir marta boshlanadi. */
+    private fun watchGroupCall() = intent {
+        repeatOnSubscription {
+            observeGroupCall(chatId).collect { count -> reduce { state.copy(groupCallCount = count) } }
         }
     }
 
@@ -232,13 +270,16 @@ class ChatViewModel @AssistedInject constructor(
                     myUserId = me?.id,
                     typing = typing[chatId].orEmpty() - me?.id.orEmpty(),
                     memberCount = members.size,
-                    myRole = members.firstOrNull { it.isMe }?.role
+                    myRole = members.firstOrNull { it.isMe }?.role,
+                    memberIds = members.map { it.userId }
                 )
             }.collect { data ->
-                // Guruh ekanligi birinchi marta bilinganda a'zolar ro'yxati yangilanadi (soni va rolim uchun).
+                // Guruh ekanligi birinchi marta bilinganda a'zolar ro'yxati yangilanadi (soni va rolim uchun)
+                // va guruh video chati kuzatila boshlaydi.
                 if (data.chat?.type == ChatType.GROUP && !membersRequested) {
                     membersRequested = true
                     refreshGroupMembers()
+                    watchGroupCall()
                 }
                 // Yozish paneli holati (matn, rejim) saqlanadi — faqat ma'lumot qismi yangilanadi.
                 reduce {
@@ -249,7 +290,8 @@ class ChatViewModel @AssistedInject constructor(
                         myUserId = data.myUserId,
                         typingUserIds = data.typing,
                         memberCount = data.memberCount,
-                        myRole = data.myRole
+                        myRole = data.myRole,
+                        memberIds = data.memberIds
                     )
                 }
             }
@@ -264,7 +306,8 @@ class ChatViewModel @AssistedInject constructor(
         val myUserId: String?,
         val typing: Set<String>,
         val memberCount: Int,
-        val myRole: MemberRole?
+        val myRole: MemberRole?,
+        val memberIds: List<String>
     )
 
     /** A'zolar faqat bir marta so'raladi — keyingi o'zgarishlar update'lar orqali bazaga keladi. */

@@ -10,4 +10,11 @@
     <string name="call_speaker">Динамик</string>
     <string name="call_end">Завершить</string>
     <string name="call_connecting">Подключение…</string>
+    <string name="call_group_title">Видеочат</string>
+    <plurals name="call_participants">
+        <item quantity="one">%d участник</item>
+        <item quantity="few">%d участника</item>
+        <item quantity="many">%d участников</item>
+        <item quantity="other">%d участника</item>
+    </plurals>
 </resources>

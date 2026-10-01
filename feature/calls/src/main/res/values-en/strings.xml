@@ -10,4 +10,9 @@
     <string name="call_speaker">Speaker</string>
     <string name="call_end">End</string>
     <string name="call_connecting">Connecting…</string>
+    <string name="call_group_title">Video chat</string>
+    <plurals name="call_participants">
+        <item quantity="one">%d participant</item>
+        <item quantity="other">%d participants</item>
+    </plurals>
 </resources>

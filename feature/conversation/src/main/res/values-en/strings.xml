@@ -95,4 +95,12 @@
     <string name="call_no_answer">No answer</string>
     <string name="call_declined">Declined call</string>
     <string name="call_canceled">Canceled call</string>
+    <string name="call_group_started">Video chat started</string>
+    <string name="call_group_ended">Video chat ended</string>
+    <string name="group_call_banner_title">Video chat</string>
+    <string name="group_call_join">Join</string>
+    <plurals name="group_call_participants">
+        <item quantity="one">%d participant</item>
+        <item quantity="other">%d participants</item>
+    </plurals>
 </resources>

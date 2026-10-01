@@ -75,4 +75,6 @@
     <string name="call_no_answer">No answer</string>
     <string name="call_declined">Declined call</string>
     <string name="call_canceled">Canceled call</string>
+    <string name="call_group_started">Video chat started</string>
+    <string name="call_group_ended">Video chat ended</string>
 </resources>

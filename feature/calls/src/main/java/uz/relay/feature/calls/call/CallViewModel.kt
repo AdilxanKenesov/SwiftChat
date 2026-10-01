@@ -38,25 +38,34 @@ import uz.relay.domain.usecase.message.SendTextMessageUseCase
  * Stream'ning `DefaultOnCallActionHandler`i faqat mikrofon/kamera/karnayni boshqaradi; qabul qilish, rad etish,
  * bekor qilish va chiqish bu yerda — SDK'ning o'z `StreamCallActivity`dagi tartibda (accept → join,
  * reject(Decline/Cancel), leave). Chiquvchi qo'ng'iroqni suhbatdosh qabul qilsa, SDK qo'ng'iroq qiluvchini o'zi ulaydi.
+ *
+ * [group] — guruh video chati (Telegram'dagidek ochiq xona): jiringlash va 15 s taymer yo'q, ekran ochilishi bilan
+ * xonaga qo'shilinadi; kimdir chiqsa qo'ng'iroq tugamaydi — faqat o'zim chiqsam yoki xona tugasa ekran yopiladi.
  */
 @HiltViewModel(assistedFactory = CallViewModel.Factory::class)
 class CallViewModel @AssistedInject constructor(
     @Assisted("callId") callId: String,
     @Assisted video: Boolean?,
     @Assisted("chatId") private val chatId: String?,
+    @Assisted("group") private val group: Boolean,
     private val sendTextMessage: SendTextMessageUseCase,
     private val directions: CallContract.Directions
 ) : ViewModel(), CallContract.ViewModel {
 
     @AssistedFactory
     interface Factory {
-        fun create(@Assisted("callId") callId: String, video: Boolean?, @Assisted("chatId") chatId: String?): CallViewModel
+        fun create(
+            @Assisted("callId") callId: String,
+            video: Boolean?,
+            @Assisted("chatId") chatId: String?,
+            @Assisted("group") group: Boolean
+        ): CallViewModel
     }
 
     /** Bir xil (type, id) har doim bir xil `Call` obyektini qaytaradi — kiruvchi qo'ng'iroqning holati ham shu yerda. */
     val call: Call? = StreamVideo.instanceOrNull()?.call(type = CALL_TYPE, id = callId)
 
-    private val isVideo: Boolean = video ?: (call?.isVideoEnabled() ?: true)
+    private val isVideo: Boolean = group || (video ?: (call?.isVideoEnabled() ?: true))
 
     /** Ekran bir marta yopilsin (bir nechta "tugadi" signali kelishi mumkin). */
     private var finished = false
@@ -66,12 +75,16 @@ class CallViewModel @AssistedInject constructor(
 
     override val container =
         orbitContainer<CallContract.UiState, CallContract.SideEffect>(
-            CallContract.UiState(isVideo = isVideo, unavailable = call == null)
+            CallContract.UiState(isVideo = isVideo, isGroup = group, unavailable = call == null)
         ) {
             if (call != null) {
-                observeEnd(call)
                 observeCallClosed(call)
-                watchRingTimeout(call)
+                if (group) {
+                    joinGroup(call)
+                } else {
+                    observeEnd(call)
+                    watchRingTimeout(call)
+                }
             }
         }
 
@@ -161,9 +174,28 @@ class CallViewModel @AssistedInject constructor(
                 if (ringing !is RingingState.Idle) wasLive = true
                 when {
                     endedAt != null -> finish(call, outcomeFromRinging(call))
-                    ringing is RingingState.Idle && wasLive -> finish(call, outcomeFromRinging(call))
+                    // Guruh xonasida jiringlash yo'q — holat butun qo'ng'iroq davomida Idle bo'lishi mumkin.
+                    !group && ringing is RingingState.Idle && wasLive -> finish(call, outcomeFromRinging(call))
                 }
             }
+    }
+
+    /**
+     * Guruh xonasiga qo'shilish (xona ChatViewModel'da allaqachon yaratilgan). Davomiylik shu paytdan sanaladi;
+     * xona boshlangan vaqt server'da bo'lsa ("tugadi" yozuvi uchun) — o'shandan.
+     */
+    private fun joinGroup(call: Call) = intent {
+        when (val result = call.join()) {
+            is Result.Success -> {
+                answeredAt = call.state.session.value?.startedAt?.toInstant()?.toEpochMilli() ?: System.currentTimeMillis()
+                Log.i(TAG, "joined group call=${call.id}")
+            }
+            is Result.Failure -> {
+                Log.w(TAG, "group join failed call=${call.id}: ${result.value.message}")
+                postSideEffect(CallContract.SideEffect.ShowError(callError(result.value.message)))
+                finish(call)
+            }
+        }
     }
 
     /**
@@ -196,12 +228,27 @@ class CallViewModel @AssistedInject constructor(
         if (finished) return
         finished = true
         Log.i(TAG, "finish call=${call.id} answered=${answeredAt != null} fallback=$fallback")
+        // Guruhda: xonadan oxirgi bo'lib chiqyapmanmi — leave()'dan keyin ro'yxat tozalanadi, shuning uchun oldin.
+        val lastInGroup = group && answeredAt != null && call.state.remoteParticipants.value.isEmpty()
         // leave() xato bersa ham ekran yopilishi shart — aks holda qora ekranda qolinadi.
         runCatching { withContext(Dispatchers.Main) { call.leave() } }
             .onFailure { Log.w(TAG, "leave failed call=${call.id}", it) }
         directions.back()
         // Ekran yopilgach ViewModel tozalanadi va uning scope'i bekor bo'ladi — tarix yozuvi yo'qolmasin.
-        withContext(NonCancellable) { saveCallLog(fallback) }
+        withContext(NonCancellable) {
+            if (group) { if (lastInGroup) saveGroupEndLog() } else saveCallLog(fallback)
+        }
+    }
+
+    /**
+     * Guruhda "Video chat tugadi · 12:34" yozuvini xonadan OXIRGI chiqqan odam yuboradi ("boshlandi"ni xonani
+     * ochgan odam ChatViewModel'da yuboradi) — har bir chiqqan odam yozsa chat yozuvlarga to'lib ketardi.
+     */
+    private suspend fun saveGroupEndLog() {
+        val chatId = chatId ?: return
+        val started = answeredAt ?: return
+        val log = CallLog(video = true, outcome = CallOutcome.ANSWERED, durationSeconds = (System.currentTimeMillis() - started) / 1000, group = true)
+        sendTextMessage(chatId, CallLogFormat.format(log), replyToClientMessageId = null)
     }
 
     /**

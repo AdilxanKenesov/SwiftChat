@@ -75,4 +75,6 @@
     <string name="call_no_answer">Нет ответа</string>
     <string name="call_declined">Отклонённый звонок</string>
     <string name="call_canceled">Отменённый звонок</string>
+    <string name="call_group_started">Видеочат начат</string>
+    <string name="call_group_ended">Видеочат завершён</string>
 </resources>

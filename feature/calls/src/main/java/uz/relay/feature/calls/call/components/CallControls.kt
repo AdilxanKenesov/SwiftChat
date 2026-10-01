@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -157,16 +158,19 @@ private fun ControlButton(
 /**
  * Tepada: suhbatdosh ismi va qo'ng'iroq davomiyligi ("0:42"). Davomiylik suhbatdosh ulangan paytdan sanaladi
  * (jiringlash kirmaydi); ulanguncha "Ulanmoqda…". Bu yerda "chiqish" tugmasi YO'Q — u faqat pastdagi panelda.
+ *
+ * Guruh video chatida ([group]): ism o'rniga "Video chat", ostida ishtirokchilar soni va xonada o'tirgan vaqtim
+ * (xonaga kirishim bilan sanaladi — kimdir ulanishini kutish yo'q).
  */
 @Composable
-internal fun CallTopBar(call: Call, modifier: Modifier = Modifier) {
+internal fun CallTopBar(call: Call, modifier: Modifier = Modifier, group: Boolean = false) {
     val members by call.state.members.collectAsState()
     val remotes by call.state.remoteParticipants.collectAsState()
     // 1:1 qo'ng'iroq: a'zolardan men bo'lmagani — suhbatdosh (a'zolar ro'yxati join'dan oldin ham bor).
     val myId = remember { StreamVideo.instanceOrNull()?.userId }
-    val name = members.firstOrNull { it.user.id != myId }?.user?.name.orEmpty()
+    val name = if (group) stringResource(R.string.call_group_title) else members.firstOrNull { it.user.id != myId }?.user?.name.orEmpty()
 
-    var startedAt by remember { mutableStateOf<Long?>(null) }
+    var startedAt by remember { mutableStateOf(if (group) System.currentTimeMillis() else null) }
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(remotes.isNotEmpty()) {
         if (remotes.isNotEmpty() && startedAt == null) startedAt = System.currentTimeMillis()
@@ -189,8 +193,11 @@ internal fun CallTopBar(call: Call, modifier: Modifier = Modifier) {
     ) {
         Text(text = name, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
         val started = startedAt
+        val duration = if (started != null) CallLogFormat.duration((now - started) / 1000) else stringResource(R.string.call_connecting)
+        // Guruhda: "3 ishtirokchi · 0:42" (men ham hisobga kiraman).
+        val people = remotes.size + 1
         Text(
-            text = if (started != null) CallLogFormat.duration((now - started) / 1000) else stringResource(R.string.call_connecting),
+            text = if (group) pluralStringResource(R.plurals.call_participants, people, people) + " · " + duration else duration,
             color = Color.White.copy(alpha = 0.7f),
             fontSize = 14.sp
         )

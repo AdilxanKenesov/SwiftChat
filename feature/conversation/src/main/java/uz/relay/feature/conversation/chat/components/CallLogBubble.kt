@@ -31,7 +31,8 @@ import uz.relay.feature.conversation.R
 /**
  * Chatdagi qo'ng'iroq yozuvi (Telegram'dagi "Chiquvchi qoʻngʻiroq · 2:31"). Serverda u oddiy matnli xabar
  * (`📞 Call · audio · 2:31`, [CallLogFormat]) — bu yerda tilga mos sarlavha, ikonka va davomiylik bilan chiziladi.
- * Bosilsa o'sha turdagi qo'ng'iroq qayta boshlanadi (bosishni MessageRow ushlaydi).
+ * Bosilsa o'sha turdagi qo'ng'iroq qayta boshlanadi (bosishni MessageRow ushlaydi); guruhda — video chatga
+ * qo'shilish. Guruh yozuvi "boshlandi" yoki "tugadi · davomiylik".
  */
 @Composable
 internal fun CallLogBubble(message: Message, log: CallLog, modifier: Modifier = Modifier) {
@@ -39,7 +40,7 @@ internal fun CallLogBubble(message: Message, log: CallLog, modifier: Modifier = 
     val isOut = message.isMine
     val bubble = bubbleColors(isOut)
     // Javobsiz / rad etilgan / bekor qilingan — qizil: Telegram'dagidek "suhbat bo'lmadi" ko'zga tashlansin.
-    val failed = log.outcome != CallOutcome.ANSWERED
+    val failed = log.outcome != CallOutcome.ANSWERED && log.outcome != CallOutcome.STARTED
     val accent = if (failed && !isOut) colors.error else bubble.replyAccent
 
     Row(
@@ -87,7 +88,12 @@ internal fun CallLogBubble(message: Message, log: CallLog, modifier: Modifier = 
  */
 @StringRes
 internal fun callTitleRes(log: CallLog, isMine: Boolean): Int = when (log.outcome) {
-    CallOutcome.ANSWERED -> if (isMine) R.string.call_outgoing else R.string.call_incoming
+    CallOutcome.STARTED -> R.string.call_group_started
+    CallOutcome.ANSWERED -> when {
+        log.group -> R.string.call_group_ended
+        isMine -> R.string.call_outgoing
+        else -> R.string.call_incoming
+    }
     CallOutcome.MISSED -> if (isMine) R.string.call_no_answer else R.string.call_missed
     CallOutcome.DECLINED -> R.string.call_declined
     CallOutcome.CANCELED -> if (isMine) R.string.call_canceled else R.string.call_missed

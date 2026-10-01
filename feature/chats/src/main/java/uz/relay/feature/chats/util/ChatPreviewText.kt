@@ -110,7 +110,12 @@ private fun systemText(
 
 /** Qo'ng'iroq yozuvi sarlavhasi (suhbat ekranidagi CallLogBubble bilan bir xil qoida). */
 private fun callTitleRes(log: CallLog, isMine: Boolean): Int = when (log.outcome) {
-    CallOutcome.ANSWERED -> if (isMine) R.string.call_outgoing else R.string.call_incoming
+    CallOutcome.STARTED -> R.string.call_group_started
+    CallOutcome.ANSWERED -> when {
+        log.group -> R.string.call_group_ended
+        isMine -> R.string.call_outgoing
+        else -> R.string.call_incoming
+    }
     CallOutcome.MISSED -> if (isMine) R.string.call_no_answer else R.string.call_missed
     CallOutcome.DECLINED -> R.string.call_declined
     CallOutcome.CANCELED -> if (isMine) R.string.call_canceled else R.string.call_missed

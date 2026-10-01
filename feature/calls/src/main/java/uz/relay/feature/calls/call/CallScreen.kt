@@ -51,9 +51,9 @@ import uz.relay.feature.calls.call.components.CallTopBar
  * Ochiladi: shaxsiy chat sarlavhasidagi 📞/🎥 (chiquvchi) yoki ilova darajasidagi kiruvchi qo'ng'iroq (MainViewModel).
  */
 @Composable
-internal fun CallScreen(callId: String, video: Boolean?, chatId: String?) {
+internal fun CallScreen(callId: String, video: Boolean?, chatId: String?, group: Boolean) {
     val viewModel = hiltViewModel<CallViewModel, CallViewModel.Factory>(
-        creationCallback = { factory -> factory.create(callId, video, chatId) }
+        creationCallback = { factory -> factory.create(callId, video, chatId, group) }
     )
     val uiState by viewModel.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -81,7 +81,17 @@ internal fun CallScreen(callId: String, video: Boolean?, chatId: String?) {
         } else {
             CallPermissions(isVideo = uiState.isVideo)
             VideoTheme {
-                CallContentHost(call = call, isVideo = uiState.isVideo, onEventDispatcher = viewModel::onEventDispatcher)
+                if (uiState.isGroup) {
+                    // Guruh xonasi: jiringlash bosqichi yo'q — darhol to'liq ekranli xona.
+                    FullScreenVideoCall(
+                        call = call,
+                        group = true,
+                        onBack = { viewModel.onEventDispatcher(CallContract.Intent.OnBack) },
+                        onCallAction = { viewModel.onEventDispatcher(CallContract.Intent.OnCallAction(it)) }
+                    )
+                } else {
+                    CallContentHost(call = call, isVideo = uiState.isVideo, onEventDispatcher = viewModel::onEventDispatcher)
+                }
             }
         }
         SwiftSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.TopCenter))
@@ -105,7 +115,7 @@ private fun CallContentHost(call: Call, isVideo: Boolean, onEventDispatcher: (Ca
         onCallAction = onCallAction,
         onAcceptedContent = {
             if (isVideo) {
-                FullScreenVideoCall(call = call, onBack = onBack, onCallAction = onCallAction)
+                FullScreenVideoCall(call = call, group = false, onBack = onBack, onCallAction = onCallAction)
             } else {
                 val micOn by call.microphone.isEnabled.collectAsState()
                 AudioCallContent(
@@ -143,7 +153,7 @@ private fun CallContentHost(call: Call, isVideo: Boolean, onEventDispatcher: (Ca
  * uchun xato bilan qo'ng'iroqdan chiqib ketardi (qora ekran). PiP alohida bosqichda manifest bilan birga yoqiladi.
  */
 @Composable
-private fun FullScreenVideoCall(call: Call, onBack: () -> Unit, onCallAction: (CallAction) -> Unit) {
+private fun FullScreenVideoCall(call: Call, group: Boolean, onBack: () -> Unit, onCallAction: (CallAction) -> Unit) {
     Box(modifier = Modifier.fillMaxSize()) {
         CallContent(
             call = call,
@@ -156,6 +166,7 @@ private fun FullScreenVideoCall(call: Call, onBack: () -> Unit, onCallAction: (C
         )
         CallTopBar(
             call = call,
+            group = group,
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .background(Brush.verticalGradient(listOf(Scrim, Color.Transparent)))

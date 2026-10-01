@@ -51,6 +51,8 @@ interface ChatContract {
         data class OnMediaClick(val message: Message) : Intent
         /** Sarlavhadagi 📞 (audio) yoki 🎥 (video) — suhbatdoshga qo'ng'iroq. */
         data class OnStartCall(val video: Boolean) : Intent
+        /** Guruhda 🎥, "Qo'shilish" banneri yoki video chat yozuvi — guruh video chatini boshlash yoki unga qo'shilish. */
+        object OnGroupCall : Intent
     }
 
     /** Bir martalik hodisalar: Screen ularni `collectSideEffect` bilan tutib, Snackbar/Intent'ga aylantiradi. */
@@ -82,7 +84,11 @@ interface ChatContract {
         /** Fayl tayyorlanmoqda (nusxalash/hash) — katta videoda bir necha soniya. */
         val isPreparingMedia: Boolean = false,
         /** Qo'ng'iroq yaratilmoqda — tugma ikki marta bosilsa ikkinchi qo'ng'iroq boshlanmasin. */
-        val isStartingCall: Boolean = false
+        val isStartingCall: Boolean = false,
+        /** Guruh video chatida hozir nechta odam bor (0 — video chat yo'q, banner ko'rinmaydi). */
+        val groupCallCount: Int = 0,
+        /** Guruh a'zolari id'lari — video chat xonasiga a'zo qilib qo'shish uchun. */
+        val memberIds: List<String> = emptyList()
     ) {
         val isGroup: Boolean get() = chat?.type == ChatType.GROUP
         val canSend: Boolean get() = composerText.isNotBlank()
@@ -106,6 +112,7 @@ interface ChatContract {
         suspend fun navigateToUserProfile(userId: String)
         suspend fun navigateToMediaViewer(chatId: String, clientMessageId: String)
         suspend fun navigateToCall(callId: String, video: Boolean, chatId: String)
+        suspend fun navigateToGroupCall(callId: String, chatId: String)
     }
 }
 

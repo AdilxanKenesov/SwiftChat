@@ -68,6 +68,7 @@ import uz.relay.domain.model.MessageType
 import uz.relay.domain.model.SystemEvent
 import uz.relay.feature.conversation.R
 import uz.relay.feature.conversation.chat.components.ChatTopBar
+import uz.relay.feature.conversation.chat.components.GroupCallBanner
 import uz.relay.feature.conversation.chat.components.Composer
 import uz.relay.feature.conversation.chat.components.DateChip
 import uz.relay.feature.conversation.chat.components.MenuTarget
@@ -200,13 +201,23 @@ private fun ChatScreenContent(
                 // Guruhda — guruh ma'lumoti, shaxsiy chatda — suhbatdoshning profili (tanlovni ViewModel qiladi).
                 onTitleClick = { onEventDispatcher(ChatContract.Intent.OnOpenInfo) },
                 onMoreClick = { onEventDispatcher(ChatContract.Intent.OnOpenInfo) },
-                // Qo'ng'iroq faqat shaxsiy chatda (1:1) — guruh qo'ng'iroqlari keyinroq.
+                // Shaxsiy chatda — 📞 va 🎥 (1:1 qo'ng'iroq); guruhda — faqat 🎥 (guruh video chati).
                 onAudioCall = if (uiState.isGroup || uiState.chat == null) null else ({ onEventDispatcher(ChatContract.Intent.OnStartCall(video = false)) }),
-                onVideoCall = if (uiState.isGroup || uiState.chat == null) null else ({ onEventDispatcher(ChatContract.Intent.OnStartCall(video = true)) }),
+                onVideoCall = when {
+                    uiState.chat == null -> null
+                    uiState.isGroup -> ({ onEventDispatcher(ChatContract.Intent.OnGroupCall) })
+                    else -> ({ onEventDispatcher(ChatContract.Intent.OnStartCall(video = true)) })
+                },
                 modifier = Modifier
                     .background(colors.bg)
                     .statusBarsPadding()
             )
+            if (uiState.isGroup && uiState.groupCallCount > 0) {
+                GroupCallBanner(
+                    participants = uiState.groupCallCount,
+                    onJoin = { onEventDispatcher(ChatContract.Intent.OnGroupCall) }
+                )
+            }
 
             LazyColumn(
                 state = listState,
@@ -237,8 +248,10 @@ private fun ChatScreenContent(
                             onMediaClick = { onEventDispatcher(ChatContract.Intent.OnMediaClick(item.message)) },
                             onCancelUpload = { onEventDispatcher(ChatContract.Intent.OnCancelUpload(item.message)) },
                             downloadProgress = uiState.fileDownloads[item.message.clientMessageId],
-                            // Qayta qo'ng'iroq faqat shaxsiy chatda (guruhda qo'ng'iroq yozuvi bo'lmaydi).
-                            onCallLogClick = { video -> if (!uiState.isGroup) onEventDispatcher(ChatContract.Intent.OnStartCall(video)) }
+                            // Shaxsiy chatda — qayta qo'ng'iroq, guruhda — video chatga qo'shilish (yoki yangisini boshlash).
+                            onCallLogClick = { video ->
+                                onEventDispatcher(if (uiState.isGroup) ChatContract.Intent.OnGroupCall else ChatContract.Intent.OnStartCall(video))
+                            }
                         )
                     }
                 }
