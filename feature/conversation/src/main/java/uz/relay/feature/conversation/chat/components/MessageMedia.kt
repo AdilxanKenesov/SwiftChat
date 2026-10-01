@@ -26,7 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import java.io.File
 import uz.relay.core.designsystem.R as DesignR
 import uz.relay.core.designsystem.theme.SwiftTheme
 import uz.relay.domain.model.MediaKind
@@ -47,7 +48,6 @@ import uz.relay.feature.conversation.util.formatDuration
 import uz.relay.feature.conversation.util.formatMessageTime
 import uz.relay.feature.conversation.util.formatSize
 import uz.relay.feature.conversation.util.formatSizeProgress
-import java.io.File
 
 /*
  * Media xabarlar ko'rinishi: rasm/video bubble'i, fayl kartasi, yuklash/yuklab olish progressi.
@@ -131,7 +131,7 @@ internal fun VisualMessageBubble(
                         modifier = Modifier.align(Alignment.Center)
                     )
                     Pill(
-                        text = formatSizeProgress(upload.sentBytes, upload.totalBytes, LocalContext.current.resources),
+                        text = formatSizeProgress(upload.sentBytes, upload.totalBytes, LocalResources.current),
                         bold = true,
                         modifier = Modifier.align(Alignment.TopStart).padding(8.dp)
                     )
@@ -204,7 +204,7 @@ internal fun FileMessageBubble(
     modifier: Modifier = Modifier
 ) {
     val colors = SwiftTheme.colors
-    val resources = LocalContext.current.resources
+    val resources = LocalResources.current
     val isOut = message.isMine
     val bubble = bubbleColors(isOut)
     // Server fayl nomini saqlamaydi — u `body`da keladi.

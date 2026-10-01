@@ -123,3 +123,13 @@ dependencies {
     // Faqat debug: Android Studio preview va Layout Inspector.
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
+
+// Ilova ichida til almashtiriladi (uz/ru/en). AAB'da Play tillarni telefon tiliga qarab kesib tashlasa, boshqa tilga
+// o'tib bo'lmay qolardi — shuning uchun barcha tillar har bir o'rnatishda bo'ladi (matnlar hajmi juda kichik).
+android {
+    bundle {
+        language {
+            enableSplit = false
+        }
+    }
+}

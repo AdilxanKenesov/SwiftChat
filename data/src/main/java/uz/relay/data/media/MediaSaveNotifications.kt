@@ -96,7 +96,6 @@ class MediaSaveNotifications @Inject constructor(
 
     /** Kanal bir marta yaratiladi (qayta chaqirish zararsiz). Nomi joriy tilda — til almashsa keyingi chaqiruvda yangilanadi. */
     private fun ensureChannel() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val channel = NotificationChannel(CHANNEL_ID, context.getString(R.string.media_save_channel), NotificationManager.IMPORTANCE_LOW)
             .apply { description = context.getString(R.string.media_save_channel_description) }
         context.getSystemService(NotificationManager::class.java).createNotificationChannel(channel)

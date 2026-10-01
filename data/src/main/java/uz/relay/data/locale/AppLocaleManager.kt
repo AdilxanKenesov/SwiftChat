@@ -6,14 +6,15 @@ import android.content.res.Configuration
 import android.content.res.Resources
 import android.os.Build
 import android.os.LocaleList
+import androidx.core.content.edit
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.util.Locale
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import uz.relay.domain.model.AppLanguage
-import java.util.Locale
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Ilova ichidagi til tanlovi ("per-app language"), qo'shimcha kutubxonasiz.
@@ -41,8 +42,8 @@ class AppLocaleManager @Inject constructor(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             context.getSystemService(LocaleManager::class.java).applicationLocales = LocaleList.forLanguageTags(language.tag)
         } else {
-            // commit: Activity darhol qayta yaratiladi va wrap() yangi qiymatni o'qishi kerak.
-            prefs(context).edit().putString(KEY_LANGUAGE, language.tag).commit()
+            // commit (apply emas): Activity darhol qayta yaratiladi va wrap() yangi qiymatni o'qishi kerak.
+            prefs(context).edit(commit = true) { putString(KEY_LANGUAGE, language.tag) }
         }
         _language.value = language
     }

@@ -1,6 +1,5 @@
 package uz.relay.feature.auth.profile
 
-import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -29,7 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -45,6 +44,7 @@ import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
 import uz.relay.core.designsystem.R as DesignR
 import uz.relay.core.designsystem.component.SwiftPrimaryButton
+import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import uz.relay.core.designsystem.component.SwiftTextField
 import uz.relay.core.designsystem.theme.SwiftChatTheme
 import uz.relay.core.designsystem.theme.SwiftTheme
@@ -63,12 +63,12 @@ import uz.relay.feature.auth.util.messageRes
 internal fun ProfileSetupScreen(viewModel: ProfileSetupViewModel = hiltViewModel()) {
     val uiState by viewModel.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
-    val context = LocalContext.current
+    val resources = LocalResources.current
 
     viewModel.collectSideEffect { sideEffect ->
         when (sideEffect) {
             is ProfileSetupContract.SideEffect.ShowError ->
-                snackbarHostState.showSnackbar(context.getString(sideEffect.error.messageRes()))
+                snackbarHostState.showSnackbar(resources.getString(sideEffect.error.messageRes()))
         }
     }
 

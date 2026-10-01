@@ -331,10 +331,10 @@ private fun ControlButton(
     label: String,
     on: Boolean,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
     size: Dp = 56.dp,
     background: Color? = null,
-    enabled: Boolean = true,
-    modifier: Modifier = Modifier
+    enabled: Boolean = true
 ) {
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Box(

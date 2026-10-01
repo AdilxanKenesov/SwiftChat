@@ -1,7 +1,5 @@
 package uz.relay.feature.auth.otp
 
-import uz.relay.core.designsystem.component.SwiftSnackbarHost
-import androidx.compose.ui.res.pluralStringResource
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -30,8 +28,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -50,6 +49,7 @@ import org.orbitmvi.orbit.compose.collectSideEffect
 import uz.relay.core.designsystem.R as DesignR
 import uz.relay.core.designsystem.component.BrandTile
 import uz.relay.core.designsystem.component.SwiftPrimaryButton
+import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import uz.relay.core.designsystem.theme.SwiftChatTheme
 import uz.relay.core.designsystem.theme.SwiftTheme
 import uz.relay.feature.auth.R
@@ -73,12 +73,12 @@ internal fun OtpScreen(phone: String) {
     val snackbarHostState = remember { SnackbarHostState() }
     // Shake - bir martalik hodisa; uni Flow orqali OtpCodeInput'ga uzatamiz. Buffer tryEmit yo'qolmasligi uchun.
     val shakeEvents = remember { MutableSharedFlow<Unit>(extraBufferCapacity = 1) }
-    val context = LocalContext.current
+    val resources = LocalResources.current
 
     viewModel.collectSideEffect { sideEffect ->
         when (sideEffect) {
             is OtpContract.SideEffect.ShowError ->
-                snackbarHostState.showSnackbar(context.getString(sideEffect.error.messageRes()))
+                snackbarHostState.showSnackbar(resources.getString(sideEffect.error.messageRes()))
 
             OtpContract.SideEffect.Shake -> shakeEvents.tryEmit(Unit)
         }

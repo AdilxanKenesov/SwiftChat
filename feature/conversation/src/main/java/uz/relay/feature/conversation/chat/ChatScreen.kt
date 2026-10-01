@@ -1,16 +1,9 @@
 package uz.relay.feature.conversation.chat
 
-import uz.relay.core.designsystem.R as DesignR
-import uz.relay.core.designsystem.component.SwiftDialog
-import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import android.content.ActivityNotFoundException
+import android.content.ClipData
 import android.content.Context
 import android.content.Intent
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.core.content.FileProvider
-import uz.relay.feature.conversation.chat.components.AttachSheet
-import java.io.File
-import android.content.ClipData
 import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -41,6 +34,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -48,16 +42,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import java.io.File
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
+import uz.relay.core.designsystem.R as DesignR
+import uz.relay.core.designsystem.component.SwiftDialog
+import uz.relay.core.designsystem.component.SwiftSnackbarHost
 import uz.relay.core.designsystem.theme.SwiftChatTheme
 import uz.relay.core.designsystem.theme.SwiftTheme
 import uz.relay.domain.model.ChatSummary
@@ -67,10 +67,11 @@ import uz.relay.domain.model.MessageStatus
 import uz.relay.domain.model.MessageType
 import uz.relay.domain.model.SystemEvent
 import uz.relay.feature.conversation.R
+import uz.relay.feature.conversation.chat.components.AttachSheet
 import uz.relay.feature.conversation.chat.components.ChatTopBar
-import uz.relay.feature.conversation.chat.components.GroupCallBanner
 import uz.relay.feature.conversation.chat.components.Composer
 import uz.relay.feature.conversation.chat.components.DateChip
+import uz.relay.feature.conversation.chat.components.GroupCallBanner
 import uz.relay.feature.conversation.chat.components.MenuTarget
 import uz.relay.feature.conversation.chat.components.MessageMenuOverlay
 import uz.relay.feature.conversation.chat.components.MessageRow
@@ -98,15 +99,16 @@ internal fun ChatScreen(chatId: String, focusMessageId: String? = null) {
     val uiState by viewModel.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
+    val resources = LocalResources.current
 
     viewModel.collectSideEffect { sideEffect ->
         when (sideEffect) {
             is ChatContract.SideEffect.ShowError ->
-                snackbarHostState.showSnackbar(context.getString(sideEffect.error.messageRes()))
+                snackbarHostState.showSnackbar(resources.getString(sideEffect.error.messageRes()))
 
             is ChatContract.SideEffect.OpenFile ->
                 if (!openFile(context, sideEffect.path, sideEffect.mimeType)) {
-                    snackbarHostState.showSnackbar(context.getString(R.string.no_app_to_open))
+                    snackbarHostState.showSnackbar(resources.getString(R.string.no_app_to_open))
                 }
         }
     }
@@ -137,7 +139,7 @@ internal fun ChatScreenContent(
 ) {
     val colors = SwiftTheme.colors
     val context = LocalContext.current
-    val resources = context.resources
+    val resources = LocalResources.current
     val clipboard = LocalClipboard.current
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
@@ -299,7 +301,7 @@ internal fun ChatScreenContent(
                 },
                 onCameraUnavailable = {
                     showAttach = false
-                    scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.no_camera_app)) }
+                    scope.launch { snackbarHostState.showSnackbar(resources.getString(R.string.no_camera_app)) }
                 }
             )
         }
@@ -323,7 +325,7 @@ internal fun ChatScreenContent(
                         clipboard.setClipEntry(ClipEntry(ClipData.newPlainText(null, message.text.orEmpty())))
                         // Android 13+ nusxalanganini o'zi ko'rsatadi — ikki marta xabar bermaymiz.
                         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-                            snackbarHostState.showSnackbar(context.getString(R.string.copied))
+                            snackbarHostState.showSnackbar(resources.getString(R.string.copied))
                         }
                     }
                 },

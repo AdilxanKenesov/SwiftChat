@@ -27,7 +27,6 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:theme="@style/Theme.SwiftChat.Starting"
             android:windowSoftInputMode="adjustResize"
             android:supportsPictureInPicture="true"

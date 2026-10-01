@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- System splash icon: the 112dp Brand logo tile centered in the 288dp splash icon area. -->
+<!-- System splash icon: the 112dp Brand logo tile centered in the 288dp splash icon area.
+     288dp — SplashScreen API talabi (VectorRaster ogohlantirishi shu sababli o'chirilgan). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="VectorRaster"
     android:width="288dp"
     android:height="288dp"
     android:viewportWidth="288"
