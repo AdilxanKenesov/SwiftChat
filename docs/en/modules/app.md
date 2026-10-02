@@ -140,7 +140,7 @@ Every navigation command arrives from the event bus (`AppNavigationHandler.param
 - If any value or the keystore file is missing, the release build is produced **unsigned** instead of failing.
 - The keystore (`/keystore/`, `*.jks`) and `local.properties` are git-ignored.
 
-Signed APKs are published on **GitHub Releases** (`v1.0`).
+Signed APKs are published on **GitHub Releases** (`v1.0`, `v1.1`).
 
 ---
 
