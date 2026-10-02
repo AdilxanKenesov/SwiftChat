@@ -278,7 +278,7 @@ send status and the other members' read/delivered cursors, so one cursor update 
 
 ### Other
 - `AppLocaleManager` — per-app language (system `LocaleManager` on Android 13+, SharedPreferences + context wrap below).
-- `AppSettingsStorage` — theme and notification switches (DataStore, survives logout).
+- `AppSettingsStorage` — theme and notification switches, plus recently used emoji (key `recent_emojis`, newline-separated, ordered by `RecentEmojis.push`) (DataStore, survives logout).
 - `NetworkMonitor` — internet availability `StateFlow`.
 - `TypingTracker` — in-memory "typing…" state with 5 s TTL (implements `TypingRepository`).
 - `UserCache` — fetches missing user profiles (max 4 in parallel).
@@ -312,7 +312,7 @@ send status and the other members' read/delivered cursors, so one cursor update 
 | `GroupRepositoryImpl` | `GroupRepository` | ChatApi, Chat/ChatMember/Message/MemberCursor/User DAOs, UserCache, SessionStorage | members, create, add/remove, roles, rename, leave |
 | `ContactRepositoryImpl` | `ContactRepository` | ContactDao, UserDao, UserCache | local contacts |
 | `MediaRepositoryImpl` | `MediaRepository` | media OkHttp, MediaFiles, MediaSaveScheduler | download with progress, schedule gallery save |
-| `SettingsRepositoryImpl` | `SettingsRepository` | AppSettingsStorage, AppLocaleManager | theme, notifications, language |
+| `SettingsRepositoryImpl` | `SettingsRepository` | AppSettingsStorage, AppLocaleManager | theme, notifications, language, recent emoji |
 | `ConnectionRepositoryImpl` | `ConnectionRepository` | NetworkMonitor, RealtimeClient, SyncEngine | combined status OFFLINE > UPDATING > CONNECTING > CONNECTED |
 | `CallRepositoryImpl` | `CallRepository` | StreamVideoConnector, Stream SDK | 1:1 calls, incoming calls, group rooms |
 | `TypingTracker` (`realtime/`) | `TypingRepository` | – | in-memory typing state |
@@ -379,7 +379,7 @@ Paths are relative to `data/src/main/java/uz/relay/data/`.
 | `repository_impl/MessageRepositoryImpl.kt` | `MessageRepositoryImpl` | see §9 | |
 | `repository_impl/SettingsRepositoryImpl.kt` | `SettingsRepositoryImpl` | see §9 | |
 | `repository_impl/UserRepositoryImpl.kt` | `UserRepositoryImpl` | see §9 | |
-| `source/local/AppSettingsStorage.kt` | `AppSettingsStorage` | DataStore for theme/notifications | SettingsRepositoryImpl |
+| `source/local/AppSettingsStorage.kt` | `AppSettingsStorage` | DataStore for theme/notifications/recent emoji | SettingsRepositoryImpl |
 | `source/local/Session.kt` | `Session` | tokens, userId, deviceId | SessionStorage |
 | `source/local/SessionStorage.kt` | `SessionStorage` | encrypted session store + memory cache | interceptors, repositories, RealtimeClient |
 | `source/local/cache/UserCache.kt` | `UserCache` | fetch missing profiles | UserApi / sync, repositories |

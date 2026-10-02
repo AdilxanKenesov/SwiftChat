@@ -22,6 +22,7 @@ import uz.relay.domain.testing.FakeChatRepository
 import uz.relay.domain.testing.FakeGroupRepository
 import uz.relay.domain.testing.FakeMediaRepository
 import uz.relay.domain.testing.FakeMessageRepository
+import uz.relay.domain.testing.FakeSettingsRepository
 import uz.relay.domain.testing.FakeTypingRepository
 import uz.relay.domain.testing.FakeUserRepository
 import uz.relay.domain.testing.MainDispatcherRule
@@ -45,6 +46,8 @@ import uz.relay.domain.usecase.message.ObserveMessagesUseCase
 import uz.relay.domain.usecase.message.RetryMessageUseCase
 import uz.relay.domain.usecase.message.SendTextMessageUseCase
 import uz.relay.domain.usecase.message.SendTypingUseCase
+import uz.relay.domain.usecase.settings.AddRecentEmojiUseCase
+import uz.relay.domain.usecase.settings.ObserveRecentEmojisUseCase
 import uz.relay.domain.usecase.user.ObserveMeUseCase
 import uz.relay.domain.usecase.user.ObserveUserNamesUseCase
 
@@ -63,6 +66,7 @@ class ChatViewModelTest {
     private val groups = FakeGroupRepository()
     private val media = FakeMediaRepository()
     private val calls = FakeCallRepository()
+    private val settings = FakeSettingsRepository()
     private val navigation = mutableListOf<String>()
     private val directions = object : ChatContract.Directions {
         override suspend fun back() { navigation += "back" }
@@ -96,6 +100,8 @@ class ChatViewModelTest {
         startCall = StartCallUseCase(calls),
         prepareGroupCall = PrepareGroupCallUseCase(calls),
         observeGroupCall = ObserveGroupCallUseCase(calls),
+        observeRecentEmojis = ObserveRecentEmojisUseCase(settings),
+        addRecentEmoji = AddRecentEmojiUseCase(settings),
         directions = directions
     )
 
@@ -341,5 +347,19 @@ class ChatViewModelTest {
             assertEquals("m1", (state.items.first() as ChatItem.Bubble).message.clientMessageId)
             cancelAndIgnoreRemainingItems()
         }
+    }
+
+    @Test
+    fun `picked emoji is appended and remembered as recent`() = runTest {
+        viewModel().test(this, ChatContract.UiState(composerText = "Salom ")) {
+            expectInitialState()
+            containerHost.onEventDispatcher(ChatContract.Intent.OnEmojiPicked("😂"))
+            expectState { copy(composerText = "Salom 😂") }
+            containerHost.onEventDispatcher(ChatContract.Intent.OnEmojiPicked("👍"))
+            expectState { copy(composerText = "Salom 😂👍") }
+        }
+        assertEquals(listOf("👍", "😂"), settings.recent.value)
+        // Emoji ham "yozmoqda…" signalini beradi (oddiy matn kabi).
+        assertEquals(2, messages.typingSignals)
     }
 }

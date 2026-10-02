@@ -48,7 +48,7 @@ qo'yiladi va aloqa tiklanishi bilan o'zi yetkaziladi.
 |---|---|
 | **Kirish** | Telefon raqami + Telegram bot orqali keladigan bir martalik kod; Telegram akkauntini bog'lash; profilni to'ldirish (ism, noyob username) |
 | **Chatlar** | Shaxsiy va guruh chatlari; tablar (Hammasi / Shaxsiy / Guruhlar); o'qilmaganlar soni; "yozmoqda…" belgisi; online / oxirgi marta ko'rilgan vaqt; 1 soat / 8 soat / 1 kun / butunlay ovozsiz qilish |
-| **Xabarlar** | Matn, rasm, video va fayl; javob berish (Telegram'dagidek xabarni chapga surib ham), tahrirlash (48 soat ichida), o'chirish; ✓ yuborildi / ✓✓ yetkazildi / o'qildi holatlari; chat ichida lokal qidiruv |
+| **Xabarlar** | Matn, rasm, video va fayl; javob berish (Telegram'dagidek xabarni chapga surib ham), tahrirlash (48 soat ichida), o'chirish; ✓ yuborildi / ✓✓ yetkazildi / o'qildi holatlari; chat ichida lokal qidiruv; emoji paneli (kategoriyalar + so'nggilar) va faqat emojidan iborat katta xabarlar (1–3 ta, Telegram'dagidek) |
 | **Media** | Uzilsa davom etadigan bo'laklab yuklash, progress bilan yuklab olish, to'liq ekranli ko'ruvchi (kattalashtirish, video pleyer), progress bildirishnomasi bilan galereyaga saqlash |
 | **Guruhlar** | Yaratish, nomini o'zgartirish, a'zo qo'shish/chiqarish, admin rollari, guruhdan chiqish |
 | **Qo'ng'iroqlar** (Stream Video) | Jiringlaydigan 1:1 audio/video qo'ng'iroqlar, guruh video chati (ochiq xona), kichik oyna (picture-in-picture), emoji reaksiyalar, qo'l ko'tarish, ekranni ulashish, orqa fonni xiralashtirish / almashtirish, chatda qo'ng'iroqlar tarixi |
@@ -317,7 +317,7 @@ qo'llab, cursor'ni oldinga suradi, **(3)** qo'shimcha ishlar (typing belgisini t
 | Modul | Turi | Vazifasi | Hujjat |
 |---|---|---|---|
 | `:app` | Android ilova | Kirish nuqtasi: `App` (ishga tushish), `MainActivity` (splash, tema, til), `MainViewModel` (boshlang'ich ekran, kiruvchi qo'ng'iroqlar), `AppNavHost` (back stack) | [app](docs/uz/modules/app.md) |
-| `:domain` | sof Kotlin | Modellar, 11 ta repository interfeysi, 58 ta use case | [domain](docs/uz/modules/domain.md) |
+| `:domain` | sof Kotlin | Modellar, 11 ta repository interfeysi, 60 ta use case | [domain](docs/uz/modules/domain.md) |
 | `:data` | Android kutubxona | Repository implementatsiyalari, Retrofit, WebSocket, Room, sync, outbox, media, Stream | [data](docs/uz/modules/data.md) |
 | `:core:common` | sof Kotlin | `AppResult`, `AppError`, xato kodlari, dispatcher'lar | [core](docs/uz/modules/core.md) |
 | `:core:designsystem` | Android kutubxona | Tema tokenlari, tipografiya, umumiy Compose komponentlari | [core](docs/uz/modules/core.md) |
@@ -478,7 +478,7 @@ Har bir modulning har bir fayli — vazifasi va bog'lanishlari bilan —
 |---|---|
 | Debug APK | `./gradlew assembleDebug` |
 | Imzolangan release APK | `./gradlew assembleRelease` |
-| Unit, ViewModel va Compose UI testlari (235 ta) | `./gradlew testDebugUnitTest :domain:test` |
+| Unit, ViewModel va Compose UI testlari (248 ta) | `./gradlew testDebugUnitTest :domain:test` |
 | Screenshot testlari (19 ta golden) | `./gradlew verifyRoborazziDebug` · golden'larni yangilash: `recordRoborazziDebug` |
 | Lint | `./gradlew lintDebug` |
 | Token server testlari | `node --test server/stream-token/test/index.test.mjs` |
@@ -487,7 +487,7 @@ Har bir modulning har bir fayli — vazifasi va bog'lanishlari bilan —
 
 - **CI** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) har bir PR'da va `develop`ga har bir push'da ishlaydi: build →
   testlar → screenshot'lar → token server testlari → lint. Muvaffaqiyatli bo'lsa, debug APK shu run'ga biriktiriladi.
-- **Testlar** — JVM'da 235 ta test: biznes qoidalari, mapper'lar, xatolarni qayta ishlash, har bir ViewModel (soxta
+- **Testlar** — JVM'da 248 ta test: biznes qoidalari, mapper'lar, xatolarni qayta ishlash, har bir ViewModel (soxta
   repository'lar bilan), Compose UI xatti-harakati (Robolectric) va 19 ta screenshot golden (kunduzgi va tungi).
 - **Branch'lar** — yangi imkoniyatlar `feature/*`da, tuzatishlar `bug/*`da, PR'lar `develop`ga; `master`ni egasi yangilaydi.
 

@@ -5,6 +5,7 @@ import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,6 +43,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -71,6 +73,7 @@ import uz.relay.feature.conversation.chat.components.AttachSheet
 import uz.relay.feature.conversation.chat.components.ChatTopBar
 import uz.relay.feature.conversation.chat.components.Composer
 import uz.relay.feature.conversation.chat.components.DateChip
+import uz.relay.feature.conversation.chat.components.EmojiPanel
 import uz.relay.feature.conversation.chat.components.GroupCallBanner
 import uz.relay.feature.conversation.chat.components.MenuTarget
 import uz.relay.feature.conversation.chat.components.MessageMenuOverlay
@@ -148,6 +151,19 @@ internal fun ChatScreenContent(
     var menuTarget by remember { mutableStateOf<MenuTarget?>(null) }
     // Saveable: kamera/fayl tanlovchi ochiq paytda Activity qayta yaratilsa ham natija shu sheet'ga qaytadi.
     var showAttach by rememberSaveable { mutableStateOf(false) }
+    // Emoji paneli — faqat UI holati. Balandligi oxirgi ochilgan klaviaturaniki (bo'lmasa 280dp): almashganda ekran sakramaydi.
+    var emojiPanelOpen by rememberSaveable { mutableStateOf(false) }
+    val density = LocalDensity.current
+    val imeHeight = with(density) { (WindowInsets.ime.getBottom(density) - WindowInsets.navigationBars.getBottom(density)).toDp() }
+    var keyboardHeight by remember { mutableStateOf(0.dp) }
+    LaunchedEffect(imeHeight) { if (imeHeight > 120.dp) keyboardHeight = imeHeight }
+    val emojiPanelHeight = if (keyboardHeight > 120.dp) keyboardHeight else 280.dp
+    // "Orqaga" avval panelni yopadi (keyin chatdan chiqadi).
+    BackHandler(enabled = emojiPanelOpen) { emojiPanelOpen = false }
+    // Javob/tahrir boshlansa klaviatura ochiladi — panel yopiladi.
+    LaunchedEffect(uiState.composerMode) {
+        if (uiState.composerMode !is ChatContract.ComposerMode.None) emojiPanelOpen = false
+    }
     var deleteTarget by remember { mutableStateOf<Message?>(null) }
 
     // reverseLayout: 0-element ekranning eng pastida. Pastda turibmizmi — o'qildi kvitansiyasi shunga bog'liq.
@@ -283,10 +299,23 @@ internal fun ChatScreenContent(
                 onCancelMode = { onEventDispatcher(ChatContract.Intent.OnCancelComposerMode) },
                 onAttach = { showAttach = true },
                 // Klaviatura ochiq bo'lsa uning balandligi, yopiq bo'lsa navigatsiya paneli — qaysi katta bo'lsa.
+                // Emoji paneli ochiq bo'lsa pastki joyni panel egallaydi (u navigatsiya panelini o'zi hisobga oladi).
                 modifier = Modifier
                     .background(colors.bg)
-                    .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars).only(WindowInsetsSides.Bottom))
+                    .then(
+                        if (emojiPanelOpen) Modifier
+                        else Modifier.windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars).only(WindowInsetsSides.Bottom))
+                    ),
+                emojiPanelOpen = emojiPanelOpen,
+                onEmojiPanelOpenChange = { emojiPanelOpen = it }
             )
+            if (emojiPanelOpen) {
+                EmojiPanel(
+                    recent = uiState.recentEmojis,
+                    height = emojiPanelHeight,
+                    onEmoji = { onEventDispatcher(ChatContract.Intent.OnEmojiPicked(it)) }
+                )
+            }
         }
 
         SwiftSnackbarHost(

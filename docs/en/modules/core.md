@@ -147,7 +147,7 @@ Extra palettes:
 | `formatPresence(...)` | "online" / "last seen just now / N min / N h / yesterday HH:mm / dd.MM.yyyy / recently" |
 
 Resources:
-- 53 vector icons (`ic_*.xml`, Lucide style);
+- 55 vector icons (`ic_*.xml`, Lucide style; incl. `ic_smile` / `ic_keyboard` for the emoji panel toggle);
 - 5 Figtree font files;
 - presence strings in Uzbek (default), Russian and English.
 

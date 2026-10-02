@@ -1,6 +1,8 @@
 package uz.relay.feature.conversation.chat.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -63,7 +65,10 @@ fun Composer(
     onSend: () -> Unit,
     onCancelMode: () -> Unit,
     onAttach: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** Klaviatura o'rnida emoji paneli ochiqmi (holat ChatScreen'da — panelni u chizadi). */
+    emojiPanelOpen: Boolean = false,
+    onEmojiPanelOpenChange: (Boolean) -> Unit = {}
 ) {
     val colors = SwiftTheme.colors
     val isEditing = mode is ChatContract.ComposerMode.Edit
@@ -76,6 +81,17 @@ fun Composer(
         is ChatContract.ComposerMode.Reply -> mode.message.clientMessageId
         is ChatContract.ComposerMode.Edit -> mode.message.clientMessageId
         ChatContract.ComposerMode.None -> null
+    }
+    val fieldInteraction = remember { MutableInteractionSource() }
+    // Panel ochiq paytda matn maydoniga tegilsa — Telegram'dagidek panel yopilib, klaviatura chiqadi.
+    LaunchedEffect(fieldInteraction, emojiPanelOpen) {
+        if (!emojiPanelOpen) return@LaunchedEffect
+        fieldInteraction.interactions.collect { interaction ->
+            if (interaction is PressInteraction.Release) {
+                onEmojiPanelOpenChange(false)
+                keyboard?.show()
+            }
+        }
     }
     LaunchedEffect(modeMessageId) {
         if (modeMessageId != null) {
@@ -108,8 +124,30 @@ fun Composer(
                     modifier = Modifier.size(23.dp)
                 )
             }
+            // 😊 ↔ ⌨: panel va klaviatura bir-birining o'rnini egallaydi.
+            IconButton(
+                onClick = {
+                    if (emojiPanelOpen) {
+                        onEmojiPanelOpenChange(false)
+                        focusRequester.requestFocus()
+                        keyboard?.show()
+                    } else {
+                        keyboard?.hide()
+                        onEmojiPanelOpenChange(true)
+                    }
+                },
+                modifier = Modifier.size(44.dp)
+            ) {
+                Icon(
+                    painter = painterResource(if (emojiPanelOpen) DesignR.drawable.ic_keyboard else DesignR.drawable.ic_smile),
+                    contentDescription = stringResource(if (emojiPanelOpen) R.string.keyboard else R.string.emoji),
+                    tint = colors.text2,
+                    modifier = Modifier.size(23.dp)
+                )
+            }
             BasicTextField(
                 value = text,
+                interactionSource = fieldInteraction,
                 onValueChange = onTextChange,
                 maxLines = 5,
                 textStyle = TextStyle(color = colors.text, fontSize = 16.sp, fontFamily = FigtreeFontFamily),

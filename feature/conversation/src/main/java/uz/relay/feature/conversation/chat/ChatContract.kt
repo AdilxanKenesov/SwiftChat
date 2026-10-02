@@ -53,6 +53,8 @@ interface ChatContract {
         data class OnStartCall(val video: Boolean) : Intent
         /** Guruhda 🎥, "Qo'shilish" banneri yoki video chat yozuvi — guruh video chatini boshlash yoki unga qo'shilish. */
         object OnGroupCall : Intent
+        /** Emoji panelidan tanlandi — matn oxiriga qo'shiladi va "So'nggi" ro'yxatining boshiga o'tadi. */
+        data class OnEmojiPicked(val emoji: String) : Intent
     }
 
     /** Bir martalik hodisalar: Screen ularni `collectSideEffect` bilan tutib, Snackbar/Intent'ga aylantiradi. */
@@ -88,7 +90,9 @@ interface ChatContract {
         /** Guruh video chatida hozir nechta odam bor (0 — video chat yo'q, banner ko'rinmaydi). */
         val groupCallCount: Int = 0,
         /** Guruh a'zolari id'lari — video chat xonasiga a'zo qilib qo'shish uchun. */
-        val memberIds: List<String> = emptyList()
+        val memberIds: List<String> = emptyList(),
+        /** Emoji panelidagi "So'nggi" bo'limi (qurilmada saqlanadi). */
+        val recentEmojis: List<String> = emptyList()
     ) {
         val isGroup: Boolean get() = chat?.type == ChatType.GROUP
         val canSend: Boolean get() = composerText.isNotBlank()

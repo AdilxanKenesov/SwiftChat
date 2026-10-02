@@ -18,17 +18,17 @@ import uz.relay.domain.model.CallOutcome
 import uz.relay.domain.model.ChatSummary
 import uz.relay.domain.model.ChatType
 import uz.relay.domain.model.DownloadState
+import uz.relay.domain.model.MemberRole
 import uz.relay.domain.model.Message
 import uz.relay.domain.model.MessageMedia
 import uz.relay.domain.model.MessageType
-import uz.relay.domain.model.MemberRole
+import uz.relay.domain.usecase.call.ObserveGroupCallUseCase
+import uz.relay.domain.usecase.call.PrepareGroupCallUseCase
+import uz.relay.domain.usecase.call.StartCallUseCase
 import uz.relay.domain.usecase.chat.ObserveChatUseCase
 import uz.relay.domain.usecase.chat.ObserveTypingUseCase
 import uz.relay.domain.usecase.group.ObserveMembersUseCase
 import uz.relay.domain.usecase.group.RefreshMembersUseCase
-import uz.relay.domain.usecase.call.ObserveGroupCallUseCase
-import uz.relay.domain.usecase.call.PrepareGroupCallUseCase
-import uz.relay.domain.usecase.call.StartCallUseCase
 import uz.relay.domain.usecase.media.CancelUploadUseCase
 import uz.relay.domain.usecase.media.DownloadMediaUseCase
 import uz.relay.domain.usecase.media.SendMediaMessageUseCase
@@ -41,6 +41,8 @@ import uz.relay.domain.usecase.message.ObserveMessagesUseCase
 import uz.relay.domain.usecase.message.RetryMessageUseCase
 import uz.relay.domain.usecase.message.SendTextMessageUseCase
 import uz.relay.domain.usecase.message.SendTypingUseCase
+import uz.relay.domain.usecase.settings.AddRecentEmojiUseCase
+import uz.relay.domain.usecase.settings.ObserveRecentEmojisUseCase
 import uz.relay.domain.usecase.user.ObserveMeUseCase
 import uz.relay.domain.usecase.user.ObserveUserNamesUseCase
 
@@ -79,6 +81,8 @@ class ChatViewModel @AssistedInject constructor(
     private val startCall: StartCallUseCase,
     private val prepareGroupCall: PrepareGroupCallUseCase,
     private val observeGroupCall: ObserveGroupCallUseCase,
+    private val observeRecentEmojis: ObserveRecentEmojisUseCase,
+    private val addRecentEmoji: AddRecentEmojiUseCase,
     private val directions: ChatContract.Directions
 ) : ViewModel(), ChatContract.ViewModel {
 
@@ -92,6 +96,7 @@ class ChatViewModel @AssistedInject constructor(
     override val container =
         orbitContainer<ChatContract.UiState, ChatContract.SideEffect>(ChatContract.UiState()) {
             observeData()
+            observeRecentEmojisList()
             loadLatest()
         }
 
@@ -147,6 +152,7 @@ class ChatViewModel @AssistedInject constructor(
             is ChatContract.Intent.OnMediaClick -> openMedia(intent.message)
             is ChatContract.Intent.OnStartCall -> startCall(intent.video)
             ChatContract.Intent.OnGroupCall -> joinGroupCall()
+            is ChatContract.Intent.OnEmojiPicked -> pickEmoji(intent.emoji)
         }
     }
 
@@ -211,6 +217,24 @@ class ChatViewModel @AssistedInject constructor(
     }
 
     /** Guruh video chatidagi odamlar soni — sarlavha ostidagi banner uchun. Faqat guruhda, bir marta boshlanadi. */
+    /**
+     * Emoji matn oxiriga qo'shiladi (maydon holati ViewModel'da — kursor joyi saqlanmaydi, Telegram ham odatda
+     * oxiriga qo'yadi). Matn sinxron yangilanadi (`blockingIntent`), "So'nggi" ro'yxati esa fonda saqlanadi.
+     */
+    private fun pickEmoji(emoji: String) {
+        onTextChange(stateText() + emoji)
+        intent { addRecentEmoji(emoji) }
+    }
+
+    private fun stateText(): String = container.stateFlow.value.composerText
+
+    /** "So'nggi" emojilar — emoji paneli uchun. */
+    private fun observeRecentEmojisList() = intent {
+        repeatOnSubscription {
+            observeRecentEmojis().collect { recent -> reduce { state.copy(recentEmojis = recent) } }
+        }
+    }
+
     private fun watchGroupCall() = intent {
         repeatOnSubscription {
             observeGroupCall(chatId).collect { count -> reduce { state.copy(groupCallCount = count) } }

@@ -27,4 +27,9 @@ interface SettingsRepository {
 
     /** Tilni almashtirish. Ekranlar yangi tilda qayta chiziladi (Activity qayta yaratiladi). */
     suspend fun setLanguage(language: AppLanguage)
+
+    /** Emoji panelidagi so'nggi ishlatilganlar (birinchisi — eng oxirgisi). Qurilmada saqlanadi, logout'da o'chmaydi. */
+    val recentEmojis: Flow<List<String>>
+
+    suspend fun addRecentEmoji(emoji: String)
 }

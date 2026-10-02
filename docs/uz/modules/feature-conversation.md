@@ -38,7 +38,7 @@ Contract + ViewModel + Screen + DirectionsImpl (Orbit MVI). Uchala ViewModel'ga 
 
 | Ekran (NavKey) | Intent'lar | UiState | SideEffect'lar | Directions → manzil | Use case'lar |
 |---|---|---|---|---|---|
-| **Chat** (`ChatKey(chatId, focusMessageId?)`) | `OnBack`, `OnTextChange`, `OnSend`, `OnReply`, `OnEdit`, `OnCancelComposerMode`, `OnDelete`, `OnRetry`, `OnLoadOlder`, `OnBottomVisible`, `OnOpenInfo`, `OnAttach(Attachment)`, `OnCancelUpload`, `OnMediaClick`, `OnStartCall(video)`, `OnGroupCall` | `chat`, `items: List<ChatItem>`, `userNames`, `myUserId`, `typingUserIds`, `composerText`, `composerMode` (`None`/`Reply`/`Edit`), `hasMore`, `isLoadingOlder`, `memberCount`, `myRole`, `fileDownloads` (id → 0..1), `isPreparingMedia`, `isStartingCall`, `groupCallCount`, `memberIds`; hisoblanadigan `isGroup`, `canSend`, `canDeleteOthers` | `ShowError` (HTTP 401 ko'rsatilmaydi), `OpenFile(path, mime)` | `back`; `navigateToGroupInfo`; `navigateToUserProfile`; `navigateToMediaViewer`; `navigateToCall` → `CallKey(callId, video, chatId)`; `navigateToGroupCall` → `CallKey(…, group = true)` | `ObserveMessages`, `ObserveChat`, `ObserveUserNames`, `ObserveMe`, `ObserveTyping`, `LoadLatestMessages`, `LoadOlderMessages`, `SendTextMessage`, `RetryMessage`, `EditMessage`, `DeleteMessage`, `SendTyping`, `MarkChatRead`, `ObserveMembers`, `RefreshMembers`, `SendMediaMessage`, `CancelUpload`, `DownloadMedia`, `StartCall`, `PrepareGroupCall`, `ObserveGroupCall` |
+| **Chat** (`ChatKey(chatId, focusMessageId?)`) | `OnBack`, `OnTextChange`, `OnSend`, `OnReply`, `OnEdit`, `OnCancelComposerMode`, `OnDelete`, `OnRetry`, `OnLoadOlder`, `OnBottomVisible`, `OnOpenInfo`, `OnAttach(Attachment)`, `OnCancelUpload`, `OnMediaClick`, `OnStartCall(video)`, `OnGroupCall`, `OnEmojiPicked(emoji)` | `chat`, `items: List<ChatItem>`, `userNames`, `myUserId`, `typingUserIds`, `composerText`, `composerMode` (`None`/`Reply`/`Edit`), `hasMore`, `isLoadingOlder`, `memberCount`, `myRole`, `fileDownloads` (id → 0..1), `isPreparingMedia`, `isStartingCall`, `groupCallCount`, `memberIds`, `recentEmojis`; hisoblanadigan `isGroup`, `canSend`, `canDeleteOthers` | `ShowError` (HTTP 401 ko'rsatilmaydi), `OpenFile(path, mime)` | `back`; `navigateToGroupInfo`; `navigateToUserProfile`; `navigateToMediaViewer`; `navigateToCall` → `CallKey(callId, video, chatId)`; `navigateToGroupCall` → `CallKey(…, group = true)` | `ObserveMessages`, `ObserveChat`, `ObserveUserNames`, `ObserveMe`, `ObserveTyping`, `LoadLatestMessages`, `LoadOlderMessages`, `SendTextMessage`, `RetryMessage`, `EditMessage`, `DeleteMessage`, `SendTyping`, `MarkChatRead`, `ObserveMembers`, `RefreshMembers`, `SendMediaMessage`, `CancelUpload`, `DownloadMedia`, `StartCall`, `PrepareGroupCall`, `ObserveGroupCall`, `ObserveRecentEmojis`, `AddRecentEmoji` |
 | **ChatSearch** (`ChatSearchKey(chatId)`) | `OnBack`, `OnQueryChange`, `OnClear`, `OnResultClick` | `query`, `results: List<Message>`, `searchedQuery`, `userNames`; hisoblanadigan `showNothingFound` | — | `back`; `openMessage` → `BackTo(ChatsKey)`, keyin `To(ChatKey(chatId, focusMessageId))` | `SearchMessages`, `ObserveUserNames` |
 | **MediaViewer** (`MediaViewerKey(chatId, clientMessageId)`) | `OnBack`, `OnPageChange(index)`, `OnSave(ViewerItem)` | `items: List<ViewerItem>`, `initialIndex`, `userNames`, `myUserId` | `Saved`, `ShowError` | `back` | `ObserveMessages`, `ObserveUserNames`, `ObserveMe`, `SaveMediaToGallery` (+ ExoPlayer uchun media `DataSource.Factory`) |
 
@@ -52,6 +52,8 @@ Xabar amallari qoidalari `ChatContract.kt` faylida: `canEdit()` (o'zimning matnl
 | **Matn yuborish** | `OnSend` yozish panelini darhol tozalaydi va `SendTextMessageUseCase`ni chaqiradi. Repository **PENDING** qatorini (UUID `clientMessageId`) qo'shadi va outbox'ni rejalashtiradi — xabar tarmoqni kutmasdan, hatto offline'da ham "yuborilmoqda" bo'lib ko'rinadi. |
 | **Media yuborish** | `OnAttach` (Photo Picker orqali galereya, kamera, fayl — runtime ruxsatlar kerak emas). Yozish panelidagi matn izohga aylanadi (fayllar uchun emas). Fayl nusxalanib, xesh hisoblanayotganda `isPreparingMedia` ikki marta yuborishni bloklaydi. Yuklash jarayoni xabar ichida ko'rsatiladi va uni bekor qilish mumkin. |
 | **Javob berish / tahrirlash / o'chirish** | Bosib turish `MessageMenuOverlay`ni ochadi (xiralashgan fon, ko'tarilgan xabar). Reply/Edit `composerMode`ni almashtiradi; tahrirlash `EditMessageUseCase`ni chaqiradi. O'chirish tasdiqlashni so'raydi; server sinxronizatsiya orqali tombstone qaytaradi. *Tahrirlash* bekor qilinsa matn tozalanadi, *javob berish* bekor qilinsa matn qoladi. |
+| **Emoji** | Yozish panelidagi 😊 tugmasi klaviaturani `EmojiPanel` bilan almashtiradi (balandligi oxirgi klaviatura bilan bir xil, boshida 280dp; belgi ⌨ ga aylanadi). Tepada kategoriyalar, birinchisi — "So'nggi" (🕘), agar bo'sh bo'lmasa. Bosilganda `OnEmojiPicked` → emoji matnga qo'shiladi va `AddRecentEmojiUseCase` uni saqlaydi (eng yangisi birinchi, ko'pi bilan 24 ta, DataStore). Maydonni bosish, Orqaga yoki javob/tahrirlash rejimiga o'tish panelni yopadi. |
+| **Katta emoji** | Faqat 1–3 ta emojidan iborat va javob bo'lmagan matnli xabar (`emojiOnlyCount`, ICU grafema klasterlari — API 26 da ishlaydi) `EmojiMessage` orqali pufakchasiz chiziladi: 56 / 44 / 36sp, vaqt qora fonli kapsulada. Xabar tarmoqlanish tartibi: media → qo'ng'iroq yozuvi → faqat emoji → matn. |
 | **Qayta yuborish** | Yuborilmagan chiquvchi xabarda qizil tugma chiqadi → `RetryMessageUseCase`. |
 | **O'qildi belgilari** | Eng yangi xabar ko'rinib turganda ekran `OnBottomVisible` yuboradi; ViewModel `MarkChatReadUseCase`ni faqat eng yangi `serverSeq` oxirgi yuborilganidan katta bo'lsa chaqiradi. |
 | **Tarixni sahifalash** | Ro'yxat teskari (eng yangisi pastda). Foydalanuvchi eng eski xabarga 8 ta element qolguncha aylantirsa, `OnLoadOlder` oldingi sahifani yuklaydi (`hasMore` / `isLoadingOlder` bilan himoyalangan). |
@@ -114,6 +116,8 @@ OutboxSender ─► WebSocket (10 s ack kutadi) ──yoki──► REST POST (o
 | `chat/components/MessageMedia.kt` | Rasm/video xabari, fayl xabari, yuklash/yuklab olish jarayoni halqalari, play belgisi. |
 | `chat/components/MessageMenu.kt` | Bosib turishda chiqadigan oyna: Javob berish, Tahrirlash, Nusxalash, O'chirish. |
 | `chat/components/MessageRow.kt` | Chap/o'ng tekislash, guruh avatari joyi, qayta yuborish tugmasi, bosish / bosib turishni qayta ishlash; `SwipeToReplyBox` bilan o'ralgan. |
+| `chat/components/EmojiPanel.kt` | Klaviatura o'rnidagi emoji paneli: kategoriya tugmalari (birinchisi "So'nggi"), moslashuvchan 44dp to'r; bir nechtasini tanlash uchun panel ochiq qoladi. |
+| `chat/components/EmojiMessage.kt` | Pufakchasiz katta emoji xabari (1–3 ta), meta qora fonli kapsulada. |
 | `chat/components/SwipeToReply.kt` | Telegram'dagidek chapga surib javob berish: qator barmoq ortidan siljiydi, o'ng chetda ↩ belgisi kattalashadi, 56dp'da yengil titrash, qo'yib yuborilganda javob. Faqat chapga surish ushlanadi, shuning uchun o'ngga surish (orqaga) va vertikal scroll ishlayveradi. |
 
 ## Yordamchi fayllar
@@ -121,12 +125,14 @@ OutboxSender ─► WebSocket (10 s ack kutadi) ──yoki──► REST POST (o
 | Fayl | Mazmuni |
 |---|---|
 | `chat/ChatItems.kt` | `ChatItem` (DateSeparator / System / Bubble) va sof funksiya `buildChatItems(messages, isGroup)`. |
+| `chat/emoji/EmojiText.kt` | `emojiOnlyCount(text)` — matn faqat 1..`MAX_LARGE_EMOJI` (3) ta emoji bo'lsa ularning soni, aks holda `null`; ICU `BreakIterator` grafema klasterlari (`EXTENDED_PICTOGRAPHIC` API 29 talab qiladi, minSdk 26). |
+| `chat/emoji/EmojiCatalog.kt` | `EmojiCategory`, `EmojiCatalog` — 9 ta ichki kategoriya (smayllar, odamlar, hayvonlar, ovqat, sayohat, faoliyat, buyumlar, belgilar, bayroqlar); kutubxonasiz. |
 | `util/ChatTimeFormat.kt` | `formatMessageTime`, `dayStartMillis`, `formatDateSeparator` (Bugun / Kecha / "24-sentabr[, 2025]"). |
 | `util/MediaFormat.kt` | `formatSize`, `formatSizeProgress`, `formatDuration`, `fileTypeLabel`. |
 | `util/SystemText.kt` | `systemText(...)` — guruh yaratildi / a'zolar qo'shildi / chiqarildi / chiqib ketdi gaplari. |
 | `util/ErrorMessage.kt` | `AppError.messageRes()` — internet yo'q, fayl juda katta (413), qo'ng'iroqlar mavjud emas, qo'ng'iroq amalga oshmadi, juda ko'p urinish, tahrirlash muddati o'tdi, taqiqlangan, noma'lum. |
 
-## Barcha fayllar (29)
+## Barcha fayllar (34)
 
 Yo'llar `feature/conversation/src/main/java/uz/relay/feature/conversation/` ga nisbatan berilgan.
 
@@ -149,7 +155,11 @@ Yo'llar `feature/conversation/src/main/java/uz/relay/feature/conversation/` ga n
 | `chat/components/MessageMedia.kt` | `VisualMessageBubble`, `FileMessageBubble` | Media xabarlar. | `MessageBubble` |
 | `chat/components/MessageMenu.kt` | `MenuTarget`, `MessageMenuOverlay` | Bosib turish menyusi. | `ChatScreen` |
 | `chat/components/MessageRow.kt` | `MessageRow` | Qator joylashuvi va imo-ishoralar. | `ChatScreen` |
+| `chat/components/EmojiMessage.kt` | `EmojiMessage` | Pufakchasiz katta emoji. | `MessageBubble` |
+| `chat/components/EmojiPanel.kt` | `EmojiPanel` | Emoji tanlash paneli. | `ChatScreen`, `EmojiCatalog` |
 | `chat/components/SwipeToReply.kt` | `SwipeToReplyBox` | Chapga surib javob berish (graphicsLayer orqali siljish, chegarada titrash). | `MessageRow`, `rememberGestureThresholdHaptic` |
+| `chat/emoji/EmojiCatalog.kt` | `EmojiCategory`, `EmojiCatalog` | Kategoriyalar bo'yicha ichki emoji ro'yxati. | `EmojiPanel` |
+| `chat/emoji/EmojiText.kt` | `emojiOnlyCount`, `MAX_LARGE_EMOJI` | Faqat emojidan iborat matnni aniqlash. | `MessageBubble` |
 | `search/ChatSearchContract.kt` | `ChatSearchContract` | Chat ichida qidiruv contract'i. | Screen, ViewModel |
 | `search/ChatSearchViewModel.kt` | `ChatSearchViewModel` (assisted `chatId`) | Lokal qidiruv, 200 ms debounce. | `SearchMessages`, `ObserveUserNames` |
 | `search/ChatSearchScreen.kt` | `ChatSearchScreen`, `ChatSearchContent` | Mosliklar ajratib ko'rsatilgan qidiruv UI. | `ChatSearchViewModel` |
@@ -171,7 +181,7 @@ Yo'llar `feature/conversation/src/main/java/uz/relay/feature/conversation/` ga n
 
 | Turi | Klasslar |
 |---|---|
-| Mantiq | `BuildChatItemsTest`, `MessageActionsTest` (yordamchi: `TestMessages.kt`) |
-| ViewModel | `ChatViewModelTest`, `ChatSearchViewModelTest` |
+| Mantiq | `BuildChatItemsTest`, `MessageActionsTest` (yordamchi: `TestMessages.kt`), `EmojiTextTest` (1–3 emoji; 3 tadan ko'pi oddiy matn; ZWJ/bayroq/keycap bittadan sanaladi; matn yoki aralash — faqat emoji emas; katalogdagi har bir emoji aniqlanadi) |
+| ViewModel | `ChatViewModelTest` (shu jumladan emoji tanlansa matnga qo'shilishi va so'nggilarga saqlanishi), `ChatSearchViewModelTest` |
 | Compose UI | `CallUiTest` (qo'ng'iroq yozuvlari, guruh qo'ng'irog'i banneri, qo'ng'iroq tugmalari), `SwipeToReplyTest` (chapga surish javob beradi; o'ngga, qisqa surish va yetkazilmagan xabarda javob yo'q) |
-| Screenshot | `CallUiScreenshotTest` — sarlavha, banner, barcha turdagi qo'ng'iroq yozuvlari; yorug' va tungi tema |
+| Screenshot | `CallUiScreenshotTest` — sarlavha, banner, barcha turdagi qo'ng'iroq yozuvlari; `EmojiScreenshotTest` — katta emoji xabarlari va emoji paneli; yorug' va tungi tema |

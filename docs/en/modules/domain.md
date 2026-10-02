@@ -11,7 +11,7 @@ JUnit in milliseconds, and the data source can be replaced without touching the 
 - Package: `uz.relay.domain`
 - Type: JVM library (`java-library` + Kotlin JVM + `java-test-fixtures`)
 - Depends on: `:core:common` (exposed as `api` — `AppResult` / `AppError` are part of the domain API)
-- Source files: **83** = 14 model files + 11 repository interfaces + 58 use cases
+- Source files: **86** = 15 model files + 11 repository interfaces + 60 use cases
 
 ---
 
@@ -23,7 +23,7 @@ flowchart LR
         VM["*ViewModel"]
     end
     subgraph Domain[":domain"]
-        UC["usecase/*<br/>58 use cases"]
+        UC["usecase/*<br/>60 use cases"]
         R["repository/*<br/>11 interfaces"]
         M["model/*<br/>User · Message · ChatSummary · CallLog …"]
     end
@@ -65,6 +65,7 @@ like a function: `requestOtp(phone)`. Most use cases only delegate; the ones mar
 | `Message.kt` | `Message` | one chat message (clientMessageId, serverId/seq, reply, edited/deleted, status, media, upload) |
 | `MuteDuration.kt` | `MuteDuration` | 1 h, 8 h, 1 day, forever |
 | `OtpRules.kt` | `OtpRules` | OTP code length (6) |
+| `RecentEmojis.kt` | `RecentEmojis` | recently used emoji list rule: `push` puts the emoji first, removes duplicates, keeps at most `MAX` (24) |
 | `ProfileRules.kt` | `ProfileRules` | name 1–128 chars, username `[a-zA-Z0-9_]{3,32}` (same as server) |
 | `SyncStatus.kt` | `SyncStatus` | syncing / bootstrapped flags |
 | `ThemeMode.kt` | `ThemeMode` (SYSTEM, LIGHT, DARK) | app theme |
@@ -83,7 +84,7 @@ like a function: `requestOtp(phone)`. Most use cases only delegate; the ones mar
 | `GroupRepository` | `observeMembers`, `refreshMembers`, `createGroup`, `addMembers`, `removeMember`, `changeRole`, `rename`, `leave` | `GroupRepositoryImpl` |
 | `ContactRepository` | `observeContacts()`, `observeContactIds()`, `add(userId)`, `remove(userId)` (local, device-only) | `ContactRepositoryImpl` |
 | `MediaRepository` | `download(media, fileName): Flow<DownloadState>`, `saveToGallery(media, fileName)` | `MediaRepositoryImpl` |
-| `SettingsRepository` | `themeMode` / `setThemeMode`, `notificationsEnabled` / `setNotificationsEnabled`, `language` / `setLanguage` | `SettingsRepositoryImpl` |
+| `SettingsRepository` | `themeMode` / `setThemeMode`, `notificationsEnabled` / `setNotificationsEnabled`, `language` / `setLanguage`, `recentEmojis` / `addRecentEmoji` | `SettingsRepositoryImpl` |
 | `ConnectionRepository` | `status: Flow<ConnectionStatus>` | `ConnectionRepositoryImpl` |
 | `TypingRepository` | `typing: Flow<Map<chatId, Set<userId>>>` | `TypingTracker` |
 | `CallRepository` | `startCall(peerUserId, video)`, `observeIncomingCalls()`, `prepareGroupCall(chatId, memberIds)`, `observeGroupCall(chatId)` | `CallRepositoryImpl` (Stream Video) |
@@ -92,7 +93,7 @@ Suspend functions that can fail return `AppResult<T>`; observations return `Flow
 
 ---
 
-## 4. Use cases (`usecase/`) — 58
+## 4. Use cases (`usecase/`) — 60
 
 | Package | Use case | Purpose |
 |---|---|---|
@@ -143,6 +144,7 @@ Suspend functions that can fail return `AppResult<T>`; observations return `Flow
 | `settings` | `ObserveThemeModeUseCase` / `SetThemeModeUseCase` | theme |
 | | `ObserveLanguageUseCase` / `SetLanguageUseCase` | language |
 | | `ObserveNotificationsEnabledUseCase` / `SetNotificationsEnabledUseCase` | notifications switch |
+| | `ObserveRecentEmojisUseCase` / `AddRecentEmojiUseCase` | recently used emoji (chat emoji panel) |
 | `user` | `ObserveMeUseCase` | my profile |
 | | `RefreshMeUseCase` | reload my profile |
 | | `UpdateProfileUseCase` | change name / username |
@@ -170,6 +172,7 @@ Paths are relative to `domain/src/main/java/uz/relay/domain/`.
 | `model/MuteDuration.kt` | `MuteDuration` | mute presets | chats |
 | `model/OtpRules.kt` | `OtpRules` | OTP length | auth |
 | `model/ProfileRules.kt` | `ProfileRules` | profile validation | auth, profile |
+| `model/RecentEmojis.kt` | `RecentEmojis` | recent emoji list rule | AppSettingsStorage, FakeSettingsRepository |
 | `model/SyncStatus.kt` | `SyncStatus` | sync flags | chats |
 | `model/ThemeMode.kt` | `ThemeMode` | theme enum | app, profile |
 | `model/User.kt` | `User` | user model | everywhere |
@@ -228,8 +231,10 @@ Paths are relative to `domain/src/main/java/uz/relay/domain/`.
 | `usecase/message/SearchMessagesUseCase.kt` | `SearchMessagesUseCase` | see §4 | ChatSearch |
 | `usecase/message/SendTextMessageUseCase.kt` | `SendTextMessageUseCase` | see §4 | Chat, Call (call history) |
 | `usecase/message/SendTypingUseCase.kt` | `SendTypingUseCase` | see §4 | Chat |
+| `usecase/settings/AddRecentEmojiUseCase.kt` | `AddRecentEmojiUseCase` | see §4 | ChatViewModel |
 | `usecase/settings/ObserveLanguageUseCase.kt` | `ObserveLanguageUseCase` | see §4 | MyProfile |
 | `usecase/settings/ObserveNotificationsEnabledUseCase.kt` | `ObserveNotificationsEnabledUseCase` | see §4 | MyProfile |
+| `usecase/settings/ObserveRecentEmojisUseCase.kt` | `ObserveRecentEmojisUseCase` | see §4 | ChatViewModel |
 | `usecase/settings/ObserveThemeModeUseCase.kt` | `ObserveThemeModeUseCase` | see §4 | MainViewModel, MyProfile |
 | `usecase/settings/SetLanguageUseCase.kt` | `SetLanguageUseCase` | see §4 | MyProfile |
 | `usecase/settings/SetNotificationsEnabledUseCase.kt` | `SetNotificationsEnabledUseCase` | see §4 | MyProfile |
@@ -243,7 +248,7 @@ Paths are relative to `domain/src/main/java/uz/relay/domain/`.
 | `usecase/user/SearchUsersUseCase.kt` | `SearchUsersUseCase` | see §4 | Search, AddContact, GroupCreate |
 | `usecase/user/UpdateProfileUseCase.kt` | `UpdateProfileUseCase` | see §4 | ProfileSetup, EditProfile |
 
-Total: **83 files**.
+Total: **86 files**.
 
 ---
 
@@ -262,6 +267,7 @@ Total: **83 files**.
 | `model/CallLogFormatTest` | call-log text format ↔ parse round trip, group format, invalid text, durations |
 | `model/ProfileRulesTest` | username/name rules |
 | `model/GroupPermissionsTest` | OWNER / ADMIN / MEMBER permissions |
+| `model/RecentEmojisTest` | newest first, no duplicates, max 24 |
 | `usecase/UseCaseLogicTest` | user search, message search, mute end time, media caption |
 
 Run: `./gradlew :domain:test`

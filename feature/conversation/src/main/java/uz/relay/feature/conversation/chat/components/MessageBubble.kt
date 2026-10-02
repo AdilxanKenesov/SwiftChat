@@ -33,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.max
 import uz.relay.core.designsystem.R as DesignR
 import uz.relay.core.designsystem.theme.SenderNameColors
 import uz.relay.core.designsystem.theme.SwiftTheme
@@ -41,8 +42,8 @@ import uz.relay.domain.model.Message
 import uz.relay.domain.model.MessageStatus
 import uz.relay.domain.model.MessageType
 import uz.relay.feature.conversation.R
+import uz.relay.feature.conversation.chat.emoji.emojiOnlyCount
 import uz.relay.feature.conversation.util.formatMessageTime
-import kotlin.math.max
 
 /** Bubble ranglari: kiruvchi va chiquvchi xabar uchun turlicha (spec 1.1). */
 internal data class BubbleColors(
@@ -131,6 +132,14 @@ fun MessageBubble(
     if (message.type == MessageType.TEXT && !message.isDeleted) {
         CallLogFormat.parse(message.text)?.let { log ->
             CallLogBubble(message = message, log = log, modifier = modifier)
+            return
+        }
+    }
+
+    // Faqat emoji (1–3 ta), javobsiz — katta va bubble'siz (Telegram'dagidek). Javob bo'lsa iqtibos uchun oddiy bubble.
+    if (message.type == MessageType.TEXT && !message.isDeleted && message.replyToClientMessageId == null) {
+        emojiOnlyCount(message.text)?.let { count ->
+            EmojiMessage(message = message, count = count, modifier = modifier)
             return
         }
     }

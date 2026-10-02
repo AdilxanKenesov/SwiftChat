@@ -26,3 +26,6 @@ local.properties
 /keystore/
 *.jks
 *.keystore
+
+# JVM xotira tugaganda yoziladigan heap dump (yuzlab MB) — hech qachon commit qilinmaydi.
+*.hprof

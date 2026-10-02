@@ -147,7 +147,7 @@ Qo'shimcha palitralar:
 | `formatPresence(...)` | "online" / "oxirgi marta hozirgina / N daqiqa / N soat / kecha HH:mm / dd.MM.yyyy / yaqinda" |
 
 Resurslar:
-- 53 ta vektor ikonka (`ic_*.xml`, Lucide uslubida);
+- 55 ta vektor ikonka (`ic_*.xml`, Lucide uslubida; shu jumladan emoji paneli tugmasi uchun `ic_smile` / `ic_keyboard`);
 - 5 ta Figtree shrift fayli;
 - o'zbek (asosiy), rus va ingliz tillaridagi presence matnlari.
 

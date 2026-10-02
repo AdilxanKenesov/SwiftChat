@@ -281,7 +281,7 @@ xabarlarni birdaniga belgilaydi.
 
 ### Boshqalar
 - `AppLocaleManager` — ilova tili (Android 13+ da tizim `LocaleManager`, undan pastda SharedPreferences + context o'rash).
-- `AppSettingsStorage` — mavzu va bildirishnoma sozlamalari (DataStore, chiqishdan keyin ham saqlanadi).
+- `AppSettingsStorage` — mavzu va bildirishnoma sozlamalari, hamda so'nggi ishlatilgan emojilar (kalit `recent_emojis`, yangi qator bilan ajratilgan, tartibi `RecentEmojis.push` bo'yicha) (DataStore, chiqishdan keyin ham saqlanadi).
 - `NetworkMonitor` — internet mavjudligi `StateFlow`i.
 - `TypingTracker` — xotiradagi "yozmoqda…" holati, 5 s TTL bilan (`TypingRepository`ni amalga oshiradi).
 - `UserCache` — yetishmayotgan foydalanuvchi profillarini oladi (bir vaqtda ko'pi bilan 4 ta).
@@ -315,7 +315,7 @@ xabarlarni birdaniga belgilaydi.
 | `GroupRepositoryImpl` | `GroupRepository` | ChatApi, Chat/ChatMember/Message/MemberCursor/User DAO'lari, UserCache, SessionStorage | a'zolar, yaratish, qo'shish/chiqarish, rollar, nom o'zgartirish, chiqish |
 | `ContactRepositoryImpl` | `ContactRepository` | ContactDao, UserDao, UserCache | lokal kontaktlar |
 | `MediaRepositoryImpl` | `MediaRepository` | media OkHttp, MediaFiles, MediaSaveScheduler | jarayon bilan yuklab olish, galereyaga saqlashni rejalashtirish |
-| `SettingsRepositoryImpl` | `SettingsRepository` | AppSettingsStorage, AppLocaleManager | mavzu, bildirishnomalar, til |
+| `SettingsRepositoryImpl` | `SettingsRepository` | AppSettingsStorage, AppLocaleManager | mavzu, bildirishnomalar, til, so'nggi emojilar |
 | `ConnectionRepositoryImpl` | `ConnectionRepository` | NetworkMonitor, RealtimeClient, SyncEngine | umumiy holat OFFLINE > UPDATING > CONNECTING > CONNECTED |
 | `CallRepositoryImpl` | `CallRepository` | StreamVideoConnector, Stream SDK | 1:1 qo'ng'iroqlar, kiruvchi qo'ng'iroqlar, guruh xonalari |
 | `TypingTracker` (`realtime/`) | `TypingRepository` | – | xotiradagi "yozmoqda" holati |
@@ -382,7 +382,7 @@ Yo'llar `data/src/main/java/uz/relay/data/`ga nisbatan.
 | `repository_impl/MessageRepositoryImpl.kt` | `MessageRepositoryImpl` | §9 ga qarang | |
 | `repository_impl/SettingsRepositoryImpl.kt` | `SettingsRepositoryImpl` | §9 ga qarang | |
 | `repository_impl/UserRepositoryImpl.kt` | `UserRepositoryImpl` | §9 ga qarang | |
-| `source/local/AppSettingsStorage.kt` | `AppSettingsStorage` | mavzu/bildirishnomalar uchun DataStore | SettingsRepositoryImpl |
+| `source/local/AppSettingsStorage.kt` | `AppSettingsStorage` | mavzu/bildirishnomalar/so'nggi emojilar uchun DataStore | SettingsRepositoryImpl |
 | `source/local/Session.kt` | `Session` | token'lar, userId, deviceId | SessionStorage |
 | `source/local/SessionStorage.kt` | `SessionStorage` | shifrlangan sessiya ombori + xotira keshi | interceptor'lar, repository'lar, RealtimeClient |
 | `source/local/cache/UserCache.kt` | `UserCache` | yetishmayotgan profillarni olish | UserApi / sync, repository'lar |

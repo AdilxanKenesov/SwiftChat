@@ -12,7 +12,7 @@ manbasini esa UI'ga tegmasdan almashtirish mumkin.
 - Paket: `uz.relay.domain`
 - Turi: JVM kutubxona (`java-library` + Kotlin JVM + `java-test-fixtures`)
 - Bog'liqligi: `:core:common` (`api` sifatida — `AppResult` / `AppError` domain API'ning bir qismi)
-- Manba fayllar: **83** = 14 ta model fayli + 11 ta repository interfeysi + 58 ta use case
+- Manba fayllar: **86** = 15 ta model fayli + 11 ta repository interfeysi + 60 ta use case
 
 ---
 
@@ -24,7 +24,7 @@ flowchart LR
         VM["*ViewModel"]
     end
     subgraph Domain[":domain"]
-        UC["usecase/*<br/>58 ta use case"]
+        UC["usecase/*<br/>60 ta use case"]
         R["repository/*<br/>11 ta interfeys"]
         M["model/*<br/>User · Message · ChatSummary · CallLog …"]
     end
@@ -67,6 +67,7 @@ belgilanganlari esa o'zidan qoida qo'shadi.
 | `Message.kt` | `Message` | bitta chat xabari (clientMessageId, serverId/seq, javob, tahrirlangan/o'chirilgan, holat, media, yuklash) |
 | `MuteDuration.kt` | `MuteDuration` | 1 soat, 8 soat, 1 kun, butunlay |
 | `OtpRules.kt` | `OtpRules` | OTP kod uzunligi (6) |
+| `RecentEmojis.kt` | `RecentEmojis` | so'nggi ishlatilgan emojilar qoidasi: `push` emojini boshiga qo'yadi, takrorini olib tashlaydi, ko'pi bilan `MAX` (24) ta saqlaydi |
 | `ProfileRules.kt` | `ProfileRules` | ism 1–128 belgi, username `[a-zA-Z0-9_]{3,32}` (server bilan bir xil) |
 | `SyncStatus.kt` | `SyncStatus` | sinxronlanmoqda / bootstrap tugagan bayroqlari |
 | `ThemeMode.kt` | `ThemeMode` (SYSTEM, LIGHT, DARK) | ilova mavzusi |
@@ -85,7 +86,7 @@ belgilanganlari esa o'zidan qoida qo'shadi.
 | `GroupRepository` | `observeMembers`, `refreshMembers`, `createGroup`, `addMembers`, `removeMember`, `changeRole`, `rename`, `leave` | `GroupRepositoryImpl` |
 | `ContactRepository` | `observeContacts()`, `observeContactIds()`, `add(userId)`, `remove(userId)` (lokal, faqat qurilmada) | `ContactRepositoryImpl` |
 | `MediaRepository` | `download(media, fileName): Flow<DownloadState>`, `saveToGallery(media, fileName)` | `MediaRepositoryImpl` |
-| `SettingsRepository` | `themeMode` / `setThemeMode`, `notificationsEnabled` / `setNotificationsEnabled`, `language` / `setLanguage` | `SettingsRepositoryImpl` |
+| `SettingsRepository` | `themeMode` / `setThemeMode`, `notificationsEnabled` / `setNotificationsEnabled`, `language` / `setLanguage`, `recentEmojis` / `addRecentEmoji` | `SettingsRepositoryImpl` |
 | `ConnectionRepository` | `status: Flow<ConnectionStatus>` | `ConnectionRepositoryImpl` |
 | `TypingRepository` | `typing: Flow<Map<chatId, Set<userId>>>` | `TypingTracker` |
 | `CallRepository` | `startCall(peerUserId, video)`, `observeIncomingCalls()`, `prepareGroupCall(chatId, memberIds)`, `observeGroupCall(chatId)` | `CallRepositoryImpl` (Stream Video) |
@@ -95,7 +96,7 @@ Xato bilan tugashi mumkin bo'lgan suspend funksiyalar `AppResult<T>` qaytaradi; 
 
 ---
 
-## 4. Use case'lar (`usecase/`) — 58 ta
+## 4. Use case'lar (`usecase/`) — 60 ta
 
 | Paket | Use case | Vazifasi |
 |---|---|---|
@@ -146,6 +147,7 @@ Xato bilan tugashi mumkin bo'lgan suspend funksiyalar `AppResult<T>` qaytaradi; 
 | `settings` | `ObserveThemeModeUseCase` / `SetThemeModeUseCase` | mavzu |
 | | `ObserveLanguageUseCase` / `SetLanguageUseCase` | til |
 | | `ObserveNotificationsEnabledUseCase` / `SetNotificationsEnabledUseCase` | bildirishnomalar tugmasi |
+| | `ObserveRecentEmojisUseCase` / `AddRecentEmojiUseCase` | so'nggi ishlatilgan emojilar (chatdagi emoji paneli) |
 | `user` | `ObserveMeUseCase` | mening profilim |
 | | `RefreshMeUseCase` | profilimni qayta yuklash |
 | | `UpdateProfileUseCase` | ism / username'ni o'zgartirish |
@@ -173,6 +175,7 @@ Yo'llar `domain/src/main/java/uz/relay/domain/`ga nisbatan.
 | `model/MuteDuration.kt` | `MuteDuration` | ovozsiz qilish variantlari | chats |
 | `model/OtpRules.kt` | `OtpRules` | OTP uzunligi | auth |
 | `model/ProfileRules.kt` | `ProfileRules` | profil validatsiyasi | auth, profile |
+| `model/RecentEmojis.kt` | `RecentEmojis` | so'nggi emojilar qoidasi | AppSettingsStorage, FakeSettingsRepository |
 | `model/SyncStatus.kt` | `SyncStatus` | sinxronizatsiya bayroqlari | chats |
 | `model/ThemeMode.kt` | `ThemeMode` | mavzu enum'i | app, profile |
 | `model/User.kt` | `User` | foydalanuvchi modeli | hamma joyda |
@@ -231,8 +234,10 @@ Yo'llar `domain/src/main/java/uz/relay/domain/`ga nisbatan.
 | `usecase/message/SearchMessagesUseCase.kt` | `SearchMessagesUseCase` | §4 ga qarang | ChatSearch |
 | `usecase/message/SendTextMessageUseCase.kt` | `SendTextMessageUseCase` | §4 ga qarang | Chat, Call (qo'ng'iroq tarixi) |
 | `usecase/message/SendTypingUseCase.kt` | `SendTypingUseCase` | §4 ga qarang | Chat |
+| `usecase/settings/AddRecentEmojiUseCase.kt` | `AddRecentEmojiUseCase` | §4 ga qarang | ChatViewModel |
 | `usecase/settings/ObserveLanguageUseCase.kt` | `ObserveLanguageUseCase` | §4 ga qarang | MyProfile |
 | `usecase/settings/ObserveNotificationsEnabledUseCase.kt` | `ObserveNotificationsEnabledUseCase` | §4 ga qarang | MyProfile |
+| `usecase/settings/ObserveRecentEmojisUseCase.kt` | `ObserveRecentEmojisUseCase` | §4 ga qarang | ChatViewModel |
 | `usecase/settings/ObserveThemeModeUseCase.kt` | `ObserveThemeModeUseCase` | §4 ga qarang | MainViewModel, MyProfile |
 | `usecase/settings/SetLanguageUseCase.kt` | `SetLanguageUseCase` | §4 ga qarang | MyProfile |
 | `usecase/settings/SetNotificationsEnabledUseCase.kt` | `SetNotificationsEnabledUseCase` | §4 ga qarang | MyProfile |
@@ -246,7 +251,7 @@ Yo'llar `domain/src/main/java/uz/relay/domain/`ga nisbatan.
 | `usecase/user/SearchUsersUseCase.kt` | `SearchUsersUseCase` | §4 ga qarang | Search, AddContact, GroupCreate |
 | `usecase/user/UpdateProfileUseCase.kt` | `UpdateProfileUseCase` | §4 ga qarang | ProfileSetup, EditProfile |
 
-Jami: **83 ta fayl**.
+Jami: **86 ta fayl**.
 
 ---
 
@@ -266,6 +271,7 @@ orqali bo'lishiladi:
 | `model/CallLogFormatTest` | qo'ng'iroq yozuvi formati ↔ parse (ikki tomonga), guruh formati, noto'g'ri matn, davomiyliklar |
 | `model/ProfileRulesTest` | username/ism qoidalari |
 | `model/GroupPermissionsTest` | OWNER / ADMIN / MEMBER ruxsatlari |
+| `model/RecentEmojisTest` | eng yangisi birinchi, takrorlarsiz, ko'pi bilan 24 ta |
 | `usecase/UseCaseLogicTest` | foydalanuvchi qidiruvi, xabar qidiruvi, ovozsiz rejim tugash vaqti, media izohi |
 
 Ishga tushirish: `./gradlew :domain:test`
