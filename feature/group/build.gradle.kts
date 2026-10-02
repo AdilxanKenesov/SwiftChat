@@ -49,6 +49,8 @@ dependencies {
     implementation(project(":core:navigation"))
 
     implementation(libs.androidx.core.ktx)
+    // BackHandler — guruh yaratishning 2-qadamida "orqaga" (tizim yoki o'ngga surish) 1-qadamga qaytarsin.
+    implementation(libs.androidx.activity.compose)
 
     // Hilt — DI (ksp generatsiya qiladi).
     implementation(libs.hilt.android)

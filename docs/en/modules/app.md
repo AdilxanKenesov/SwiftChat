@@ -207,6 +207,7 @@ app ◄── {token,userId,expiresAt} ── Worker   (signed with STREAM_API_S
 | `uz/relay/app/MainActivity.kt` | `MainActivity` | Single activity. Splash hold, edge-to-edge, per-app locale (wrap + recreate on old Android), theme resolution, hosts `AppNavHost`. | uses `MainViewModel`, `AppLocaleManager`, `SwiftChatTheme`, `AppNavHost` |
 | `uz/relay/app/MainViewModel.kt` | `MainViewModel` | Theme and start key for the splash, global incoming-call navigation, reset to login when the session ends. | uses `ObserveThemeModeUseCase`, `ObserveAuthStateUseCase`, `ObserveIncomingCallsUseCase`, `AppNavigator`, `AppNavigationHandler` |
 | `uz/relay/app/navigation/AppNavHost.kt` | `AppNavHost`, `apply()`, `pop()` | Navigation 3 back stack. Applies `AppNavigationParam` commands and registers every feature's `*Entries()`. | uses `core:navigation`, all `:feature:*` entry functions |
+| `uz/relay/app/navigation/SwipeBackGesture.kt` | `Modifier.swipeBack(enabled)` | Swipe right anywhere to go back. Sends the same events as the system predictive back (`DirectNavigationEventInput` → `NavigationEventDispatcher`), so `NavDisplay` animates the previous screen underneath and screen `BackHandler`s still win. Completes past 35% width or on a fast fling; children that consume horizontal drags (pagers, swipe-to-reply) take priority. | `AppNavHost` |
 
 File count check: `find app/src/main -name '*.kt'` returns **4**.
 
@@ -217,6 +218,7 @@ File count check: `find app/src/main -name '*.kt'` returns **4**.
 | Test | Type | Notes |
 |---|---|---|
 | `app/src/test/.../navigation/BackStackApplyTest.kt` | JVM (10 tests) | every `AppNavigationParam` command on the back stack: single-top, replace, back never empties the stack, `BackTo` (inclusive / missing key), `BackToOrTo`, `ResetTo` |
+| `app/src/test/.../navigation/SwipeBackGestureTest.kt` | Robolectric (4) | long swipe right goes back; short slow swipe, swipe left and disabled (root) screens do not |
 | `app/src/androidTest/.../ExampleInstrumentedTest.kt` | instrumented | template stub |
 
 The rest of the app shell is exercised through feature tests and CI builds.

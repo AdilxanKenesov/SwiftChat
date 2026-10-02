@@ -207,6 +207,7 @@ ilova ◄── {token,userId,expiresAt} ── Worker   (STREAM_API_SECRET bila
 | `uz/relay/app/MainActivity.kt` | `MainActivity` | Yagona activity. Splash'ni ushlab turish, edge-to-edge, ilova tili (eski Android'da wrap + recreate), temani tanlash, `AppNavHost`ni joylashtiradi. | `MainViewModel`, `AppLocaleManager`, `SwiftChatTheme`, `AppNavHost` ni ishlatadi |
 | `uz/relay/app/MainViewModel.kt` | `MainViewModel` | Splash uchun tema va boshlang'ich kalit, global kiruvchi qo'ng'iroq navigatsiyasi, sessiya tugaganda login'ga qaytarish. | `ObserveThemeModeUseCase`, `ObserveAuthStateUseCase`, `ObserveIncomingCallsUseCase`, `AppNavigator`, `AppNavigationHandler` ni ishlatadi |
 | `uz/relay/app/navigation/AppNavHost.kt` | `AppNavHost`, `apply()`, `pop()` | Navigation 3 back stack'i. `AppNavigationParam` buyruqlarini qo'llaydi va har bir feature'ning `*Entries()` funksiyasini ro'yxatdan o'tkazadi. | `core:navigation`, barcha `:feature:*` entry funksiyalarini ishlatadi |
+| `uz/relay/app/navigation/SwipeBackGesture.kt` | `Modifier.swipeBack(enabled)` | Ekranning istalgan joyidan o'ngga surib orqaga qaytish. Tizimdagi predictive back bilan bir xil hodisalarni yuboradi (`DirectNavigationEventInput` → `NavigationEventDispatcher`), shuning uchun `NavDisplay` ostidagi oldingi ekranni ko'rsatib animatsiya qiladi va ekranlardagi `BackHandler`lar birinchi ishlaydi. Kenglikning 35% idan o'tganda yoki tez surilganda bajariladi; gorizontal surishni o'zi ishlatadigan bolalar (pager, surib javob berish) ustun. | `AppNavHost` |
 
 Fayllar sonini tekshirish: `find app/src/main -name '*.kt'` **4** ni qaytaradi.
 
@@ -217,6 +218,7 @@ Fayllar sonini tekshirish: `find app/src/main -name '*.kt'` **4** ni qaytaradi.
 | Test | Turi | Izoh |
 |---|---|---|
 | `app/src/test/.../navigation/BackStackApplyTest.kt` | JVM (10 ta test) | har bir `AppNavigationParam` buyrug'ining back stack'ka ta'siri: single-top, replace, "orqaga" stekni hech qachon bo'shatmasligi, `BackTo` (inclusive / yo'q kalit), `BackToOrTo`, `ResetTo` |
+| `app/src/test/.../navigation/SwipeBackGestureTest.kt` | Robolectric (4) | o'ngga uzun surish orqaga qaytaradi; qisqa sekin surish, chapga surish va o'chirilgan (root) ekranlarda qaytmaydi |
 | `app/src/androidTest/.../ExampleInstrumentedTest.kt` | instrumented | shablon (stub) |
 
 Ilova qobig'ining qolgan qismi feature testlari va CI build'lari orqali tekshiriladi.

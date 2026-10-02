@@ -1,5 +1,6 @@
 package uz.relay.feature.group.create
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -87,6 +88,10 @@ internal fun GroupCreateScreen(addToChatId: String?) {
     )
     val uiState by viewModel.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    // Nom qadamida "orqaga" (tizim tugmasi, gesture yoki o'ngga surish) ekranni yopmasin — tanlash qadamiga qaytaradi.
+    BackHandler(enabled = uiState.step == GroupCreateContract.Step.NAME) {
+        viewModel.onEventDispatcher(GroupCreateContract.Intent.OnBack)
+    }
     val resources = LocalResources.current
 
     viewModel.collectSideEffect { sideEffect ->

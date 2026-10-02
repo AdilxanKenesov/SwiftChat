@@ -59,7 +59,7 @@ Yo'llar `feature/group/src/main/java/uz/relay/feature/group/` ga nisbatan berilg
 | `di/GroupDirectionsModule.kt` | `GroupDirectionsModule` | 2 ta `DirectionsImpl` klassini bind qiladi. | Hilt |
 | `create/GroupCreateContract.kt` | `GroupCreateContract`, `Step` | Yaratish / a'zo qo'shish contract'i. | Screen, ViewModel |
 | `create/GroupCreateViewModel.kt` | `GroupCreateViewModel` (assisted `addToChatId`) | Nomzodlar, debounce'li qidiruv, tanlash, guruh yaratish, a'zo qo'shish. | 5 ta use case |
-| `create/GroupCreateScreen.kt` | `GroupCreateScreen`, `GroupCreateContent`, tanlash/nom qadamlari, qatorlar, chip'lar | Yaratish / a'zo qo'shish UI. | `GroupCreateViewModel` |
+| `create/GroupCreateScreen.kt` | `GroupCreateScreen` (`BackHandler` bilan: nom qadamida tizim "orqaga"si va o'ngga surish tanlash qadamiga qaytaradi), `GroupCreateContent`, tanlash/nom qadamlari, qatorlar, chip'lar | Yaratish / a'zo qo'shish UI. | `GroupCreateViewModel` |
 | `create/GroupCreateDirectionsImpl.kt` | `GroupCreateDirectionsImpl` | Orqaga; yaratilgan chatni ochish. | `AppNavigator` |
 | `info/GroupInfoContract.kt` | `GroupInfoContract` | Guruh ma'lumoti contract'i. | Screen, ViewModel |
 | `info/GroupInfoViewModel.kt` | `GroupInfoViewModel` (assisted `chatId`) | Kuzatish, a'zolarni yangilash, ovozsiz qilish, nomni o'zgartirish, rollar, chiqarish, chiqib ketish, xabar yozish. | 9 ta use case |

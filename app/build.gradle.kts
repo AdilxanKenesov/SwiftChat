@@ -71,6 +71,11 @@ android {
     buildFeatures {
         compose = true
     }
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
 }
 
 dependencies {
@@ -102,6 +107,8 @@ dependencies {
     // Navigation 3: back stack oddiy ro'yxat, NavKey'lar @Serializable (process death'da tiklanadi).
     implementation(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.navigation3.ui)
+    // O'z "o'ngga surib orqaga" gesture'imiz tizimdagi predictive back bilan bir xil hodisalarni yuboradi.
+    implementation(libs.androidx.navigationevent.compose)
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
     implementation(libs.kotlinx.serialization.json)
 
@@ -132,6 +139,11 @@ dependencies {
 
     // Testlar.
     testImplementation(libs.junit)
+    // Swipe-back gesture testi: Compose UI test Robolectric ustida (JVM).
+    testImplementation(libs.robolectric)
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -64,7 +64,7 @@ qo'yiladi va aloqa tiklanishi bilan o'zi yetkaziladi.
 | **Bir yo'nalishli ma'lumot oqimi (MVI)** | Orbit MVI: `Intent` → `ViewModel` → o'zgarmas `UiState` + bir martalik `SideEffect` |
 | **Deklarativ UI** | 100 % Jetpack Compose, o'zimizning dizayn tizimimiz (`SwiftChatTheme`) |
 | **Yagona haqiqat manbai** | Room bazasi; UI Room'dagi `Flow`larni kuzatadi, tarmoq natijalari Room'ga yoziladi |
-| **Navigatsiya** | Navigation 3: har ekran uchun tipli `NavKey` va navigatsiya **event bus**'i (`AppNavigator`) |
+| **Navigatsiya** | Navigation 3: har ekran uchun tipli `NavKey` va navigatsiya **event bus**'i (`AppNavigator`); Telegram uslubidagi siljish animatsiyalari va **ekranning istalgan joyidan o'ngga surib orqaga qaytish** (predictive back) |
 | **Dependency Injection** | Hilt; argument oladigan ekranlar uchun assisted injection |
 
 ### Modullar bog'lanish grafi
@@ -478,7 +478,7 @@ Har bir modulning har bir fayli — vazifasi va bog'lanishlari bilan —
 |---|---|
 | Debug APK | `./gradlew assembleDebug` |
 | Imzolangan release APK | `./gradlew assembleRelease` |
-| Unit, ViewModel va Compose UI testlari (231 ta) | `./gradlew testDebugUnitTest :domain:test` |
+| Unit, ViewModel va Compose UI testlari (235 ta) | `./gradlew testDebugUnitTest :domain:test` |
 | Screenshot testlari (19 ta golden) | `./gradlew verifyRoborazziDebug` · golden'larni yangilash: `recordRoborazziDebug` |
 | Lint | `./gradlew lintDebug` |
 | Token server testlari | `node --test server/stream-token/test/index.test.mjs` |
@@ -487,7 +487,7 @@ Har bir modulning har bir fayli — vazifasi va bog'lanishlari bilan —
 
 - **CI** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) har bir PR'da va `develop`ga har bir push'da ishlaydi: build →
   testlar → screenshot'lar → token server testlari → lint. Muvaffaqiyatli bo'lsa, debug APK shu run'ga biriktiriladi.
-- **Testlar** — JVM'da 231 ta test: biznes qoidalari, mapper'lar, xatolarni qayta ishlash, har bir ViewModel (soxta
+- **Testlar** — JVM'da 235 ta test: biznes qoidalari, mapper'lar, xatolarni qayta ishlash, har bir ViewModel (soxta
   repository'lar bilan), Compose UI xatti-harakati (Robolectric) va 19 ta screenshot golden (kunduzgi va tungi).
 - **Branch'lar** — yangi imkoniyatlar `feature/*`da, tuzatishlar `bug/*`da, PR'lar `develop`ga; `master`ni egasi yangilaydi.
 
