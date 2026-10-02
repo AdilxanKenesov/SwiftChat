@@ -59,7 +59,7 @@ Paths are relative to `feature/group/src/main/java/uz/relay/feature/group/`.
 | `di/GroupDirectionsModule.kt` | `GroupDirectionsModule` | Binds 2 `DirectionsImpl` classes. | Hilt |
 | `create/GroupCreateContract.kt` | `GroupCreateContract`, `Step` | Create / add-members contract. | Screen, ViewModel |
 | `create/GroupCreateViewModel.kt` | `GroupCreateViewModel` (assisted `addToChatId`) | Candidates, debounced search, selection, create group, add members. | 5 use cases |
-| `create/GroupCreateScreen.kt` | `GroupCreateScreen`, `GroupCreateContent`, pick/name steps, rows, chips | Create / add-members UI. | `GroupCreateViewModel` |
+| `create/GroupCreateScreen.kt` | `GroupCreateScreen` (with a `BackHandler`: on the name step system back / swipe-back returns to the pick step), `GroupCreateContent`, pick/name steps, rows, chips | Create / add-members UI. | `GroupCreateViewModel` |
 | `create/GroupCreateDirectionsImpl.kt` | `GroupCreateDirectionsImpl` | Back; open created chat. | `AppNavigator` |
 | `info/GroupInfoContract.kt` | `GroupInfoContract` | Group info contract. | Screen, ViewModel |
 | `info/GroupInfoViewModel.kt` | `GroupInfoViewModel` (assisted `chatId`) | Observe, refresh members, mute, rename, roles, remove, leave, write message. | 9 use cases |

@@ -9,7 +9,10 @@
         .App — Hilt ildizi (@HiltAndroidApp). localeConfig — Android 13+ da ilova tilini tizim sozlamalaridan
         tanlash imkoni. Starting tema — tizim splash screen'i (core-splashscreen), keyin Theme.SwiftChat.
     -->
+    <!-- enableOnBackInvokedCallback: Android 13+ tizim "orqaga" gesture'i ilova ichidagi animatsiyani (predictive back)
+         ko'rsatadi — o'ngga surib orqaga qaytish bilan bir xil harakat. -->
     <application
+        android:enableOnBackInvokedCallback="true"
         android:name=".App"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"

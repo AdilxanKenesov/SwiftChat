@@ -1,7 +1,15 @@
 package uz.relay.app.navigation
 
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.IntOffset
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
@@ -10,6 +18,8 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import uz.relay.core.navigation.AppNavigationHandler
 import uz.relay.core.navigation.AppNavigationParam
+import uz.relay.core.navigation.key.CallKey
+import uz.relay.core.navigation.key.MediaViewerKey
 import uz.relay.feature.auth.authEntries
 import uz.relay.feature.calls.callsEntries
 import uz.relay.feature.chats.chatsEntries
@@ -31,9 +41,19 @@ fun AppNavHost(navigationHandler: AppNavigationHandler, startKey: NavKey) {
         navigationHandler.params.collect { param -> backStack.apply(param) }
     }
 
+    // O'ngga surib orqaga: faqat ostida ekran bo'lsa va ekranning o'zi o'ngga surishni ishlatmasa.
+    val top = backStack.lastOrNull()
+    val swipeBackEnabled = backStack.size > 1 && top !is MediaViewerKey && top !is CallKey
+
     NavDisplay(
         backStack = backStack,
+        modifier = Modifier.swipeBack(enabled = swipeBackEnabled),
         onBack = { backStack.pop() },
+        // Telegram uslubi: yangi ekran o'ngdan kiradi, ostidagisi biroz chapga suriladi; orqaga — aksincha.
+        transitionSpec = { slideIn(forward = true) },
+        popTransitionSpec = { slideIn(forward = false) },
+        // Gesture (tizim yoki bizning swipeBack) paytida ham xuddi shu "orqaga" harakati barmoq ortidan boradi.
+        predictivePopTransitionSpec = { slideIn(forward = false) },
         entryDecorators = listOf(
             // Har bir ekran uchun alohida rememberSaveable holati.
             rememberSaveableStateHolderNavEntryDecorator(),
@@ -50,6 +70,24 @@ fun AppNavHost(navigationHandler: AppNavigationHandler, startKey: NavKey) {
         }
     )
 }
+
+/**
+ * Ekranlar orasidagi siljish. Oldinga: yangi ekran o'ngdan to'liq kiradi, eskisi 30% chapga suriladi. Orqaga:
+ * yuqoridagi ekran o'ngga chiqib ketadi va **ustida** qoladi (`targetContentZIndex = -1`), ostidagisi -30% dan
+ * joyiga keladi — barmoq bilan surganda oldingi ekran ostidan ochilib borayotgandek ko'rinadi.
+ */
+private fun slideIn(forward: Boolean): ContentTransform {
+    val spec = tween<IntOffset>(durationMillis = TRANSITION_MS, easing = FastOutSlowInEasing)
+    return if (forward) {
+        slideInHorizontally(spec) { it } togetherWith slideOutHorizontally(spec) { -it / 3 }
+    } else {
+        (slideInHorizontally(spec) { -it / 3 } togetherWith slideOutHorizontally(spec) { it }).apply {
+            targetContentZIndex = -1f
+        }
+    }
+}
+
+private const val TRANSITION_MS = 280
 
 /** Oxirgi ekran hech qachon olib tashlanmaydi: bo'sh stek NavDisplay'ni yiqitadi. */
 private fun MutableList<NavKey>.pop() {
