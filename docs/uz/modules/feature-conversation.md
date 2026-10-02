@@ -113,7 +113,8 @@ OutboxSender ─► WebSocket (10 s ack kutadi) ──yoki──► REST POST (o
 | `chat/components/MessageBubble.kt` | Matnli xabar, javob iqtibosi, meta (vaqt, tahrirlangan, ✓/✓✓), media xabarlarga yo'naltirish. |
 | `chat/components/MessageMedia.kt` | Rasm/video xabari, fayl xabari, yuklash/yuklab olish jarayoni halqalari, play belgisi. |
 | `chat/components/MessageMenu.kt` | Bosib turishda chiqadigan oyna: Javob berish, Tahrirlash, Nusxalash, O'chirish. |
-| `chat/components/MessageRow.kt` | Chap/o'ng tekislash, guruh avatari joyi, qayta yuborish tugmasi, bosish / bosib turishni qayta ishlash. |
+| `chat/components/MessageRow.kt` | Chap/o'ng tekislash, guruh avatari joyi, qayta yuborish tugmasi, bosish / bosib turishni qayta ishlash; `SwipeToReplyBox` bilan o'ralgan. |
+| `chat/components/SwipeToReply.kt` | Telegram'dagidek chapga surib javob berish: qator barmoq ortidan siljiydi, o'ng chetda ↩ belgisi kattalashadi, 56dp'da yengil titrash, qo'yib yuborilganda javob. Faqat chapga surish ushlanadi, shuning uchun o'ngga surish (orqaga) va vertikal scroll ishlayveradi. |
 
 ## Yordamchi fayllar
 
@@ -148,6 +149,7 @@ Yo'llar `feature/conversation/src/main/java/uz/relay/feature/conversation/` ga n
 | `chat/components/MessageMedia.kt` | `VisualMessageBubble`, `FileMessageBubble` | Media xabarlar. | `MessageBubble` |
 | `chat/components/MessageMenu.kt` | `MenuTarget`, `MessageMenuOverlay` | Bosib turish menyusi. | `ChatScreen` |
 | `chat/components/MessageRow.kt` | `MessageRow` | Qator joylashuvi va imo-ishoralar. | `ChatScreen` |
+| `chat/components/SwipeToReply.kt` | `SwipeToReplyBox` | Chapga surib javob berish (graphicsLayer orqali siljish, chegarada titrash). | `MessageRow`, `rememberGestureThresholdHaptic` |
 | `search/ChatSearchContract.kt` | `ChatSearchContract` | Chat ichida qidiruv contract'i. | Screen, ViewModel |
 | `search/ChatSearchViewModel.kt` | `ChatSearchViewModel` (assisted `chatId`) | Lokal qidiruv, 200 ms debounce. | `SearchMessages`, `ObserveUserNames` |
 | `search/ChatSearchScreen.kt` | `ChatSearchScreen`, `ChatSearchContent` | Mosliklar ajratib ko'rsatilgan qidiruv UI. | `ChatSearchViewModel` |
@@ -171,5 +173,5 @@ Yo'llar `feature/conversation/src/main/java/uz/relay/feature/conversation/` ga n
 |---|---|
 | Mantiq | `BuildChatItemsTest`, `MessageActionsTest` (yordamchi: `TestMessages.kt`) |
 | ViewModel | `ChatViewModelTest`, `ChatSearchViewModelTest` |
-| Compose UI | `CallUiTest` (qo'ng'iroq yozuvlari, guruh qo'ng'irog'i banneri, qo'ng'iroq tugmalari) |
+| Compose UI | `CallUiTest` (qo'ng'iroq yozuvlari, guruh qo'ng'irog'i banneri, qo'ng'iroq tugmalari), `SwipeToReplyTest` (chapga surish javob beradi; o'ngga, qisqa surish va yetkazilmagan xabarda javob yo'q) |
 | Screenshot | `CallUiScreenshotTest` — sarlavha, banner, barcha turdagi qo'ng'iroq yozuvlari; yorug' va tungi tema |

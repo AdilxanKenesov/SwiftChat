@@ -113,7 +113,8 @@ OutboxSender ─► WebSocket (wait ack 10 s) ──or──► REST POST (same 
 | `chat/components/MessageBubble.kt` | Text bubble, reply quote, meta (time, edited, ✓/✓✓), dispatch to media bubbles. |
 | `chat/components/MessageMedia.kt` | Image/video bubble, file bubble, upload/download progress rings, play badge. |
 | `chat/components/MessageMenu.kt` | Long-press overlay: Reply, Edit, Copy, Delete. |
-| `chat/components/MessageRow.kt` | Left/right alignment, group avatar slot, retry button, click / long-press handling. |
+| `chat/components/MessageRow.kt` | Left/right alignment, group avatar slot, retry button, click / long-press handling; wrapped in `SwipeToReplyBox`. |
+| `chat/components/SwipeToReply.kt` | Telegram-style swipe-left-to-reply: the row follows the finger, a ↩ icon grows at the right edge, a haptic tick at 56dp, reply on release. Only leftward drags are claimed, so swipe-right (back) and vertical scrolling keep working. |
 
 ## Utilities
 
@@ -148,6 +149,7 @@ Paths are relative to `feature/conversation/src/main/java/uz/relay/feature/conve
 | `chat/components/MessageMedia.kt` | `VisualMessageBubble`, `FileMessageBubble` | Media bubbles. | `MessageBubble` |
 | `chat/components/MessageMenu.kt` | `MenuTarget`, `MessageMenuOverlay` | Long-press menu. | `ChatScreen` |
 | `chat/components/MessageRow.kt` | `MessageRow` | Row layout and gestures. | `ChatScreen` |
+| `chat/components/SwipeToReply.kt` | `SwipeToReplyBox` | Swipe left to reply (graphicsLayer translation, threshold haptic). | `MessageRow`, `rememberGestureThresholdHaptic` |
 | `search/ChatSearchContract.kt` | `ChatSearchContract` | In-chat search contract. | Screen, ViewModel |
 | `search/ChatSearchViewModel.kt` | `ChatSearchViewModel` (assisted `chatId`) | Local search, 200 ms debounce. | `SearchMessages`, `ObserveUserNames` |
 | `search/ChatSearchScreen.kt` | `ChatSearchScreen`, `ChatSearchContent` | Search UI with highlighted matches. | `ChatSearchViewModel` |
@@ -171,5 +173,5 @@ Paths are relative to `feature/conversation/src/main/java/uz/relay/feature/conve
 |---|---|
 | Logic | `BuildChatItemsTest`, `MessageActionsTest` (helper: `TestMessages.kt`) |
 | ViewModel | `ChatViewModelTest`, `ChatSearchViewModelTest` |
-| Compose UI | `CallUiTest` (call-log bubbles, group-call banner, call buttons) |
+| Compose UI | `CallUiTest` (call-log bubbles, group-call banner, call buttons), `SwipeToReplyTest` (swipe left replies; swipe right, short swipes and undelivered messages don't) |
 | Screenshot | `CallUiScreenshotTest` — header, banner, all call-log kinds; light & dark |

@@ -253,7 +253,9 @@ internal fun ChatScreenContent(
                             // Shaxsiy chatda — qayta qo'ng'iroq, guruhda — video chatga qo'shilish (yoki yangisini boshlash).
                             onCallLogClick = { video ->
                                 onEventDispatcher(if (uiState.isGroup) ChatContract.Intent.OnGroupCall else ChatContract.Intent.OnStartCall(video))
-                            }
+                            },
+                            // Telegram'dagidek: xabarni chapga surish — shu xabarga javob.
+                            onSwipeReply = { onEventDispatcher(ChatContract.Intent.OnReply(item.message)) }
                         )
                     }
                 }
