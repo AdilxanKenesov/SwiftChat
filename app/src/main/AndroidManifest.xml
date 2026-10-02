@@ -2,27 +2,62 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- REST API, WebSocket va media yuklash uchun. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!--
+        .App — Hilt ildizi (@HiltAndroidApp). localeConfig — Android 13+ da ilova tilini tizim sozlamalaridan
+        tanlash imkoni. Starting tema — tizim splash screen'i (core-splashscreen), keyin Theme.SwiftChat.
+    -->
+    <!-- enableOnBackInvokedCallback: Android 13+ tizim "orqaga" gesture'i ilova ichidagi animatsiyani (predictive back)
+         ko'rsatadi — o'ngga surib orqaga qaytish bilan bir xil harakat. -->
     <application
+        android:enableOnBackInvokedCallback="true"
+        android:name=".App"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:localeConfig="@xml/locales_config"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.SwiftChat">
+        android:theme="@style/Theme.SwiftChat.Starting">
+        <!--
+            Yagona Activity (single-activity + Compose). adjustResize — klaviatura ochilganda kontent
+            siqiladi, xabar yozish maydoni klaviatura ostida qolmaydi.
+        -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
-            android:theme="@style/Theme.SwiftChat"
-            android:windowSoftInputMode="adjustResize">
+            android:theme="@style/Theme.SwiftChat.Starting"
+            android:windowSoftInputMode="adjustResize"
+            android:supportsPictureInPicture="true"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation">
+            <!-- PiP: video qo'ng'iroqda Home/orqaga bosilsa video kichik oynada davom etadi. configChanges —
+                 PiP'ga kirish/chiqishda (oyna o'lchami o'zgaradi) activity qayta yaratilmasin, aks holda video
+                 renderer'lar uzilib qolardi. Compose o'lcham/burilish o'zgarishini o'zi qayta chizadi. -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!--
+            WorkManager'ning avtomatik initializer'i o'chiriladi: uni App o'zi HiltWorkerFactory bilan
+            sozlaydi (Configuration.Provider), shunda OutboxWorker'ga bog'liqliklar inject qilinadi.
+        -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
     </application>
 
 </manifest>

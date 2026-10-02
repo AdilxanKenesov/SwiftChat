@@ -1,0 +1,76 @@
+# SwiftChat CI: har bir PR va develop'ga push'da ilovani yig'adi, testlarni, screenshot'larni va lint'ni tekshiradi.
+# Biror qadam yiqilsa PR'da ❌ ko'rinadi — xato develop'ga kirmaydi. Hisobotlar (test, lint, screenshot farqi)
+# Actions sahifasida "Artifacts" bo'limidan yuklab olinadi.
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, master]
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+# Bir branch'ga yangi push kelsa, eskisining ishi bekor qilinadi (vaqt va limit tejaladi).
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Build · Test · Screenshots · Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      # Runner'da xotira ko'p (16 GB) — lint va Robolectric uchun Gradle'ga ko'proq beramiz.
+      GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx6g -XX:+UseParallelGC -Dfile.encoding=UTF-8"
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # Gradle va kutubxonalar keshi: keyingi ishga tushirishlar ancha tez.
+      - uses: gradle/actions/setup-gradle@v4
+
+      # local.properties yo'q — STREAM_API_KEY bo'sh bo'ladi (qo'ng'iroqlar build'i uchun yetarli, testlarga kerak emas).
+      - name: Build debug APK
+        run: ./gradlew assembleDebug
+
+      - name: Unit and Compose UI tests
+        run: ./gradlew testDebugUnitTest :domain:test
+
+      # Golden rasmlar (feature/*/src/test/screenshots) bilan solishtirish; til, ekran va vaqt zonasi testda qotirilgan.
+      - name: Screenshot tests
+        run: ./gradlew verifyRoborazziDebug
+
+      # Stream token serveri (Cloudflare Worker) testlari — Node'ning o'z test runner'i, kutubxonasiz.
+      - name: Token server tests
+        run: node --test server/stream-token/test/index.test.mjs
+
+      # Error bo'lsa yiqiladi; ogohlantirishlar faqat hisobotda.
+      - name: Lint
+        run: ./gradlew lintDebug
+
+      - name: Upload test and lint reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports
+          path: |
+            **/build/reports/tests/
+            **/build/reports/lint-results-debug.html
+            **/build/outputs/roborazzi/
+          retention-days: 14
+
+      - name: Upload debug APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug
+          path: app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 7

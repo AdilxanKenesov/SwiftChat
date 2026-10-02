@@ -1,0 +1,48 @@
+<resources>
+    <string name="back">Orqaga</string>
+
+    <!-- Mening profilim -->
+    <string name="edit_profile">Profilni tahrirlash</string>
+    <string name="online">online</string>
+    <string name="connecting">Ulanmoqda…</string>
+    <string name="phone">Telefon</string>
+    <string name="username">Username</string>
+    <string name="notifications">Bildirishnomalar</string>
+    <string name="theme">Mavzu</string>
+    <string name="theme_system">Tizim</string>
+    <string name="theme_light">Kunduzgi</string>
+    <string name="theme_dark">Tungi</string>
+    <string name="language">Til</string>
+    <!-- Til nomlari har doim o'z tilida yoziladi (tanlovda foydalanuvchi o'z tilini taniydi) — tarjima qilinmaydi. -->
+    <string name="lang_uz" translatable="false">Oʻzbekcha</string>
+    <string name="lang_ru" translatable="false">Русский</string>
+    <string name="lang_en" translatable="false">English</string>
+    <string name="section_account">Hisob</string>
+    <string name="section_settings">Sozlamalar</string>
+    <string name="logout">Chiqish</string>
+    <string name="logout_title">Hisobdan chiqasizmi?</string>
+    <string name="cancel">Bekor qilish</string>
+
+    <!-- Profilni tahrirlash -->
+    <string name="name">Ism</string>
+    <string name="username_rules">3–32 belgi · a–z, 0–9, _</string>
+    <string name="username_taken">Bu username band</string>
+    <string name="save">Saqlash</string>
+
+    <!-- Foydalanuvchi profili -->
+    <string name="message">Xabar</string>
+    <string name="mute">Ovozsiz qilish</string>
+    <string name="unmute">Ovozni yoqish</string>
+
+    <!-- Xatolar -->
+    <string name="no_internet">Internet aloqasi yoʻq</string>
+    <string name="error_rate_limited">Juda koʻp urinish. Birozdan soʻng qayta urining</string>
+    <string name="error_forbidden">Bu amalga ruxsat yoʻq</string>
+    <string name="error_not_found">Foydalanuvchi topilmadi</string>
+    <string name="error_unknown">Nimadir xato ketdi. Qayta urining</string>
+    <string name="add_to_contacts">Kontaktlarga qoʻshish</string>
+    <string name="remove_from_contacts">Kontaktlardan oʻchirish</string>
+    <string name="remove_contact_title">%1$s kontaktlardan oʻchirilsinmi?</string>
+    <string name="remove">Oʻchirish</string>
+    <string name="contact_added">Kontaktlarga qoʻshildi</string>
+</resources>

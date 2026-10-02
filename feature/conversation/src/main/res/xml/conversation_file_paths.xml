@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FileProvider faqat shu papkalarni ochib beradi (butun ilova xotirasini emas). -->
+<paths>
+    <!-- Yuklab olingan hujjatlar (data: MediaFiles.downloadsDir). -->
+    <cache-path name="media" path="media/" />
+    <!-- Kamera suratlari (yuborilgach nusxasi media_outbox'ga olinadi). -->
+    <cache-path name="camera" path="camera/" />
+    <!-- O'zim yuborgan fayllarning nusxasi (data: MediaFiles.outboxDir). -->
+    <files-path name="outbox" path="media_outbox/" />
+</paths>

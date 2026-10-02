@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SwiftChat mark: two offset bubbles forming an S. Drawn white; the tile behind it is Brand. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M15,8.5H27A7,7 0,0 1,27 22.5H8V15.5A7,7 0,0 1,15 8.5Z" />
+    <path
+        android:fillAlpha="0.55"
+        android:fillColor="#FFFFFF"
+        android:pathData="M21,25.5H40V32.5A7,7 0,0 1,33 39.5H21A7,7 0,0 1,21 25.5Z" />
+</vector>

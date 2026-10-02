@@ -1,0 +1,18 @@
+package uz.relay.feature.auth.profile
+
+import uz.relay.core.navigation.AppNavigationParam
+import uz.relay.core.navigation.AppNavigator
+import uz.relay.core.navigation.key.ChatsKey
+import javax.inject.Inject
+
+/**
+ * [ProfileSetupContract.Directions] ning amalga oshirilishi.
+ *
+ * `ResetTo` ishlatiladi - profil to'ldirilgach auth ekranlariga "orqaga" qaytish mumkin bo'lmasligi kerak.
+ */
+internal class ProfileSetupDirectionsImpl @Inject constructor(
+    private val navigator: AppNavigator
+) : ProfileSetupContract.Directions {
+
+    override suspend fun navigateToChats() = navigator.navigate(AppNavigationParam.ResetTo(ChatsKey))
+}

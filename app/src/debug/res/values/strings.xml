@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug build telefonda release'dan ajralib tursin (ikkalasi ham uz.relay.app — FCM uchun suffix qo'shilmaydi). -->
+<resources>
+    <string name="app_name" translatable="false">SwiftChat dev</string>
+</resources>

@@ -1,0 +1,125 @@
+<resources>
+    <!-- Sarlavha -->
+    <string name="back">Orqaga</string>
+    <string name="more">Koʻproq</string>
+    <string name="typing">yozmoqda…</string>
+    <string name="typing_named">%1$s yozmoqda…</string>
+
+    <!-- Sana ajratgichlari -->
+    <string name="today">Bugun</string>
+    <string name="yesterday">Kecha</string>
+    <string name="month_1">yanvar</string>
+    <string name="month_2">fevral</string>
+    <string name="month_3">mart</string>
+    <string name="month_4">aprel</string>
+    <string name="month_5">may</string>
+    <string name="month_6">iyun</string>
+    <string name="month_7">iyul</string>
+    <string name="month_8">avgust</string>
+    <string name="month_9">sentabr</string>
+    <string name="month_10">oktabr</string>
+    <string name="month_11">noyabr</string>
+    <string name="month_12">dekabr</string>
+    <string name="day_month">%1$d-%2$s</string>
+    <string name="day_month_year">%1$d-%2$s, %3$d</string>
+
+    <!-- Xabarlar -->
+    <string name="edited">tahrirlangan</string>
+    <string name="deleted">Xabar oʻchirildi</string>
+    <string name="photo">Rasm</string>
+    <string name="video">Video</string>
+    <string name="file">Fayl</string>
+    <string name="status_sending">Yuborilmoqda</string>
+    <string name="status_sent">Yuborildi</string>
+    <string name="status_delivered">Yetkazildi</string>
+    <string name="status_read">Oʻqildi</string>
+    <string name="status_failed">Yuborilmadi</string>
+    <string name="resend">Qayta yuborish</string>
+
+    <!-- SYSTEM xabarlar -->
+    <string name="sys_group_created">%1$s guruhni yaratdi</string>
+    <string name="sys_members_added">%1$s %2$sni qoʻshdi</string>
+    <string name="sys_member_joined">%1$s guruhga qoʻshildi</string>
+    <string name="sys_member_removed">%1$s %2$sni chiqardi</string>
+    <string name="sys_member_left">%1$s guruhdan chiqdi</string>
+    <string name="sys_you">Siz</string>
+    <string name="sys_someone">Kimdir</string>
+
+    <!-- Menyu -->
+    <string name="reply">Javob berish</string>
+    <string name="edit">Tahrirlash</string>
+    <string name="copy">Nusxalash</string>
+    <string name="delete">Oʻchirish</string>
+    <string name="copied">Nusxalandi</string>
+    <string name="delete_title">Xabarni oʻchirasizmi?</string>
+    <string name="delete_text">Xabar hamma uchun oʻchiriladi.</string>
+    <string name="cancel">Bekor qilish</string>
+
+    <!-- Yozish paneli -->
+    <string name="message_hint">Xabar</string>
+    <string name="attach">Biriktirish</string>
+    <string name="send">Yuborish</string>
+    <string name="save">Saqlash</string>
+
+    <!-- Media -->
+    <string name="gallery">Galereya</string>
+    <string name="camera">Kamera</string>
+    <string name="play_video">Videoni ijro etish</string>
+    <string name="cancel_upload">Yuklashni bekor qilish</string>
+    <string name="download">Yuklab olish</string>
+    <string name="size_progress">%1$s / %2$s</string>
+    <string name="file_meta">%1$s · %2$s</string>
+    <string name="size_mb">%1$s MB</string>
+    <string name="size_kb">%1$s KB</string>
+    <string name="close">Yopish</string>
+    <string name="pager_position">%1$d / %2$d</string>
+    <string name="viewer_when">%1$s, %2$s</string>
+    <string name="play">Ijro etish</string>
+    <string name="pause">Pauza</string>
+    <string name="mute_sound">Ovozni oʻchirish</string>
+    <string name="unmute_sound">Ovozni yoqish</string>
+    <string name="saving_to_gallery">Saqlanmoqda — jarayon bildirishnomada</string>
+    <string name="no_app_to_open">Bu faylni ochadigan ilova topilmadi</string>
+    <string name="no_camera_app">Kamera ilovasi topilmadi</string>
+    <string name="error_too_large">Fayl 100 MB dan katta</string>
+    <string name="error_media_prepare">Faylni oʻqib boʻlmadi</string>
+
+    <!-- Guruh -->
+    <plurals name="members_n">
+        <item quantity="one">%1$d aʼzo</item>
+        <item quantity="other">%1$d aʼzo</item>
+    </plurals>
+
+    <!-- Chat ichida qidiruv -->
+    <string name="search_in_chat_hint">Xabarlardan qidirish</string>
+    <string name="clear">Tozalash</string>
+    <string name="nothing_found">Hech narsa topilmadi</string>
+    <string name="search_local_note">Qurilmadagi xabarlar ichidan qidiriladi</string>
+
+    <!-- Xatolar -->
+    <string name="no_internet">Internet aloqasi yoʻq</string>
+    <string name="error_rate_limited">Juda koʻp urinish. Birozdan soʻng qayta urining</string>
+    <string name="error_edit_window">Tahrirlash muddati tugagan (48 soat)</string>
+    <string name="error_forbidden">Bu amalga ruxsat yoʻq</string>
+    <string name="error_unknown">Nimadir xato ketdi. Qayta urining</string>
+    <string name="audio_call">Audio qoʻngʻiroq</string>
+    <string name="video_call">Video qoʻngʻiroq</string>
+    <string name="error_calls_unavailable">Qoʻngʻiroqlar hozircha ishlamayapti</string>
+    <string name="error_call_failed">Qoʻngʻiroqni boshlab boʻlmadi</string>
+    <string name="call_outgoing">Chiquvchi qoʻngʻiroq</string>
+    <string name="call_incoming">Kiruvchi qoʻngʻiroq</string>
+    <string name="call_missed">Oʻtkazib yuborilgan qoʻngʻiroq</string>
+    <string name="call_no_answer">Javobsiz qoʻngʻiroq</string>
+    <string name="call_declined">Rad etilgan qoʻngʻiroq</string>
+    <string name="call_canceled">Bekor qilingan qoʻngʻiroq</string>
+    <string name="call_group_started">Video chat boshlandi</string>
+    <string name="call_group_ended">Video chat tugadi</string>
+    <string name="group_call_banner_title">Video chat</string>
+    <string name="group_call_join">Qoʻshilish</string>
+    <plurals name="group_call_participants">
+        <item quantity="one">%d ishtirokchi</item>
+        <item quantity="other">%d ishtirokchi</item>
+    </plurals>
+    <string name="emoji">Emoji</string>
+    <string name="keyboard">Klaviatura</string>
+</resources>

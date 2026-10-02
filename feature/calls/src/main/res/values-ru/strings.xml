@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ruscha tarjima. Kalitlar values/strings.xml (o'zbekcha, asosiy) bilan bir xil. -->
+<resources>
+    <string name="calls_unavailable">Звонки сейчас недоступны</string>
+    <string name="call_failed">Не удалось начать звонок</string>
+    <string name="call_no_answer">Нет ответа</string>
+    <string name="call_camera">Камера</string>
+    <string name="call_flip">Сменить</string>
+    <string name="call_microphone">Микрофон</string>
+    <string name="call_speaker">Динамик</string>
+    <string name="call_end">Завершить</string>
+    <string name="call_connecting">Подключение…</string>
+    <string name="call_group_title">Видеочат</string>
+    <plurals name="call_participants">
+        <item quantity="one">%d участник</item>
+        <item quantity="few">%d участника</item>
+        <item quantity="many">%d участников</item>
+        <item quantity="other">%d участника</item>
+    </plurals>
+    <string name="call_more">Ещё</string>
+    <string name="call_raise_hand">Поднять руку</string>
+    <string name="call_lower_hand">Опустить руку</string>
+    <string name="call_share_screen">Показать экран</string>
+    <string name="call_stop_share">Остановить</string>
+    <string name="call_background">Фон</string>
+    <string name="call_bg_none">Нет</string>
+    <string name="call_bg_blur">Размыть</string>
+</resources>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Inglizcha tarjima. Kalitlar values/strings.xml (o'zbekcha, asosiy) bilan bir xil. -->
+<resources>
+    <string name="presence_online">online</string>
+    <string name="presence_last_seen">last seen %1$s</string>
+    <string name="presence_recently">recently</string>
+    <string name="presence_just_now">just now</string>
+    <plurals name="presence_minutes_ago">
+        <item quantity="one">%1$d minute ago</item>
+        <item quantity="other">%1$d minutes ago</item>
+    </plurals>
+    <plurals name="presence_hours_ago">
+        <item quantity="one">%1$d hour ago</item>
+        <item quantity="other">%1$d hours ago</item>
+    </plurals>
+    <string name="presence_yesterday_at">yesterday at %1$s</string>
+</resources>
