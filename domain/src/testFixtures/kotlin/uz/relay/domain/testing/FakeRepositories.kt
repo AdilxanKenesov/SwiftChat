@@ -16,6 +16,7 @@ import uz.relay.domain.model.DownloadState
 import uz.relay.domain.model.MemberRole
 import uz.relay.domain.model.Message
 import uz.relay.domain.model.MessageMedia
+import uz.relay.domain.model.RecentEmojis
 import uz.relay.domain.model.SyncStatus
 import uz.relay.domain.model.ThemeMode
 import uz.relay.domain.model.User
@@ -111,6 +112,9 @@ class FakeSettingsRepository : SettingsRepository {
     override suspend fun setNotificationsEnabled(enabled: Boolean) { notifications.value = enabled }
     override val language: Flow<AppLanguage> = lang
     override suspend fun setLanguage(language: AppLanguage) { lang.value = language }
+    val recent = MutableStateFlow<List<String>>(emptyList())
+    override val recentEmojis: Flow<List<String>> = recent
+    override suspend fun addRecentEmoji(emoji: String) { recent.value = RecentEmojis.push(recent.value, emoji) }
 }
 
 class FakeConnectionRepository : ConnectionRepository {

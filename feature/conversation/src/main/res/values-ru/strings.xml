@@ -107,4 +107,6 @@
         <item quantity="many">%d участников</item>
         <item quantity="other">%d участника</item>
     </plurals>
+    <string name="emoji">Эмодзи</string>
+    <string name="keyboard">Клавиатура</string>
 </resources>

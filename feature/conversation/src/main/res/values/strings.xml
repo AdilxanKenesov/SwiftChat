@@ -120,4 +120,6 @@
         <item quantity="one">%d ishtirokchi</item>
         <item quantity="other">%d ishtirokchi</item>
     </plurals>
+    <string name="emoji">Emoji</string>
+    <string name="keyboard">Klaviatura</string>
 </resources>

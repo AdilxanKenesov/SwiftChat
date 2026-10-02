@@ -10,6 +10,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import uz.relay.domain.model.RecentEmojis
 import uz.relay.domain.model.ThemeMode
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -49,9 +50,23 @@ class AppSettingsStorage @Inject constructor(
         dataStore.edit { it[KEY_NOTIFICATIONS_ENABLED] = enabled }
     }
 
+    /** So'nggi emojilar bitta qatorda, `\n` bilan ajratilgan (emojida yangi qator bo'lmaydi). */
+    val recentEmojis: Flow<List<String>> = dataStore.data
+        .map { prefs -> prefs[KEY_RECENT_EMOJIS]?.split(SEPARATOR)?.filter { it.isNotEmpty() }.orEmpty() }
+        .distinctUntilChanged()
+
+    suspend fun addRecentEmoji(emoji: String) {
+        dataStore.edit { prefs ->
+            val current = prefs[KEY_RECENT_EMOJIS]?.split(SEPARATOR)?.filter { it.isNotEmpty() }.orEmpty()
+            prefs[KEY_RECENT_EMOJIS] = RecentEmojis.push(current, emoji).joinToString(SEPARATOR)
+        }
+    }
+
     private companion object {
         const val DATASTORE_NAME = "app_settings"
         val KEY_THEME_MODE = stringPreferencesKey("theme_mode")
         val KEY_NOTIFICATIONS_ENABLED = booleanPreferencesKey("notifications_enabled")
+        val KEY_RECENT_EMOJIS = stringPreferencesKey("recent_emojis")
+        const val SEPARATOR = "\n"
     }
 }

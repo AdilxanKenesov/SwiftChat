@@ -30,4 +30,8 @@ internal class SettingsRepositoryImpl @Inject constructor(
     override val language: Flow<AppLanguage> = localeManager.language
 
     override suspend fun setLanguage(language: AppLanguage) = localeManager.set(language)
+
+    override val recentEmojis: Flow<List<String>> = storage.recentEmojis
+
+    override suspend fun addRecentEmoji(emoji: String) = storage.addRecentEmoji(emoji)
 }
