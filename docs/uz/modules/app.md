@@ -140,7 +140,7 @@ Har bir navigatsiya buyrug'i event bus'dan (`AppNavigationHandler.params`) kelad
 - Biror qiymat yoki keystore fayli bo'lmasa, release build yiqilmaydi, balki **imzosiz** yig'iladi.
 - Keystore (`/keystore/`, `*.jks`) va `local.properties` git'ga kirmaydi.
 
-Imzolangan APK'lar **GitHub Releases**da e'lon qilinadi (`v1.0`).
+Imzolangan APK'lar **GitHub Releases**da e'lon qilinadi (`v1.0`, `v1.1`).
 
 ---
 
